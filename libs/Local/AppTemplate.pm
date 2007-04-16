@@ -34,9 +34,6 @@ use strict;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
-use Local::UsageLogger;
-use Local::Env;
-
 @ISA    = qw();
 @EXPORT = qw();
 
@@ -72,7 +69,7 @@ sub new {
     $tmp->{config} = $config;
 
     # parameters loaded from initialization
-    $config->{title}         = $opts{title} || "UMR Information Technology";
+    $config->{title}         = $opts{title} || "Web Application";
     $config->{apptitle}      = $opts{apptitle};
     $config->{headerimage}   = $opts{headerimage};
     $config->{stylesheet}    = $opts{stylesheet};
@@ -85,6 +82,9 @@ sub new {
     $config->{refresh_time} = $opts{refresh_time};
     $config->{refresh_url}  = $opts{refresh_url};
 
+    $config->{template_url} = $opts{template_url};
+    $config->{template_path} = $opts{template_path};
+
     if ( $opts{quiet} ) {
         $config->{quiet} = $opts{quiet};
     }
@@ -95,8 +95,6 @@ sub new {
     # internal tracking data
     $tmp->{open_blocks}      = [];
     $tmp->{inner_row_number} = 0;
-
-    &LogAPIUsage();
 
     return bless $tmp, $class;
 }
@@ -167,7 +165,7 @@ sub _filter {
     my $self = shift;
     my $text = shift;
 
-    my $app_env = &UMR_Env();
+    my $app_env = "prod";
 
     my $config = $self->{config};
 
@@ -175,8 +173,8 @@ sub _filter {
     my $apptitle = $config->{apptitle} || $title;
 
     my $app_url   = $config->{app_url}       || "?";
-    my $con_url   = $config->{contact_url}   || "https://help.umr.edu";
-    my $con_label = $config->{contact_label} || "UMR Solutions Center";
+    my $con_url   = $config->{contact_url}   || "/";
+    my $con_label = $config->{contact_label} || "WebMaster";
 
     my $app_header_image = $config->{headerimage};
 
@@ -220,17 +218,20 @@ sub _filter {
         }
     }
 
-    $text =~ s/__PAGE_TITLE__/$title/;
-    $text =~ s/__APP_URL__/$app_url/;
-    $text =~ s/__APP_TITLE__/$apptitle/;
-    $text =~ s/__APP_HEADER_IMAGE__/$app_header_image/;
-    $text =~ s/__APP_HEAD_PRE__/$app_head_pre/;
-    $text =~ s/__APP_HEAD_POST__/$app_head_post/;
-    $text =~ s/__CONTACT_LABEL__/$con_label/;
-    $text =~ s/__CONTACT_URL__/$con_url/;
+    my $tmpl_url = $config->{template_url} || $config->{template_path};
+
+    $text =~ s/__PAGE_TITLE__/$title/g;
+    $text =~ s/__APP_URL__/$app_url/g;
+    $text =~ s/__APP_TITLE__/$apptitle/g;
+    $text =~ s/__APP_HEADER_IMAGE__/$app_header_image/g;
+    $text =~ s/__APP_HEAD_PRE__/$app_head_pre/g;
+    $text =~ s/__APP_HEAD_POST__/$app_head_post/g;
+    $text =~ s/__CONTACT_LABEL__/$con_label/g;
+    $text =~ s/__CONTACT_URL__/$con_url/g;
+    $text =~ s/__TEMPLATE_URL__/$tmpl_url/g;
 
     my $base_url = $self->_server_base_url();
-    $text =~ s/__BASE_URL__/$base_url/;
+    $text =~ s/__BASE_URL__/$base_url/g;
 
     return $text;
 }
@@ -247,10 +248,7 @@ sub PageHeader {
     my $self   = shift;
     my $config = $self->{config};
 
-    my $tmplfile = "/local/apptmpl/html/headerNoImage.html";
-    if ( $config->{headerimage} ) {
-        $tmplfile = "/local/apptmpl/html/headerWithImage.html";
-    }
+    my $tmplfile = $config->{template_path} . "/header.inc";
 
     open( HEADER_IN, $tmplfile );
     my $text = join( "", <HEADER_IN> );
@@ -269,10 +267,13 @@ sub PageHeader {
 # End-Doc
 sub PageFooter {
     my $self = shift;
+    my $config = $self->{config};
 
     $self->_CloseNonPageBlocks();
 
-    open( FOOTER_IN, "/local/apptmpl/html/footer.html" );
+    my $tmplfile = $config->{template_path} . "/footer.inc";
+
+    open( FOOTER_IN, $tmplfile );
     my $text = join( "", <FOOTER_IN> );
     close(FOOTER_IN);
 
@@ -596,7 +597,10 @@ sub StartInnerTable {
     if ( $#headers >= 0 ) {
         $self->StartInnerHeaderRow();
         foreach my $header (@headers) {
-            print "<th><b>", $self->Encode($header), "</b></th>\n";
+            my $th = $header;
+            $th = $self->Encode($header);
+            $th =~ s/&lt;br&gt;/<br>/gio;
+            print "<th><b>${th}</b></th>\n";
         }
         $self->EndInnerHeaderRow();
     }
