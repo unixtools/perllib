@@ -47,9 +47,9 @@ $| = 1;
 
 my $AUTHSRV_CACHE = {};
 
-my $AUTHSRV_ENCRYPT   = "/usr/bin/authsrv-encrypt";
-my $AUTHSRV_DECRYPT   = "/usr/bin/authsrv-decrypt";
-my $AUTHSRV_DELETE    = "/usr/bin/authsrv-delete";
+my $AUTHSRV_ENCRYPT = "/usr/bin/authsrv-encrypt";
+my $AUTHSRV_DECRYPT = "/usr/bin/authsrv-decrypt";
+my $AUTHSRV_DELETE  = "/usr/bin/authsrv-delete";
 
 # Begin-Doc
 # Name: AuthSrv_Fetch
@@ -66,18 +66,42 @@ sub AuthSrv_Fetch {
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
-        open( AUTHSRV_SV_STDERR, ">&STDERR" );
-        close(STDERR);
+        if ( -e $AUTHSRV_DECRYPT ) {
+            open( AUTHSRV_SV_STDERR, ">&STDERR" );
+            close(STDERR);
 
-        open( AUTHSRV_FETCH_IN, "-|" )
-            || exec( $AUTHSRV_DECRYPT, $user, $instance );
-        while ( my $line = <AUTHSRV_FETCH_IN> ) {
-            chomp($line);
-            $passwd .= $line;
+            open( AUTHSRV_FETCH_IN, "-|" )
+                || exec( $AUTHSRV_DECRYPT, $user, $instance );
+            while ( my $line = <AUTHSRV_FETCH_IN> ) {
+                chomp($line);
+                $passwd .= $line;
+            }
+            close(AUTHSRV_FETCH_IN);
+
+            open( STDERR, ">&AUTHSRV_SV_STDERR" );
         }
-        close(AUTHSRV_FETCH_IN);
 
-        open( STDERR, ">&AUTHSRV_SV_STDERR" );
+        #
+        # This is an ugly stop-gap, but allows for code transparency
+        # between linux and windows. And it's still better than passwords
+        # in the script itself.
+        #
+        elsif ( -e "C:\\Windows\\authsrv.dat" ) {
+            my $line;
+            open( AUTHSRV_FETCH_IN, "C:\\Windows\\authsrv.dat" );
+            my $adata = join( "", <AUTHSRV_FETCH_IN> );
+            close(AUTHSRV_FETCH_IN);
+            foreach my $line ( split( /[\r\n]+/, $adata ) ) {
+                my ( $file_user, $file_instance, $file_pw )
+                    = split( ' ', $line, 4 );
+
+                if ( $file_user eq $user && $file_instance eq $instance ) {
+                    $passwd = $file_pw;
+                    last;
+                }
+            }
+            close(AUTHSRV_FETCH_IN);
+        }
 
         $AUTHSRV_CACHE->{$user}->{$instance} = $passwd;
     }
