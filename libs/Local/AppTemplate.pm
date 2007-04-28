@@ -83,7 +83,22 @@ sub new {
     $config->{refresh_url}  = $opts{refresh_url};
 
     $config->{template_url} = $opts{template_url};
-    $config->{template_path} = $opts{template_path};
+
+    if ( ref($opts{template_path}) )
+    {
+        foreach my $path ( @{ $opts{template_path} } )
+        {
+            if ( -e $path )
+            {
+                $config->{template_path} = $path;
+                last;
+            }
+        }
+    }
+    else
+    {
+        $config->{template_path} = $opts{template_path};
+    }
 
     if ( $opts{quiet} ) {
         $config->{quiet} = $opts{quiet};
