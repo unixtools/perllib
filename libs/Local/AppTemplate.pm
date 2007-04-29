@@ -436,6 +436,31 @@ sub ErrorExit {
 }
 
 # Begin-Doc
+# Name: ErrorWarn
+# Type: method
+# Description: prints an error msg in a block and continues, for warnings
+# Syntax: $obj->ErrorWarn($errmsg);
+# End-Doc
+sub ErrorWarn {
+    my $self  = shift;
+    my $error = shift;
+
+    $self->_CloseNonPageBlocks();
+
+    $self->StartErrorBlockTable( "Error Warning", 600 );
+
+    print "<center>";
+    if ($error) {
+        print $self->Encode($error);
+    }
+    print "</center>";
+
+    $self->EndErrorBlockTable();
+    $self->PageFooter();
+}
+
+
+# Begin-Doc
 # Name: ErrorExitSQL
 # Type: method
 # Description: prints a sql error and exits
