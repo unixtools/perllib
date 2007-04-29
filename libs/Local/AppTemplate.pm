@@ -84,19 +84,15 @@ sub new {
 
     $config->{template_url} = $opts{template_url};
 
-    if ( ref($opts{template_path}) )
-    {
-        foreach my $path ( @{ $opts{template_path} } )
-        {
-            if ( -e $path )
-            {
+    if ( ref( $opts{template_path} ) ) {
+        foreach my $path ( @{ $opts{template_path} } ) {
+            if ( -e $path ) {
                 $config->{template_path} = $path;
                 last;
             }
         }
     }
-    else
-    {
+    else {
         $config->{template_path} = $opts{template_path};
     }
 
@@ -281,7 +277,7 @@ sub PageHeader {
 # Comments: Will close all open blocks as well, but this should be considered bad form
 # End-Doc
 sub PageFooter {
-    my $self = shift;
+    my $self   = shift;
     my $config = $self->{config};
 
     $self->_CloseNonPageBlocks();
@@ -588,9 +584,11 @@ sub StartBlockTable {
         print " width=$width";
     }
     print ">\n";
-    print "<tr><th class=\"blockTableHeader\">";
-    print $self->Encode($title);
-    print "</th></tr>\n";
+    if ($title) {
+        print "<tr><th class=\"blockTableHeader\">";
+        print $self->Encode($title);
+        print "</th></tr>\n";
+    }
     print "<tr><td class=\"blockTableContent\">\n";
 
     $self->_push_block("BlockTable");
