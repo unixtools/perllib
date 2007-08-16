@@ -18,6 +18,8 @@ use DBI;
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+use Local::AuthSrv;
+
 sub new {
     my $self  = shift;
     my $class = ref($self) || $self;
