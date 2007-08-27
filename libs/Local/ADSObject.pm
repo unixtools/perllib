@@ -111,23 +111,31 @@ my $ATYPE_VALS = [
 # Description:  Binds to AD
 # Syntax: $ex = new Local::ADSObject(
 #		user => $user,
-#		password => $pw) || die $Local::ADSObject::ErrorMsg;
+#		password => $pw) || die $Local:ADSObject::ErrorMsg;
 # End-Doc
 sub new {
     my $self          = shift;
     my $class         = ref($self) || $self;
     my %info          = @_;
     my $mode          = $info{mode} || "R";
-    my $server        = $info{server} || "umr-dc.umr.edu";
     my $pref_pagesize = $info{pagesize} || 25;
     my $pref_debug    = $info{debug} || 0;
     my $timeout       = $info{timeout} || 60;
     my $use_gc        = $info{use_gc} || 0;
+    my $domain        = $info{domain} || "umr.edu";
 
     &LogAPIUsage();
 
-    if ($use_gc) {
-        $server = "umr-gc.umr.edu";
+    my $server;
+
+    if ( $domain eq "mst.edu" ) {
+        $server = $info{server} || "mst-dc.mst.edu";
+    }
+    else {
+        $server = $info{server} || "umr-dc.umr.edu";
+        if ($use_gc) {
+            $server = "umr-gc.umr.edu";
+        }
     }
 
     $pref_debug && print "using server ($server)\n";
@@ -168,7 +176,6 @@ sub new {
         user     => $user,
         instance => 'ads'
     );
-    my $domain = $info{domain} || "umr.edu";
 
     # set any object params
     my $tmp = {};
@@ -176,7 +183,10 @@ sub new {
     $tmp->{"debug"}  = $pref_debug;
     $tmp->{"basedn"} = $info{basedn};
     if ( !$tmp->{"basedn"} ) {
-        if ( !$use_gc ) {
+        if ( $domain eq "mst.edu" ) {
+            $tmp->{basedn} = "DC=mst,DC=edu";
+        }
+        elsif ( !$use_gc ) {
             $tmp->{"basedn"} = "DC=umr,DC=edu";
         }
         else {
@@ -303,6 +313,47 @@ sub _GetHostDN {
 }
 
 # Begin-Doc
+# Name: FindUPN
+# Type: method
+# Access: public
+# Description: Searches for first instance found of a particular userid
+# Returns: user principal name for authentication
+# End-Doc
+
+sub FindUPN {
+    my $self  = shift;
+    my $ldap  = $self->{ldap};
+    my $Dname = undef;
+
+    my ($SAM) = @_;
+    $self->debug && print "SAM is $SAM\n";
+
+    my $baseDN = $self->{basedn};
+    $self->debug && print "baseDN = $baseDN\n";
+
+    my $srch = $ldap->search(
+        base   => $baseDN,
+        scope  => 'sub',
+        filter => "(|(sAMAccountName=$SAM))",
+        attrs  => ['userPrincipalName']
+    );
+
+    my $entry = ( $srch->entries )[0];
+    my $upn;
+
+    if ($entry) {
+        $upn = $entry->get_value('userPrincipalName');
+    }
+    $self->debug && print "upn is $upn\n";
+
+    if ( $srch->code ) {
+        $ErrorMsg = "Search failed: " . $srch->error . "\n";
+        return undef;
+    }
+    return lc $upn;
+}
+
+# Begin-Doc
 # Name: _GetDN
 # Type: method
 # Access: private
@@ -424,8 +475,8 @@ sub SetPassword {
 
 sub _gen_random_pw {
     my $pw;
-    my @chars =
-        split( '',
+    my @chars
+        = split( '',
         join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 
@@ -853,8 +904,15 @@ sub GetAttributes {
         my $name   = $aref->{type};
         my $values = $aref->{vals};
 
-        #$self->debug && print "got $name attribute\n";
-        $info->{$name} = $values;
+        if ( $name =~ /(.*);range=/o ) {
+            my $aname = $1;
+            $info->{$aname} = $self->_GetLargeAttribute( $entry->dn, $aname );
+        }
+        else {
+
+            #$self->debug && print "got $name attribute\n";
+            $info->{$name} = $values;
+        }
     }
 
     return $info;
@@ -921,8 +979,15 @@ sub GetDNAttributes {
         my $name   = $aref->{type};
         my $values = $aref->{vals};
 
-        #$self->debug && print "got $name attribute\n";
-        $info->{$name} = $values;
+        if ( $name =~ /(.*);range=/o ) {
+            my $aname = $1;
+            $info->{$aname} = $self->_GetLargeAttribute( $entry->dn, $aname );
+        }
+        else {
+
+            #$self->debug && print "got $name attribute\n";
+            $info->{$name} = $values;
+        }
     }
 
     return $info;
@@ -1009,12 +1074,19 @@ sub GetAttributesMatch {
                 my $name   = $aref->{type};
                 my $values = $aref->{vals};
 
-                $info->{$name} = $values;
+                if ( $name =~ /(.*);range=/o ) {
+                    my $aname = $1;
+                    $info->{$aname}
+                        = $self->_GetLargeAttribute( $entry->dn, $aname );
+                }
+                else {
 
+                    #$self->debug && print "got $name attribute\n";
+                    $info->{$name} = $values;
+                }
             }
             push( @$matches, $info );
         }
-
         my ($resp) = $res->control(LDAP_CONTROL_PAGED) or last;
 
         $cookie = $resp->cookie or last;
@@ -1042,10 +1114,106 @@ sub _WrapCB {
             my $name   = $aref->{type};
             my $values = $aref->{vals};
 
-            $info->{$name} = $values;
+            if ( $name =~ /(.*);range=/o ) {
+                my $aname = $1;
+                $info->{$aname}
+                    = $self->_GetLargeAttribute( $entry->dn, $aname );
+            }
+            else {
+
+                #$self->debug && print "got $name attribute\n";
+                $info->{$name} = $values;
+            }
         }
         &$cb($info);
     }
+}
+
+# Begin-Doc
+# Name: _GetLargeAttribute
+# Type: method
+# Description: Returns full set of values for an attribute that may include range processing
+# Syntax: $arrayref = $ad->_GetLargeAttribute($dn, $attribute)
+# Returns: array ref containing values
+# End-Doc
+sub _GetLargeAttribute {
+    my $self      = shift;
+    my $dn        = shift;
+    my $attr      = shift;
+    my $ldap      = $self->{ldap};
+    my $allvalues = [];
+
+    $self->debug
+        && print "_GetLargeAttribute called for $dn for attr $attr.\n";
+
+    my $low  = "0";
+    my $high = "*";
+
+    my $have_more = 1;
+    while ($have_more) {
+        $self->debug && print "requesting $attr from $low to $high\n";
+        my $res = $ldap->search(
+            base   => $dn,
+            scope  => 'base',
+            attrs  => ["$attr;range=$low-$high"],
+            filter => "(objectClass=*)",
+        );
+
+        if ( $res->code ) {
+            $self->debug && print "Search failed: " . $res->error . "\n";
+            $ErrorMsg = "Search failed: " . $res->error;
+            return undef;
+        }
+
+        my @entries = $res->all_entries;
+        my $entry   = shift(@entries);
+        if ( !defined($entry) ) {
+
+            # we're done
+            $self->debug && print "didn't get any entry.\n";
+            return $allvalues;
+        }
+
+        foreach my $aref ( @{ $entry->{asn}->{attributes} } ) {
+            my $name   = $aref->{type};
+            my $values = $aref->{vals};
+
+            if ( $name =~ /^(.*);range=(.*?)-(.*?)$/o ) {
+                my $aname    = $1;
+                my $got_low  = $2;
+                my $got_high = $3;
+
+                if ( $aname ne $attr ) {
+                    $self->debug
+                        && print "skipping unrequested attr $aname\n";
+                    next;
+                }
+
+                $self->debug
+                    && print "got $aname from $got_low to $got_high\n";
+                if ( ref($values) ) {
+                    push( @$allvalues, @{$values} );
+                }
+                else {
+                    push( @$allvalues, $values );
+                }
+
+                if ( $got_high ne "*" ) {
+                    $low       = $got_high + 1;
+                    $high      = "*";
+                    $have_more = 1;
+                }
+                else {
+                    $have_more = 0;
+                }
+            }
+        }
+
+        #    use Data::Dumper;
+        #    print Dumper($entry);
+    }
+
+    return $allvalues;
 }
 
 # Begin-Doc
@@ -1272,22 +1440,27 @@ sub DumpLDIF {
 # Name: CheckPassword
 # Type: method
 # Description: Attempts to validate an ADS password
-# Syntax: $res = $ad->CheckPassword($userid, $password)
+# Syntax: $res = $ad->CheckPassword($userid, $password, $domain)
 # Comments: Actually attempts to bind to ADS with that user and password, and returns
 # non-zero if it cannot.
 # End-Doc
 sub CheckPassword {
     my $self = shift;
-    my ( $userid, $password ) = @_;
+    my ( $userid, $password, $domain ) = @_;
     my $tmpad;
 
     if ( !$userid || !$password ) {
         return 1;
     }
 
-    $tmpad = new Local::ADSObject(
+    if ( !$domain ) {
+        $domain = $self->{domain};
+    }
+
+    $tmpad = new UMR::SysProg::ADSObject(
         user     => $userid,
-        password => $password
+        password => $password,
+        domain   => $domain,
     );
 
     if ($tmpad) {
