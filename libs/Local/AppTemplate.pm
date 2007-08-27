@@ -459,7 +459,6 @@ sub ErrorWarn {
     $self->PageFooter();
 }
 
-
 # Begin-Doc
 # Name: ErrorExitSQL
 # Type: method
