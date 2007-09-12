@@ -33,6 +33,8 @@ require Exporter;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+use LWP::Simple;
+use File::Path;
 
 @ISA    = qw();
 @EXPORT = qw();
@@ -56,6 +58,8 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 #  quiet - do not show details of error messages or stack traces/etc., defaults to showing for now
 #  refresh_time - meta refresh the page after this many seconds
 #  refresh_url - instead of refreshing to same page, refresh to this URL
+#  template_path - scalar or array of scalars pointing at locations to try accessing the template
+#  template_cache_dir - override default location where remote templates are cached
 #
 #
 # End-Doc
@@ -82,19 +86,15 @@ sub new {
     $config->{refresh_time} = $opts{refresh_time};
     $config->{refresh_url}  = $opts{refresh_url};
 
-    $config->{template_url} = $opts{template_url};
-
-    if ( ref( $opts{template_path} ) ) {
-        foreach my $path ( @{ $opts{template_path} } ) {
-            if ( -e $path ) {
-                $config->{template_path} = $path;
-                last;
-            }
-        }
+    if ( ! ref($opts{template_path}) )
+    {
+        $config->{template_path} = [ $opts{template_path} ];
     }
-    else {
+    else
+    {
         $config->{template_path} = $opts{template_path};
     }
+    $config->{template_cache_dir} = $opts{template_cache_dir};
 
     if ( $opts{quiet} ) {
         $config->{quiet} = $opts{quiet};
@@ -109,6 +109,119 @@ sub new {
 
     return bless $tmp, $class;
 }
+
+#
+# Template retrieval
+#
+
+# Begin-Doc
+# Name: _load_template
+# Type: method
+# Description: outputs a page header
+# Syntax: $obj->PageHeader();
+# Comments: If you have specified a header image, it will use that image file for the header
+# Comments: instead of a textual title area.
+# End-Doc
+sub _load_template {
+    my $self   = shift;
+    my $config = $self->{config};
+
+    # Prevent re-running the template
+    return if ( $self->{template_loaded} );
+
+    my $text;
+    foreach my $location ( @{ $config->{template_path} } )
+    {
+        if ( -f $location )
+        {
+            open( TEMPLATE_IN, "<", $location );
+            $text = join( "", <TEMPLATE_IN> );
+            close(TEMPLATE_IN);
+        }
+        elsif ( -f "$location/index.html" )
+        {
+            open( TEMPLATE_IN, "<", $location . "/index.html" );
+            $text = join( "", <TEMPLATE_IN> );
+            close(TEMPLATE_IN);
+        }
+        elsif ( $location =~ m{^(http|https|ftp|file)://} )
+        {
+            my $cache = $config->{template_cache_dir};
+            #
+            # Try to calculate a default if needed
+            #
+            if ( ! $cache )
+            {
+                my $home;
+                eval { $home = (getpwuid($>))[7]; };
+                if ( $home )
+                {
+                    $cache = $home . "/tmp/apptmpl-cache";
+                    mkpath([$cache], 0, 0700);
+                }
+                elsif ( $^O =~ /Win32/ && -e $ENV{TEMP} && $ENV{TEMP} =~ m{docum}io  )
+                {
+                    $cache = $ENV{TEMP} . "/apptmpl-cache";
+                    mkpath([$cache], 0, 0700);
+                }
+
+                if ( ! -d $cache )
+                {
+                    undef($cache);
+                }
+            }
+
+            #
+            # If we have a cache, mirror the document, otherwise just do a straight GET
+            # Might want to consider defining a minimum caching period, so we do not 
+            # attempt to cache the template repeatedly. There is also a potential 
+            # locking issue here, so we might want to use a temporary file if the LWP
+            # mirror method isn't implemented atomically internally. (Looks like
+            # mirror does a unlink+rename which should be good enough.)
+            #
+            if ( defined($cache) )
+            {
+                # use a simple 256 bit checksum for the cache file name
+                # feed it some extra parameters to get a touch more randomness in the name
+                my $cachefilename = $cache . "/" . sprintf("%.8X", unpack("%256C*", join("-", $location, $<, $>, $cache) ));
+                
+                # don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
+                my @tmpstat = stat($cachefilename);
+                unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 )
+                {
+                    my $res = mirror($location, "$cachefilename");
+                }
+
+                if ( -f $cachefilename )
+                {
+                open( TEMPLATE_IN, "<$cachefilename" );
+                $text = join( "", <TEMPLATE_IN> );
+                close(TEMPLATE_IN);
+                }
+            }
+            else
+            {
+                $text = get($location);
+            }
+        }
+    }
+
+    if ( ! $text )
+    {
+        $self->{template_text_header} = "<!-- unable to load template header -->";
+        $self->{template_text_footer} = "<!-- unable to load template footer -->";
+    }
+    else
+    {
+        my ($header,$footer) = split(/__APP_CONTENT__/, $text, 2);
+        $self->{template_text_header} = $header;
+        $self->{template_text_footer} = $footer;
+    }
+
+    $self->{template_loaded} = 1;
+    return;
+}
+
 
 #
 # Routines to track nesting of blocks
@@ -229,8 +342,6 @@ sub _filter {
         }
     }
 
-    my $tmpl_url = $config->{template_url} || $config->{template_path};
-
     $text =~ s/__PAGE_TITLE__/$title/g;
     $text =~ s/__APP_URL__/$app_url/g;
     $text =~ s/__APP_TITLE__/$apptitle/g;
@@ -239,7 +350,6 @@ sub _filter {
     $text =~ s/__APP_HEAD_POST__/$app_head_post/g;
     $text =~ s/__CONTACT_LABEL__/$con_label/g;
     $text =~ s/__CONTACT_URL__/$con_url/g;
-    $text =~ s/__TEMPLATE_URL__/$tmpl_url/g;
 
     my $base_url = $self->_server_base_url();
     $text =~ s/__BASE_URL__/$base_url/g;
@@ -259,13 +369,9 @@ sub PageHeader {
     my $self   = shift;
     my $config = $self->{config};
 
-    my $tmplfile = $config->{template_path} . "/header.inc";
+    $self->_load_template();
+    print $self->_filter($self->{template_text_header});
 
-    open( HEADER_IN, $tmplfile );
-    my $text = join( "", <HEADER_IN> );
-    close(HEADER_IN);
-
-    print $self->_filter($text);
     $self->_push_block("Page");
 }
 
@@ -282,13 +388,8 @@ sub PageFooter {
 
     $self->_CloseNonPageBlocks();
 
-    my $tmplfile = $config->{template_path} . "/footer.inc";
-
-    open( FOOTER_IN, $tmplfile );
-    my $text = join( "", <FOOTER_IN> );
-    close(FOOTER_IN);
-
-    print $self->_filter($text);
+    $self->_load_template(); # should be a no-op at this point
+    print $self->_filter($self->{template_text_footer});
 
     # Need to address recursion?
     $self->_pop_block("Page");
