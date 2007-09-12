@@ -351,7 +351,7 @@ sub _filter {
     my $remuser = $ENV{REMOTE_USER};
     $text =~ s/__REMOTE_USER__/$remuser/g;
 
-    my $remhost = $ENV{REMOTE_HOST};
+    my $remhost = $ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR};
     $text =~ s/__REMOTE_HOST__/$remhost/g;
 
     my $elaptime = (time - $^T) . " seconds";
