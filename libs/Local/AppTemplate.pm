@@ -86,12 +86,10 @@ sub new {
     $config->{refresh_time} = $opts{refresh_time};
     $config->{refresh_url}  = $opts{refresh_url};
 
-    if ( ! ref($opts{template_path}) )
-    {
+    if ( !ref( $opts{template_path} ) ) {
         $config->{template_path} = [ $opts{template_path} ];
     }
-    else
-    {
+    else {
         $config->{template_path} = $opts{template_path};
     }
     $config->{template_cache_dir} = $opts{template_cache_dir};
@@ -130,90 +128,90 @@ sub _load_template {
     return if ( $self->{template_loaded} );
 
     my $text;
-    foreach my $location ( @{ $config->{template_path} } )
-    {
-        if ( -f $location )
-        {
+    foreach my $location ( @{ $config->{template_path} } ) {
+        if ( -f $location ) {
             open( TEMPLATE_IN, "<", $location );
             $text = join( "", <TEMPLATE_IN> );
             close(TEMPLATE_IN);
         }
-        elsif ( -f "$location/index.html" )
-        {
+        elsif ( -f "$location/index.html" ) {
             open( TEMPLATE_IN, "<", $location . "/index.html" );
             $text = join( "", <TEMPLATE_IN> );
             close(TEMPLATE_IN);
         }
-        elsif ( $location =~ m{^(http|https|ftp|file)://} )
-        {
+        elsif ( $location =~ m{^(http|https|ftp|file)://} ) {
             my $cache = $config->{template_cache_dir};
+
             #
             # Try to calculate a default if needed
             #
-            if ( ! $cache )
-            {
+            if ( !$cache ) {
                 my $home;
-                eval { $home = (getpwuid($>))[7]; };
-                if ( $home )
-                {
+                eval { $home = ( getpwuid($>) )[7]; };
+                if ($home) {
                     $cache = $home . "/tmp/apptmpl-cache";
-                    mkpath([$cache], 0, 0700);
+                    mkpath( [$cache], 0, 0700 );
                 }
-                elsif ( $^O =~ /Win32/ && -e $ENV{TEMP} && $ENV{TEMP} =~ m{docum}io  )
+                elsif ($^O =~ /Win32/
+                    && -e $ENV{TEMP}
+                    && $ENV{TEMP} =~ m{docum}io )
                 {
                     $cache = $ENV{TEMP} . "/apptmpl-cache";
-                    mkpath([$cache], 0, 0700);
+                    mkpath( [$cache], 0, 0700 );
                 }
 
-                if ( ! -d $cache )
-                {
+                if ( !-d $cache ) {
                     undef($cache);
                 }
             }
 
-            #
-            # If we have a cache, mirror the document, otherwise just do a straight GET
-            # Might want to consider defining a minimum caching period, so we do not 
-            # attempt to cache the template repeatedly. There is also a potential 
-            # locking issue here, so we might want to use a temporary file if the LWP
-            # mirror method isn't implemented atomically internally. (Looks like
-            # mirror does a unlink+rename which should be good enough.)
-            #
-            if ( defined($cache) )
-            {
-                # use a simple 256 bit checksum for the cache file name
-                # feed it some extra parameters to get a touch more randomness in the name
-                my $cachefilename = $cache . "/" . sprintf("%.8X", unpack("%256C*", join("-", $location, $<, $>, $cache) ));
-                
-                # don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
+   #
+   # If we have a cache, mirror the document, otherwise just do a straight GET
+   # Might want to consider defining a minimum caching period, so we do not
+   # attempt to cache the template repeatedly. There is also a potential
+   # locking issue here, so we might want to use a temporary file if the LWP
+   # mirror method isn't implemented atomically internally. (Looks like
+   # mirror does a unlink+rename which should be good enough.)
+   #
+            if ( defined($cache) ) {
+
+    # use a simple 256 bit checksum for the cache file name
+    # feed it some extra parameters to get a touch more randomness in the name
+                my $cachefilename = $cache . "/"
+                    . sprintf(
+                    "%.8X",
+                    unpack(
+                        "%256C*", join( "-", $location, $<, $>, $cache )
+                    )
+                    );
+
+# don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
                 my @tmpstat = stat($cachefilename);
                 unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 )
                 {
-                    my $res = mirror($location, "$cachefilename");
+                    my $res = mirror( $location, "$cachefilename" );
                 }
 
-                if ( -f $cachefilename )
-                {
-                open( TEMPLATE_IN, "<$cachefilename" );
-                $text = join( "", <TEMPLATE_IN> );
-                close(TEMPLATE_IN);
+                if ( -f $cachefilename ) {
+                    open( TEMPLATE_IN, "<$cachefilename" );
+                    $text = join( "", <TEMPLATE_IN> );
+                    close(TEMPLATE_IN);
                 }
             }
-            else
-            {
+            else {
                 $text = get($location);
             }
         }
     }
 
-    if ( ! $text )
-    {
-        $self->{template_text_header} = "<!-- unable to load template header -->";
-        $self->{template_text_footer} = "<!-- unable to load template footer -->";
+    if ( !$text ) {
+        $self->{template_text_header}
+            = "<!-- unable to load template header -->";
+        $self->{template_text_footer}
+            = "<!-- unable to load template footer -->";
     }
-    else
-    {
-        my ($header,$footer) = split(/__APP_CONTENT__/, $text, 2);
+    else {
+        my ( $header, $footer ) = split( /__APP_CONTENT__/, $text, 2 );
         $self->{template_text_header} = $header;
         $self->{template_text_footer} = $footer;
     }
@@ -221,7 +219,6 @@ sub _load_template {
     $self->{template_loaded} = 1;
     return;
 }
-
 
 #
 # Routines to track nesting of blocks
@@ -370,7 +367,7 @@ sub PageHeader {
     my $config = $self->{config};
 
     $self->_load_template();
-    print $self->_filter($self->{template_text_header});
+    print $self->_filter( $self->{template_text_header} );
 
     $self->_push_block("Page");
 }
@@ -388,8 +385,8 @@ sub PageFooter {
 
     $self->_CloseNonPageBlocks();
 
-    $self->_load_template(); # should be a no-op at this point
-    print $self->_filter($self->{template_text_footer});
+    $self->_load_template();    # should be a no-op at this point
+    print $self->_filter( $self->{template_text_footer} );
 
     # Need to address recursion?
     $self->_pop_block("Page");

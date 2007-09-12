@@ -475,8 +475,7 @@ sub SetPassword {
 
 sub _gen_random_pw {
     my $pw;
-    my @chars
-        = split( '',
+    my @chars = split( '',
         join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 

@@ -99,7 +99,8 @@ sub HTMLScriptURL {
     $scriptname = $ENV{"SCRIPT_NAME"};
     $hostport   = $ENV{"HTTP_HOST"};
 
-    if ( $hostport eq "" || ($hostport !~ /:/ && $ENV{SERVER_PORT} != 80) ) {
+    if ( $hostport eq "" || ( $hostport !~ /:/ && $ENV{SERVER_PORT} != 80 ) )
+    {
         $hostport = $ENV{"SERVER_NAME"} . ":" . $ENV{"SERVER_PORT"};
     }
 
