@@ -781,6 +781,19 @@ sub StartInnerHeaderRow {
 }
 
 # Begin-Doc
+# Name: StartInnerHeaderCell
+# Type: method
+# Description: starts an inner header cell
+# Syntax: $obj->StartInnerHeaderCell()
+# End-Doc
+sub StartInnerHeaderCell {
+    my $self = shift;
+
+    print "<td class=\"blockTableInnerHeader\">";
+    $self->_push_block("InnerHeaderCell");
+}
+
+# Begin-Doc
 # Name: EndInnerHeaderRow
 # Type: method
 # Description: ends an inner header row and manage tracking even/odd
@@ -791,6 +804,19 @@ sub EndInnerHeaderRow {
 
     $self->_pop_block("InnerHeader");
     print "</tr>";
+}
+
+# Begin-Doc
+# Name: EndInnerHeaderCell
+# Type: method
+# Description: ends an inner header cell
+# Syntax: $obj->EndInnerHeaderCell()
+# End-Doc
+sub EndInnerHeaderCell {
+    my $self = shift;
+
+    $self->_pop_block("InnerHeaderCell");
+    print "</td>";
 }
 
 # Begin-Doc
