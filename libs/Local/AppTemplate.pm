@@ -86,11 +86,16 @@ sub new {
     $config->{refresh_time} = $opts{refresh_time};
     $config->{refresh_url}  = $opts{refresh_url};
 
-    if ( !ref( $opts{template_path} ) ) {
-        $config->{template_path} = [ $opts{template_path} ];
+    if ( defined( $opts{template_path} ) ) {
+        if ( !ref( $opts{template_path} ) ) {
+            $config->{template_path} = [ $opts{template_path} ];
+        }
+        elsif ( defined( $opts{template_path} ) ) {
+            $config->{template_path} = $opts{template_path};
+        }
     }
     else {
-        $config->{template_path} = $opts{template_path};
+        $config->{template_path} = ["/local/apptmpl/html"];
     }
     $config->{template_cache_dir} = $opts{template_cache_dir};
 
@@ -348,13 +353,13 @@ sub _filter {
     $text =~ s/__CONTACT_LABEL__/$con_label/g;
     $text =~ s/__CONTACT_URL__/$con_url/g;
 
-    my $remuser = $self->Encode($ENV{REMOTE_USER});
+    my $remuser = $self->Encode( $ENV{REMOTE_USER} );
     $text =~ s/__REMOTE_USER__/$remuser/g;
 
-    my $remhost = $self->Encode($ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR});
+    my $remhost = $self->Encode( $ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} );
     $text =~ s/__REMOTE_HOST__/$remhost/g;
 
-    my $elaptime = (time - $^T) . " seconds";
+    my $elaptime = ( time - $^T ) . " seconds";
     $text =~ s/__ELAPSED_TIME__/$elaptime/g;
 
     my $base_url = $self->_server_base_url();
