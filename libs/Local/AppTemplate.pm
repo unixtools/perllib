@@ -348,6 +348,9 @@ sub _filter {
     $text =~ s/__CONTACT_LABEL__/$con_label/g;
     $text =~ s/__CONTACT_URL__/$con_url/g;
 
+    my $elaptime = (time - $^T) . " seconds";
+    $text =~ s/__ELAPSED_TIME__/$elaptime/g;
+
     my $base_url = $self->_server_base_url();
     $text =~ s/__BASE_URL__/$base_url/g;
 
