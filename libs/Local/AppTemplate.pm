@@ -348,6 +348,12 @@ sub _filter {
     $text =~ s/__CONTACT_LABEL__/$con_label/g;
     $text =~ s/__CONTACT_URL__/$con_url/g;
 
+    my $remuser = $ENV{REMOTE_USER};
+    $text =~ s/__REMOTE_USER__/$remuser/g;
+
+    my $remhost = $ENV{REMOTE_HOST};
+    $text =~ s/__REMOTE_HOST__/$remhost/g;
+
     my $elaptime = (time - $^T) . " seconds";
     $text =~ s/__ELAPSED_TIME__/$elaptime/g;
 
