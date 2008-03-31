@@ -362,6 +362,9 @@ sub _filter {
     my $elaptime = ( time - $^T ) . " seconds";
     $text =~ s/__ELAPSED_TIME__/$elaptime/g;
 
+    my $curtime = scalar(localtime(time));
+    $text =~ s/__CURRENT_TIME__/$curtime/g;
+
     my $base_url = $self->_server_base_url();
     $text =~ s/__BASE_URL__/$base_url/g;
 
