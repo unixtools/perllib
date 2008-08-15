@@ -48,7 +48,6 @@ use File::Path;
 #
 #  title - page title (always recommended)
 #  apptitle - application subtitle
-#  headerimage - header image instead of textual title
 #  stylesheet - app override stylesheet placed after global stylesheets
 #  style - inline style placed after app stylesheet inclusion
 #  head_extra - inline raw content placed after app stylesheet inclusion
@@ -306,11 +305,16 @@ sub _filter {
 
     if ( $app_env ne "prod" ) {
         my $app_env_label =
-            "<b><font face = \"Brush Script MT\" color=\"\#BB1111\">"
-          . uc($app_env)
-          . "<\/font></b>";
+          "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
         $title .= " - $app_env";
         $apptitle = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
+    }
+
+    if (   $ENV{REMOTE_USER_IMPERSONATE}
+        && $ENV{REMOTE_USER_IMPERSONATE} ne $ENV{REMOTE_USER_REAL} )
+    {
+        $title .= " [Impersonating: "
+          . $self->Encode( $ENV{REMOTE_USER_IMPERSONATE} ) . "]";
     }
 
     if ( $config->{stylesheet} ) {
@@ -517,6 +521,21 @@ sub PrivErrorExit {
 }
 
 # Begin-Doc
+# Name: Exit
+# Type: method
+# Description: closes page and then exits
+# Syntax: $obj->Exit();
+# End-Doc
+sub Exit {
+    my $self  = shift;
+    my $error = shift;
+
+    $self->_CloseNonPageBlocks();
+    $self->PageFooter();
+    exit;
+}
+
+# Begin-Doc
 # Name: ErrorExit
 # Type: method
 # Description: prints an error msg in a block and exits
@@ -568,7 +587,22 @@ sub ErrorWarn {
     print "</center>";
 
     $self->EndErrorBlockTable();
-    $self->PageFooter();
+}
+
+# Begin-Doc
+# Name: ErrorWarnSQL
+# Type: method
+# Description: prints a sql error message and continues
+# Syntax: $obj->ErrorWarnSQL($errmsg, [$db]);
+# Comments: If $db is passed in, will use that to display last query and query arguments
+# End-Doc
+sub ErrorWarnSQL {
+    my $self  = shift;
+    my $error = shift;
+    my $db    = shift;
+    my $quiet = $self->{quiet};
+
+    $self->ErrorSQLHelper( "Database Error (Warning)", $error, $db );
 }
 
 # Begin-Doc
@@ -584,15 +618,34 @@ sub ErrorExitSQL {
     my $db    = shift;
     my $quiet = $self->{quiet};
 
-    $self->_CloseNonPageBlocks();
-
     if ( $self->{_in_error_exit} ) {
         print "<!-- error exit recursed, terminating app -->";
         exit;
     }
 
     $self->{_in_error_exit} = 1;
-    $self->StartErrorBlockTable( "Database Error Occurred", 600 );
+
+    $self->_CloseNonPageBlocks();
+    $self->ErrorSQLHelper( "Database Error", $error, $db );
+    $self->PageFooter();
+    exit;
+}
+
+# Begin-Doc
+# Name: ErrorSQLHelper
+# Type: method
+# Description: prints a sql error message block
+# Syntax: $obj->ErrorSQLHelper($blocktabletitle, $errmsg, [$db]);
+# Comments: If $db is passed in, will use that to display last query and query arguments
+# End-Doc
+sub ErrorSQLHelper {
+    my $self  = shift;
+    my $title = shift;
+    my $error = shift;
+    my $db    = shift;
+    my $quiet = $self->{quiet};
+
+    $self->StartErrorBlockTable( $title, 600 );
 
     print "<center>";
     if ($error) {
@@ -665,8 +718,6 @@ sub ErrorExitSQL {
 
     print "</center>\n";
     $self->EndErrorBlockTable();
-    $self->PageFooter();
-    exit;
 }
 
 # Begin-Doc
