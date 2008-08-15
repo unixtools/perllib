@@ -38,9 +38,9 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-    AuthSrv_Fetch
-    AuthSrv_Authenticate
-    AuthSrv_Unauthenticate
+  AuthSrv_Fetch
+  AuthSrv_Authenticate
+  AuthSrv_Unauthenticate
 );
 
 $| = 1;
@@ -71,7 +71,7 @@ sub AuthSrv_Fetch {
             close(STDERR);
 
             open( AUTHSRV_FETCH_IN, "-|" )
-                || exec( $AUTHSRV_DECRYPT, $user, $instance );
+              || exec( $AUTHSRV_DECRYPT, $user, $instance );
             while ( my $line = <AUTHSRV_FETCH_IN> ) {
                 chomp($line);
                 $passwd .= $line;
@@ -92,8 +92,8 @@ sub AuthSrv_Fetch {
             my $adata = join( "", <AUTHSRV_FETCH_IN> );
             close(AUTHSRV_FETCH_IN);
             foreach my $line ( split( /[\r\n]+/, $adata ) ) {
-                my ( $file_user, $file_instance, $file_pw )
-                    = split( ' ', $line, 4 );
+                my ( $file_user, $file_instance, $file_pw ) =
+                  split( ' ', $line, 4 );
 
                 if ( $file_user eq $user && $file_instance eq $instance ) {
                     $passwd = $file_pw;

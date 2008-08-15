@@ -16,16 +16,16 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-    Encode_HashToFile
-    Encode_FileToHash
-    Encode_HashToFileH
-    Encode_FileHToHash
-    Encode_URLEncode
-    Encode_URLDecode
-    Encode_HashToString
-    Encode_StringToHash
-    Encode_HTMLEncode
-    Encode_HTMLDecode
+  Encode_HashToFile
+  Encode_FileToHash
+  Encode_HashToFileH
+  Encode_FileHToHash
+  Encode_URLEncode
+  Encode_URLDecode
+  Encode_HashToString
+  Encode_StringToHash
+  Encode_HTMLEncode
+  Encode_HTMLDecode
 );
 
 # Begin-Doc

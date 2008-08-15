@@ -71,12 +71,12 @@ my $UAC_PW_NOT_REQUIRED        = 0x00000020;
 my $UAC_CANNOT_CHANGE_PW       = 0x00000040;
 my $UAC_NORMAL_ACCOUNT         = $UAC_INITIALIZED | $UAC_NEVER_EXPIRES;
 
-my $UAC_COMPUTER_ACCOUNT
-    = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_DES_ONLY
-    | $UAC_TRUSTED_FOR_DELEGATION;
+my $UAC_COMPUTER_ACCOUNT =
+  $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_DES_ONLY |
+  $UAC_TRUSTED_FOR_DELEGATION;
 
-my $UAC_UNIXHOST_ACCOUNT
-    = $UAC_NORMAL_ACCOUNT | $UAC_TRUSTED_FOR_DELEGATION | $UAC_DES_ONLY;
+my $UAC_UNIXHOST_ACCOUNT =
+  $UAC_NORMAL_ACCOUNT | $UAC_TRUSTED_FOR_DELEGATION | $UAC_DES_ONLY;
 
 #
 # Flag bits for group type field
@@ -432,10 +432,10 @@ sub SetPassword {
     $password = $info{password} || return "need new password\n";
 
     syslog( "info",
-              "ADSObject SetPassword ($userid) by "
-            . $ENV{REMOTE_USER}
-            . " from host "
-            . $ENV{REMOTE_HOST} );
+            "ADSObject SetPassword ($userid) by "
+          . $ENV{REMOTE_USER}
+          . " from host "
+          . $ENV{REMOTE_HOST} );
 
     $dn = $self->_GetDN($userid);
     if ( !$dn ) {
@@ -475,14 +475,15 @@ sub SetPassword {
 
 sub _gen_random_pw {
     my $pw;
-    my @chars = split( '',
+    my @chars =
+      split( '',
         join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 
     &LogAPIUsage();
 
     $pw = "";
-    for ( my $i = 0; $i < 22; $i++ ) {
+    for ( my $i = 0 ; $i < 22 ; $i++ ) {
         my $rnd = int( rand( $#chars + 1 ) );
         $pw .= $chars[$rnd];
     }
@@ -524,9 +525,8 @@ sub CreateUser {
             SamAccountName    => "$samName",
             DisplayName       => "$dispName",
             UserPrincipalName => "$userPN\@umr.edu",
-            objectclass =>
-                [ 'top', 'person', 'organizationalPerson', 'user' ],
-            unicodePwd => $self->_MakeUnicode( $self->_gen_random_pw() ),
+            objectclass => [ 'top', 'person', 'organizationalPerson', 'user' ],
+            unicodePwd  => $self->_MakeUnicode( $self->_gen_random_pw() ),
             userAccountControl => 0,
         ]
     );
@@ -721,7 +721,7 @@ sub GetUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+      || return undef;
     my @users = ();
     my $res;
 
@@ -765,7 +765,7 @@ sub GetMultiCampusUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+      || return undef;
     my @users = ();
     my $res;
 
@@ -809,7 +809,7 @@ sub GetMailboxUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+      || return undef;
     my @users = ();
     my $res;
 
@@ -1013,8 +1013,8 @@ sub GetAttributesMatch {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+      || return undef;
     my $cookie;
 
     $info = {};
@@ -1031,7 +1031,7 @@ sub GetAttributesMatch {
         $self->debug && print "Using max records = $maxrecords\n";
 
         $page = new Net::LDAP::Control::Paged( size => $maxrecords )
-            || return undef;
+          || return undef;
     }
 
     my $matches = [];
@@ -1075,8 +1075,8 @@ sub GetAttributesMatch {
 
                 if ( $name =~ /(.*);range=/o ) {
                     my $aname = $1;
-                    $info->{$aname}
-                        = $self->_GetLargeAttribute( $entry->dn, $aname );
+                    $info->{$aname} =
+                      $self->_GetLargeAttribute( $entry->dn, $aname );
                 }
                 else {
 
@@ -1115,8 +1115,8 @@ sub _WrapCB {
 
             if ( $name =~ /(.*);range=/o ) {
                 my $aname = $1;
-                $info->{$aname}
-                    = $self->_GetLargeAttribute( $entry->dn, $aname );
+                $info->{$aname} =
+                  $self->_GetLargeAttribute( $entry->dn, $aname );
             }
             else {
 
@@ -1143,7 +1143,7 @@ sub _GetLargeAttribute {
     my $allvalues = [];
 
     $self->debug
-        && print "_GetLargeAttribute called for $dn for attr $attr.\n";
+      && print "_GetLargeAttribute called for $dn for attr $attr.\n";
 
     my $low  = "0";
     my $high = "*";
@@ -1184,12 +1184,12 @@ sub _GetLargeAttribute {
 
                 if ( $aname ne $attr ) {
                     $self->debug
-                        && print "skipping unrequested attr $aname\n";
+                      && print "skipping unrequested attr $aname\n";
                     next;
                 }
 
                 $self->debug
-                    && print "got $aname from $got_low to $got_high\n";
+                  && print "got $aname from $got_low to $got_high\n";
                 if ( ref($values) ) {
                     push( @$allvalues, @{$values} );
                 }
@@ -1234,8 +1234,8 @@ sub GetAttributesMatchCB {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+      || return undef;
     my $cookie;
 
     $info = {};
@@ -1252,7 +1252,7 @@ sub GetAttributesMatchCB {
         $self->debug && print "Using max records = $maxrecords\n";
 
         $page = new Net::LDAP::Control::Paged( size => $maxrecords )
-            || return undef;
+          || return undef;
     }
 
     my $count = 0;
@@ -1382,7 +1382,7 @@ sub DumpLDIF {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
+      || return undef;
     my $fh      = shift;
     my %options = @_;
     my $res;
@@ -1519,8 +1519,8 @@ sub GetUserAccountControl {
     my $self = shift;
     my $userid = shift || return "must specify userid";
 
-    my $info
-        = $self->GetAttributes( $userid, attributes => [userAccountControl] );
+    my $info =
+      $self->GetAttributes( $userid, attributes => [userAccountControl] );
     if ( defined($info) ) {
         my ($uac) = @{ $info->{userAccountControl} };
         return int($uac);
@@ -1649,8 +1649,8 @@ sub ParseProtocolSettings {
 
     my ( $type, @subfields ) = split( /\xC2\xA7/, $ps );
     if ( $type eq "POP3" ) {
-        my ( $enable, $defaults, $mime, $charset, $richtext, @others )
-            = @subfields;
+        my ( $enable, $defaults, $mime, $charset, $richtext, @others ) =
+          @subfields;
 
         if   ( $enable == 1 ) { push( @res, "POP3-Enabled" ); }
         else                  { push( @res, "POP3-Disabled" ); }
@@ -1738,7 +1738,7 @@ sub _ModifyUACBits {
     $debug && print "old uac = $old_uac\n";
 
     $debug && print join( "\n", $self->ParseUserAccountControl($old_uac) ),
-        "\n";
+      "\n";
 
     #	$debug && printf "\t%.8X/%d | %.8X/%d == %.8X/%d\n",
     #		$new_uac, $new_uac, $set, $set,
@@ -1755,7 +1755,7 @@ sub _ModifyUACBits {
     # Add in bits that should be set
     $debug && print "new uac = $new_uac\n";
     $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ),
-        "\n";
+      "\n";
 
     my $res = $self->SetAttributes(
         userid     => $userid,
@@ -1765,8 +1765,8 @@ sub _ModifyUACBits {
     my $changed_uac = $self->GetUserAccountControl($userid);
     $debug && print "changed uac = $changed_uac\n";
     $debug
-        && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
-        "\n";
+      && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
+      "\n";
 
     return $res;
 }
@@ -1787,9 +1787,10 @@ sub MoveUser {
     my $ldap  = $self->{ldap};
 
     my $userid = $info{userid};
-    my $dn     = $info{dn}
-        || $self->_GetDN($userid)
-        || return "need a dn or userid";
+    my $dn =
+         $info{dn}
+      || $self->_GetDN($userid)
+      || return "need a dn or userid";
     my $target = $info{target} || return "need target OU\n";
 
     my $tmpres = $ldap->search(

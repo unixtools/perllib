@@ -382,8 +382,7 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $self->dbhandle(
-            DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
+        $self->dbhandle( DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
 
         if ( defined $self->dbhandle ) {
             $self->dbhandle->{PrintError}  = 0;

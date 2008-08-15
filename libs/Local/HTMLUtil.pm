@@ -21,40 +21,40 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-    HTMLGetCGI
+  HTMLGetCGI
 
-    HTMLScriptURL
-    HTMLInputFile
-    HTMLGetFile
-    HTMLInputText
-    HTMLInputPassword
-    HTMLTextArea
-    HTMLLink
-    HTMLRadioButton
-    HTMLHidden
-    HTMLCheckbox
-    HTMLSubmit
-    HTMLReset
-    HTMLStartMultiForm
-    HTMLStartForm
-    HTMLEndForm
-    HTMLStartSelect
-    HTMLSelectAssocArray
-    HTMLEndSelect
-    HTMLSelectItem
-    HTMLButton
-    HTMLRule
-    HTMLPre
-    HTMLEndPre
-    HTMLTitle
-    HTMLAddress
-    HTMLFooter
-    HTMLStatusHeader
-    HTMLContentType
-    HTMLGetRequest
+  HTMLScriptURL
+  HTMLInputFile
+  HTMLGetFile
+  HTMLInputText
+  HTMLInputPassword
+  HTMLTextArea
+  HTMLLink
+  HTMLRadioButton
+  HTMLHidden
+  HTMLCheckbox
+  HTMLSubmit
+  HTMLReset
+  HTMLStartMultiForm
+  HTMLStartForm
+  HTMLEndForm
+  HTMLStartSelect
+  HTMLSelectAssocArray
+  HTMLEndSelect
+  HTMLSelectItem
+  HTMLButton
+  HTMLRule
+  HTMLPre
+  HTMLEndPre
+  HTMLTitle
+  HTMLAddress
+  HTMLFooter
+  HTMLStatusHeader
+  HTMLContentType
+  HTMLGetRequest
 
-    HTMLGetCookies
-    HTMLSetCookies
+  HTMLGetCookies
+  HTMLSetCookies
 );
 
 BEGIN {
@@ -99,8 +99,7 @@ sub HTMLScriptURL {
     $scriptname = $ENV{"SCRIPT_NAME"};
     $hostport   = $ENV{"HTTP_HOST"};
 
-    if ( $hostport eq "" || ( $hostport !~ /:/ && $ENV{SERVER_PORT} != 80 ) )
-    {
+    if ( $hostport eq "" || ( $hostport !~ /:/ && $ENV{SERVER_PORT} != 80 ) ) {
         $hostport = $ENV{"SERVER_NAME"} . ":" . $ENV{"SERVER_PORT"};
     }
 
@@ -348,7 +347,7 @@ sub HTMLStartMultiForm {
     if ( $ACTION eq "" ) { $ACTION = &HTMLScriptURL(); }
 
     print
-        "<FORM METHOD=POST ENCTYPE=\"multipart/form-data\" ACTION=\"$ACTION\">";
+      "<FORM METHOD=POST ENCTYPE=\"multipart/form-data\" ACTION=\"$ACTION\">";
 }
 
 # Begin-Doc
@@ -706,12 +705,13 @@ sub HTMLSetCookies {
         if ($datestr)      { $cookie_string .= "; expires=" . $datestr; }
         $cookie_string .= "\n";
     }
-    @date    = gmtime($time);
-    $datestr = "Date: "
-        . $days[ $date[6] ]
-        . ", $date[3] $months[$date[4]] "
-        . ( $date[5] + 1900 )
-        . " $date[2]:$date[1]:$date[0] GMT";
+    @date = gmtime($time);
+    $datestr =
+        "Date: "
+      . $days[ $date[6] ]
+      . ", $date[3] $months[$date[4]] "
+      . ( $date[5] + 1900 )
+      . " $date[2]:$date[1]:$date[0] GMT";
     $cookie_string .= $datestr . "\n";
 
     print $cookie_string;

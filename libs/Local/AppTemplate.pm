@@ -170,30 +170,27 @@ sub _load_template {
                 }
             }
 
-   #
-   # If we have a cache, mirror the document, otherwise just do a straight GET
-   # Might want to consider defining a minimum caching period, so we do not
-   # attempt to cache the template repeatedly. There is also a potential
-   # locking issue here, so we might want to use a temporary file if the LWP
-   # mirror method isn't implemented atomically internally. (Looks like
-   # mirror does a unlink+rename which should be good enough.)
-   #
+     #
+     # If we have a cache, mirror the document, otherwise just do a straight GET
+     # Might want to consider defining a minimum caching period, so we do not
+     # attempt to cache the template repeatedly. There is also a potential
+     # locking issue here, so we might want to use a temporary file if the LWP
+     # mirror method isn't implemented atomically internally. (Looks like
+     # mirror does a unlink+rename which should be good enough.)
+     #
             if ( defined($cache) ) {
 
-    # use a simple 256 bit checksum for the cache file name
-    # feed it some extra parameters to get a touch more randomness in the name
-                my $cachefilename = $cache . "/"
-                    . sprintf(
-                    "%.8X",
-                    unpack(
-                        "%256C*", join( "-", $location, $<, $>, $cache )
-                    )
-                    );
+      # use a simple 256 bit checksum for the cache file name
+      # feed it some extra parameters to get a touch more randomness in the name
+                my $cachefilename =
+                  $cache . "/"
+                  . sprintf( "%.8X",
+                    unpack( "%256C*", join( "-", $location, $<, $>, $cache ) )
+                  );
 
 # don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
                 my @tmpstat = stat($cachefilename);
-                unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 )
-                {
+                unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 ) {
                     my $res = mirror( $location, "$cachefilename" );
                 }
 
@@ -210,10 +207,10 @@ sub _load_template {
     }
 
     if ( !$text ) {
-        $self->{template_text_header}
-            = "<!-- unable to load template header -->";
-        $self->{template_text_footer}
-            = "<!-- unable to load template footer -->";
+        $self->{template_text_header} =
+          "<!-- unable to load template header -->";
+        $self->{template_text_footer} =
+          "<!-- unable to load template footer -->";
     }
     else {
         my ( $header, $footer ) = split( /__APP_CONTENT__/, $text, 2 );
@@ -245,7 +242,7 @@ sub _pop_block {
     if ( $block ne $actual ) {
         print "<!-- pop block attempted for $block, got $actual -->";
         $self->ErrorExit(
-            "Invalid block nesting. Attempted closure of '$block', got '$actual'."
+"Invalid block nesting. Attempted closure of '$block', got '$actual'."
         );
     }
 
@@ -308,23 +305,23 @@ sub _filter {
     my $app_head_post;
 
     if ( $app_env ne "prod" ) {
-        my $app_env_label
-            = "<b><font face = \"Brush Script MT\" color=\"\#BB1111\">"
-            . uc($app_env)
-            . "<\/font></b>";
+        my $app_env_label =
+            "<b><font face = \"Brush Script MT\" color=\"\#BB1111\">"
+          . uc($app_env)
+          . "<\/font></b>";
         $title .= " - $app_env";
-        $apptitle
-            = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
+        $apptitle = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
     }
 
     if ( $config->{stylesheet} ) {
-        $app_head_post .= "<link rel=\"stylesheet\" href=\""
-            . $config->{stylesheet}
-            . "\" type=\"text/css\" />";
+        $app_head_post .=
+            "<link rel=\"stylesheet\" href=\""
+          . $config->{stylesheet}
+          . "\" type=\"text/css\" />";
     }
     if ( $config->{style} ) {
-        $app_head_post
-            .= "<style type=\"text/css\">" . $config->{style} . "</style>";
+        $app_head_post .=
+          "<style type=\"text/css\">" . $config->{style} . "</style>";
     }
     if ( $config->{head_extra} ) {
         $app_head_post .= $config->{head_extra};
@@ -335,12 +332,12 @@ sub _filter {
 
         if ( $config->{refresh_url} ) {
             my $url = $config->{refresh_url};
-            $app_head_pre
-                .= "<meta http-equiv=\"Refresh\" CONTENT=\"${time};url=${url}\">";
+            $app_head_pre .=
+              "<meta http-equiv=\"Refresh\" CONTENT=\"${time};url=${url}\">";
         }
         else {
-            $app_head_pre
-                .= "<meta http-equiv=\"Refresh\" CONTENT=\"${time}\">";
+            $app_head_pre .=
+              "<meta http-equiv=\"Refresh\" CONTENT=\"${time}\">";
         }
     }
 
@@ -362,7 +359,7 @@ sub _filter {
     my $elaptime = ( time - $^T ) . " seconds";
     $text =~ s/__ELAPSED_TIME__/$elaptime/g;
 
-    my $curtime = scalar(localtime(time));
+    my $curtime = scalar( localtime(time) );
     $text =~ s/__CURRENT_TIME__/$curtime/g;
 
     my $base_url = $self->_server_base_url();
@@ -421,7 +418,7 @@ sub _CloseNonPageBlocks {
 
     if ( $self->{closing_non_page_blocks} ) {
         print
-            "<!-- CloseNonPageBlocks is non-recursive. Forcing termination. -->";
+          "<!-- CloseNonPageBlocks is non-recursive. Forcing termination. -->";
         return;
     }
     $self->{closing_non_page_blocks} = 1;
@@ -496,13 +493,13 @@ sub PrivErrorExit {
     $self->StartInnerRow();
     print "<td colspan=2 align=left>";
     print
-        "<p>You do not have the permissions required to access this application.\n";
+"<p>You do not have the permissions required to access this application.\n";
     print
-        "</p><p>Please contact the owner or administrator of this application in order\n";
+"</p><p>Please contact the owner or administrator of this application in order\n";
     print
-        "to obtain the necessary access if you want to use it.<\/p><p>Please include\n";
+"to obtain the necessary access if you want to use it.<\/p><p>Please include\n";
     print
-        "the URL of this application as well as the privilege code below in any\n";
+"the URL of this application as well as the privilege code below in any\n";
     print "support request<\/p>.";
     print "</td>\n";
     $self->EndInnerRow();
@@ -605,9 +602,9 @@ sub ErrorExitSQL {
     if ( !$quiet ) {
         print "<br><font size=-1>";
         print
-            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
+"<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
         print
-            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
+"<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
         print "</font>\n";
     }
 
@@ -648,11 +645,10 @@ sub ErrorExitSQL {
 
                 if ( $#params >= 0 ) {
                     $self->StartInnerHeaderRow();
-                    print
-                        "<td colspan=2 align=center>Query Parameters</td>\n";
+                    print "<td colspan=2 align=center>Query Parameters</td>\n";
                     $self->EndInnerHeaderRow();
 
-                    for ( my $i = 0; $i <= $#params; $i++ ) {
+                    for ( my $i = 0 ; $i <= $#params ; $i++ ) {
                         $self->StartInnerRow();
                         print "<td colspan=2><b>$i: </b>\n";
                         print $self->Encode( $params[$i] ), "</td>\n";
