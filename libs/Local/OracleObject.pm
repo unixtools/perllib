@@ -4,13 +4,13 @@
 Begin-Doc
 Name: Local::OracleObject
 Type: module
-Description: object based UMR local interface to Oracle
+Description: object based interface to Oracle
 
 Example: 
 
 $oradb = new Local::OracleObject;
 
-$oradb->SQL_OpenDatabase ("umr") || $oradb->SQL_Error ("Can't open database");
+$oradb->SQL_OpenDatabase ("srv*") || $oradb->SQL_Error ("Can't open database");
 
 $qry = "insert into mytable (firstname, lastname, age) values ('John', 'Smith', 28)";
 $oradb->SQL_ExecQuery ($qry) or $oradb->SQL_Error && die "$qry";
@@ -448,29 +448,29 @@ Begin-Doc
 Name: SQL_OpenQuery
 Type: method
 Description: opens a cursor to a new query
-Syntax: $cid = $obj->SQL_OpenQuery($qry)
+Syntax: $cid = $obj->SQL_OpenQuery($qry, [@values])
 Comments: Submits a query string, returning a connection id which can later be
         used in other calls to access the rows returned by the query.
         SQL_OpenQuery is only needed for retrieving one or more rows from a
         query.  SQL_ExecQuery (see below) should be used for all other data
         manipulation.  If the query can not be opened, SQL_OpenQuery returns
-        0 to indicate failure.
-
+        0 to indicate failure. @values can optionally be specified if any
+        bound parameters are used in the query.
 End-Doc
 =cut
 
 sub SQL_OpenQuery {
-    my ( $self, $qry ) = @_;
+    my ( $self, $qry, @params ) = @_;
     my ( $cid, $res, $qcount );
 
     $cid                 = $self->dbhandle->prepare($qry);
     $self->{last_query}  = $qry;
-    $self->{last_params} = [];
+    $self->{last_params} = [@params];
 
     if ( defined($cid) ) {
         $self->{cid_to_query}->{$cid} = $qry;
         eval('my $foo = $cid->{NAME};');    # per Tim Bunce
-        $res = $cid->execute;
+        $res = $cid->execute(@params);
 
         if ($res) {
             return $cid;
@@ -543,7 +543,10 @@ sub SQL_ExecQuery {
             return 0;
         }
 
-        $self->{cid_to_query}->{$cid} = $qry;
+# I _think_ this is safe to remove
+# Causes a memory leak otherwise, unfortunately not sure that this would otherwise
+# ever be needed, so this might break pretty error handling in some edge cases
+#$self->{cid_to_query}->{$cid} = $qry;
     }
     else {
         $cid                 = $qry;
