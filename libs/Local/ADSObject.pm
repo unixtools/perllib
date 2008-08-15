@@ -11,12 +11,7 @@ use Net::LDAP::LDIF;
 use Net::DNS;
 use Local::AuthSrv;
 use Math::BigInt;    # should do with eval instead perhaps
-use Local::UsageLogger;
 use Sys::Syslog;
-
-BEGIN {
-    &LogAPIUsage();
-}
 
 # Begin-Doc
 # Name: Local::ADSObject
@@ -111,30 +106,26 @@ my $ATYPE_VALS = [
 # Description:  Binds to AD
 # Syntax: $ex = new Local::ADSObject(
 #		user => $user,
-#		password => $pw) || die $Local:ADSObject::ErrorMsg;
+#		password => $pw) || die $Local::ADSObject::ErrorMsg;
 # End-Doc
 sub new {
     my $self          = shift;
     my $class         = ref($self) || $self;
     my %info          = @_;
-    my $mode          = $info{mode} || "R";
     my $pref_pagesize = $info{pagesize} || 25;
     my $pref_debug    = $info{debug} || 0;
     my $timeout       = $info{timeout} || 60;
     my $use_gc        = $info{use_gc} || 0;
-    my $domain        = $info{domain} || "umr.edu";
-
-    &LogAPIUsage();
+    my $domain        = $info{domain} || "mst.edu";
 
     my $server;
 
     if ( $domain eq "mst.edu" ) {
         $server = $info{server} || "mst-dc.mst.edu";
-    }
-    else {
-        $server = $info{server} || "umr-dc.umr.edu";
         if ($use_gc) {
-            $server = "umr-gc.umr.edu";
+
+            # cosmetic only, they are the same server
+            $server = "mst-gc.mst.edu";
         }
     }
 
@@ -183,14 +174,15 @@ sub new {
     $tmp->{"debug"}  = $pref_debug;
     $tmp->{"basedn"} = $info{basedn};
     if ( !$tmp->{"basedn"} ) {
-        if ( $domain eq "mst.edu" ) {
-            $tmp->{basedn} = "DC=mst,DC=edu";
+        if ( $domain eq "mst.edu" && !$use_gc ) {
+            $tmp->{"basedn"} = "DC=mst,DC=edu";
         }
-        elsif ( !$use_gc ) {
-            $tmp->{"basedn"} = "DC=umr,DC=edu";
+        elsif ($use_gc) {
+            $tmp->{"basedn"} = "DC=edu";
         }
         else {
-            $tmp->{"basedn"} = "DC=edu";
+
+            #warn "Unable to determine default basedn.\n";
         }
     }
     $tmp->{"domain"} = $domain;
@@ -480,8 +472,6 @@ sub _gen_random_pw {
         join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 
-    &LogAPIUsage();
-
     $pw = "";
     for ( my $i = 0 ; $i < 22 ; $i++ ) {
         my $rnd = int( rand( $#chars + 1 ) );
@@ -524,7 +514,7 @@ sub CreateUser {
         attr => [
             SamAccountName    => "$samName",
             DisplayName       => "$dispName",
-            UserPrincipalName => "$userPN\@umr.edu",
+            UserPrincipalName => "$userPN\@mst.edu",
             objectclass => [ 'top', 'person', 'organizationalPerson', 'user' ],
             unicodePwd  => $self->_MakeUnicode( $self->_gen_random_pw() ),
             userAccountControl => 0,
@@ -561,8 +551,7 @@ sub CreateUser {
 # Name: CreateSecurityGroup
 # Type: method
 # Description: Creates a security group netgroup
-# Syntax: $crtusr = $ex->CreateSecurityGroup(
-#			group => $group)
+# Syntax: $crtusr = $ex->CreateSecurityGroup(group => $group)
 # Returns: undef if success, else error
 # End-Doc
 
@@ -572,36 +561,153 @@ sub CreateSecurityGroup {
     my ($group);
     my $ldap = $self->{ldap};
     $group = $info{group};
-    my $ou = $info{ou};
+    my $dname = $info{displayname} || "S&T $group";
 
-    if ( !defined($ou) ) {
-
-        if ( $group =~ /^ng-/ ) {
-            $ou = "OU=NetGroups," . $self->{basedn};
-        }
-        else {
-            return "need to specify OU";
-        }
-    }
+    my $ou = "OU=Netgroups,OU=Services - Campus," . $self->{basedn};
     my $dn = "CN=$group,$ou";
 
     $self->debug && print "dn = $dn\n";
 
     $self->debug && print "inside create\n";
     $crtusr = $self->{ldap}->add(
-        dn   => "$dn",
+        dn   => $dn,
         attr => [
-            sAMAccountName => "$group",
-            name           => $group,
-            objectclass    => [ 'top', 'group' ],
-            groupType      => -2147483640
+            sAMAccountName       => $group,
+            name                 => $group,
+            displayName          => $dname,
+            displayNamePrintable => $dname,
+            objectclass          => [ 'top', 'group' ],
+            groupType            => -2147483640
         ]
     );
+
     if ( $crtusr->code ) {
         $self->debug && print "Create failed: " . $crtusr->error . "\n";
         $ErrorMsg = "create failed: " . $crtusr->error;
         return $ErrorMsg;
     }
+
+    return undef;
+}
+
+# Begin-Doc
+# Name: UpdateSecurityGroupDetails
+# Type: method
+# Description: Updates info for a security group netgroup
+# Syntax: $crtusr = $ex->UpdateSecurityGroupDetails(
+#			group => $group, displayname => "name")
+# Returns: undef if success, else error
+# End-Doc
+
+sub UpdateSecurityGroupDetails {
+    my $self   = shift;
+    my (%info) = @_;
+    my $ldap   = $self->{ldap};
+    my $group  = $info{group};
+    my $uid    = $info{uid};
+    my $dname  = $info{displayname} || "S&T $group";
+
+    my @uid;
+    if ($uid) {
+        push( @uid, "msSFU30GidNumber" => $uid );
+    }
+
+    my $res = $self->SetAttributes(
+        userid     => $group,
+        attributes => [
+            displayName          => $dname,
+            displayNamePrintable => $dname,
+            mail                 => "$group\@mst.edu",
+            mailNickname         => $group,
+            @uid,
+            proxyAddresses => [
+                "SMTP:$group\@mst.edu",    "smtp:$group\@missouri.edu",
+                "smtp:ng-$group\@mst.edu", "smtp:ng-$group\@missouri.edu"
+            ],
+            legacyExchangeDN => "/O=University of Missouri/OU=Rolla"
+              . "/cn=Recipients/OU=Netgroups/cn=$group",
+        ]
+    );
+
+    if ($res) {
+        $self->debug && print "Update failed: " . $res . "\n";
+        $ErrorMsg = "update failed: " . $res;
+        return $ErrorMsg;
+    }
+
+    return undef;
+}
+
+sub Create_Unix_Host {
+    my $self = shift;
+    my (%info) = @_;
+    my ( $fqdn, $pw, $samName, $dispName, $count, $name );
+    my $res;
+
+    $count = 1;
+    $fqdn  = $info{fqdn};
+    $pw    = $info{pw};
+
+    my $hn = $fqdn;
+    $hn =~ s|\..*||gio;
+
+    $dispName = $fqdn;
+    $samName  = "host-$hn";
+
+    my $realm = "MST.EDU";
+
+    my $cn = $fqdn;
+    my $dn = "CN=$cn,OU=Unix,OU=Servers,DC=mst,DC=edu";
+
+    #------
+    #  Look for the sAMAccountName in AD.
+    #  If it's already present start adding digits to the end.
+    #------
+    $self->debug && print "fqdn- $fqdn\n";
+    $self->debug && print "samName - $samName\n";
+    if ( length($samName) > 15 ) {
+
+        #just in case too long
+        $samName = substr( $samName, 0, 15 );
+    }
+    $origsamName = $samName;
+    my $found = 1;
+    while ( $self->_GetDN($samName) ) {
+        $samName = $origsamName . $count;
+        if ( length($samName) > 15 ) {
+            $samName = substr( $origsamName, 0, 15 - length($count) ) . $count;
+        }
+        $count++;
+    }
+    $self->debug && print "\nadd principal\n";
+
+    $crtprinc = $self->{ldap}->add(
+        dn   => "$dn",
+        attr => [
+            sAMAccountName       => $samName,
+            userPrincipalName    => "host/$fqdn\@$realm",
+            servicePrincipalName => [ "host/$fqdn", "cifs/$fqdn" ],
+            dNSHostName          => $fqdn,
+            cn                   => $cn,
+            objectclass =>
+              [ 'top', 'person', 'organizationalPerson', 'user', 'computer' ],
+
+            unicodePwd         => $self->_MakeUnicode($pw),
+            userAccountControl => $UAC_UNIXHOST_ACCOUNT,
+        ]
+    );
+    if ( $crtprinc->code ) {
+        $ErrorMsg = "create principal failed: " . $crtprinc->error . "\n";
+        $self->debug
+          && print "Create princ failed: " . $crtprinc->error . "\n";
+        return "create principal failed: " . $crtprinc->error . "\n";
+    }
+
+    my $res = $self->_ModifyUACBits(
+        userid => $samName,
+        reset  => $UAC_PW_NOT_REQUIRED,
+    );
+    if ($res) { return $res; }
 
     return undef;
 }
@@ -633,6 +739,61 @@ sub DeleteUser {
 # Syntax: $deluser = $ads->Delete_Unix_Host( fqdn => $fqdn);
 # End-Doc
 
+sub Delete_Unix_Host {
+    my $self = shift;
+    my (%info) = @_;
+
+    my $fqdn = $info{fqdn} || return "Need the userid\n";
+    my $hn = $fqdn;
+    $hn =~ s|\..*||gio;
+
+    foreach my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" )
+    {
+        foreach my $suffix ( "", "1", "2" ) {
+            my $userid = $baseuser . $suffix;
+            my $dn     = $self->_GetDN($userid);
+            if ($dn) {
+                if (   $dn =~ /host/i
+                    || $dn =~ /computers/i
+                    || $dn =~ /servers/i
+                    || $dn =~ /workstations/i )
+                {
+
+                    #print "dn for $userid = $dn\n";
+                    $delusr = $self->{ldap}->delete($dn);
+
+                    #print "delete of $userid: ", $delusr->code, "\n";
+                    if ( $delusr->code ) {
+                        print "delete failed: " . $delusr->error . "\n";
+                    }
+                }
+            }
+        }
+    }
+
+    my $dn = $self->_GetHostDN($fqdn);
+    if (
+        $dn
+        && (   $dn =~ /host/i
+            || $dn =~ /computers/i
+            || $dn =~ /servers/i
+            || $dn =~ /workstations/i )
+      )
+    {
+
+        #print "dn for $fqdn = $dn\n";
+        my $delusr = $self->{ldap}->delete($dn);
+
+        #print "delete of $userid: ", $delusr->code, "\n";
+        if ( $delusr->code ) {
+            print "delete failed: " . $delusr->error . "\n";
+        }
+
+    }
+
+    return undef;
+}
+
 # Begin-Doc
 # Name: _MakeUnicode
 # Type: method
@@ -662,51 +823,6 @@ sub _MakeUnicode {
     #---
     return $unistring;
     print "$unistring\n";
-}
-
-# Begin-Doc
-# Name: FindProxyHost
-# Type: method
-# Description: Finds mailbox host for a given proxy address
-# Syntax: $host = $ad->FindProxyHost($email)
-# Returns: hostname if success, else error
-# Comments: If address does not have a type in front of it, assumes smtp
-# End-Doc
-
-sub FindProxyHost {
-    my $self = shift;
-    my ($email) = @_;
-    my ( $res, $homeServer );
-    my $ldap = $self->{ldap};
-
-    if ( $email !~ /^[a-z0-9\.]+:/o ) {
-        $email = "smtp:$email";
-    }
-
-    $res = $self->{ldap}->search(
-        base   => $self->{basedn},
-        scope  => 'sub',
-        filter => "(|(proxyAddresses=$email))",
-        attrs  => ['msExchHomeServerName']
-    );
-    if ( $res->code ) {
-        $self->debug && print "Search failed: " . $res->error . "\n";
-        $ErrorMsg = "create failed: " . $res->error;
-        return undef;
-    }
-
-    my @entries = $res->entries;
-    foreach my $entry ( $res->entries ) {
-        $homeServer = $entry->get_value('msExchHomeServerName');
-    }
-
-    $homeServer =~ s/.*cn=//gio;
-    if ( $homeServer !~ /UMR-MAIL\d+/ ) {
-        $ErrorMsg = "unknown server pattern";
-        return undef;
-    }
-
-    return lc($homeServer);
 }
 
 # Begin-Doc
@@ -754,14 +870,14 @@ sub GetUserList {
 }
 
 # Begin-Doc
-# Name: GetMultiCampusUserList
+# Name: GetUnityUserList
 # Type: method
-# Description: Returns list of all ADS userids
-# Syntax: @users = $ad->GetMultiCampusUserList()
-# Returns: Returns list of all ADS userids
+# Description: Returns list of all unity enabled userids
+# Syntax: @users = $ad->GetUnityUserList()
+# Returns: Returns list of all unity enabled ADS userids
 # End-Doc
 
-sub GetMultiCampusUserList {
+sub GetUnityUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
@@ -771,9 +887,9 @@ sub GetMultiCampusUserList {
 
     while (1) {
         $res = $self->{ldap}->search(
-            base    => 'OU=Multi-Campus,OU=Accounts,DC=umr,DC=edu',
+            base    => $self->{basedn},
             scope   => 'sub',
-            filter  => "(&(sAMAccountName=*))",
+            filter  => "(&(sAMAccountName=*)(ciscoEcsbuDtmfId=*))",
             attrs   => ['sAMAccountName'],
             control => [$page],
         );
@@ -1456,7 +1572,7 @@ sub CheckPassword {
         $domain = $self->{domain};
     }
 
-    $tmpad = new UMR::SysProg::ADSObject(
+    $tmpad = new Local::ADSObject(
         user     => $userid,
         password => $password,
         domain   => $domain,
