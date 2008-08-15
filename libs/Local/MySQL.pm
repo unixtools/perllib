@@ -4,7 +4,19 @@ Begin-Doc
 Name: Local::MySQL
 Type: module
 Description: non object based access to MySQL
-RCSId: $Header$
+Comments: Don't use this module, it should be considered strongly discouraged. For documentation of it's routines
+see the documentation for Local::MySQLObject. These routinese are just wrappers around the corresponding
+method in Local::MySQLObject.
+
+The usage of these routines is similar to those in Local::MySQLObject, just use them without the object
+syntax:
+
+&SQL_OpenDatabase(...) instead of $db->SQL_OpenDatabase(...);
+
+Because there is no object associated with these, multiple database sessions can stomp on each other.
+
+NEVER use this module in a library or perl module that may get re-used.
+
 End-Doc
 =cut
 
