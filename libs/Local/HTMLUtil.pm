@@ -40,6 +40,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
   HTMLEndForm
   HTMLStartSelect
   HTMLSelectAssocArray
+  HTMLSelectArray
   HTMLEndSelect
   HTMLSelectItem
   HTMLButton
@@ -99,7 +100,7 @@ sub HTMLScriptURL {
     $scriptname = $ENV{"SCRIPT_NAME"};
     $hostport   = $ENV{"HTTP_HOST"};
 
-    if ( $hostport eq "" || ( $hostport !~ /:/ && $ENV{SERVER_PORT} != 80 ) ) {
+    if ( $hostport eq "" ) {
         $hostport = $ENV{"SERVER_NAME"} . ":" . $ENV{"SERVER_PORT"};
     }
 
@@ -437,6 +438,33 @@ sub HTMLSelectAssocArray {
 
         &HTMLEndSelect;
     }
+}
+
+# Begin-Doc
+# Name: HTMLSelectArray
+# Type: function
+# Syntax: &HTMLSelectArray($varname, $size, $selection, @array)
+# Description: create a select box based on array
+# Comments: $varname is the name of the variable in quotes.
+#         if $size equals one, the select box will be a popup, otherwise it will be a listbox.
+#         $selection will be the default value
+#         @array is a list of the select box
+# Comments: does not encoded any of the values, so make sure they are HTML-safe
+# End-Doc
+sub HTMLSelectArray {
+    my ( $varname, $size, $selection, @array ) = @_;
+
+    &HTMLStartSelect( $varname, $size );
+
+    foreach my $sel (@array) {
+        if ( $selection eq $sel ) {
+            &HTMLSelectItem( $sel, $sel, 1 );
+        }
+        else {
+            &HTMLSelectItem( $sel, $sel, 0 );
+        }
+    }
+    &HTMLEndSelect();
 }
 
 # Begin-Doc
