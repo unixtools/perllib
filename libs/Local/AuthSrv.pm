@@ -67,7 +67,7 @@ sub AuthSrv_Fetch {
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
-        if ( -e $AUTHSRV_DECRYPT ) {
+        if ( -e $AUTHSRV_DECRYPT || -e "/usr/bin/$AUTHSRV_DECRYPT" ) {
             open( AUTHSRV_SV_STDERR, ">&STDERR" );
             close(STDERR);
 
