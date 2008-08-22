@@ -223,7 +223,12 @@ sub SQLTidy {
             $p = $sp_two;
             shift @pieces;
         }
-        elsif ( $nsp_two eq "<=" || $nsp_two eq ">=" || $nsp_two eq "()" ) {
+        elsif ($nsp_two eq "<="
+            || $nsp_two eq ">="
+            || $nsp_two eq "()"
+            || $nsp_two eq "!="
+            || $nsp_two eq "<>" )
+        {
             $p = $nsp_two;
             shift @pieces;
         }
