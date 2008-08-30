@@ -103,6 +103,11 @@ sub HTMLScriptURL {
     if ( $hostport eq "" ) {
         $hostport = $ENV{"SERVER_NAME"} . ":" . $ENV{"SERVER_PORT"};
     }
+    if ( $ENV{SERVER_PORT} ne 80 && $ENV{SERVER_PORT} ne 443 && 
+        $hostport !~ /:/ )
+    {
+        $hostport .= ":" . $ENV{SERVER_PORT};
+    }
 
     $url = "$prefix://$hostport$scriptname";
     return $url;
