@@ -103,8 +103,11 @@ sub HTMLScriptURL {
     if ( $hostport eq "" ) {
         $hostport = $ENV{"SERVER_NAME"} . ":" . $ENV{"SERVER_PORT"};
     }
-    if ( $ENV{SERVER_PORT} ne 80 && $ENV{SERVER_PORT} ne 443 && 
-        $hostport !~ /:/ )
+
+    # Tack on a port if it wasn't already present
+    if (   $ENV{SERVER_PORT} ne 80
+        && $ENV{SERVER_PORT} ne 443
+        && $hostport !~ /:/ )
     {
         $hostport .= ":" . $ENV{SERVER_PORT};
     }
@@ -126,18 +129,18 @@ sub HTMLScriptURL {
 sub HTMLInputText {
     my ( $NAME, $SIZE, $VALUE, $MAXLENGTH ) = @_;
 
-    print "<INPUT TYPE=\"text\" NAME=\"$NAME\"";
+    print "<input type=\"text\" name=\"$NAME\"";
 
     if ( $VALUE ne "" ) {
-        print " VALUE=\"$VALUE\"";
+        print " value=\"$VALUE\"";
     }
 
     if ( $SIZE ne "" ) {
-        print " SIZE=\"$SIZE\"";
+        print " size=\"$SIZE\"";
     }
 
     if ( int($MAXLENGTH) > 0 ) {
-        print " MAXLENGTH=\"$MAXLENGTH\"";
+        print " maxlength=\"$MAXLENGTH\"";
     }
 
     print '>';
@@ -157,18 +160,18 @@ sub HTMLInputText {
 sub HTMLInputFile {
     my ( $NAME, $SIZE, $VALUE, $MAXLENGTH ) = @_;
 
-    print "<INPUT TYPE=\"file\" NAME=\"$NAME\"";
+    print "<input type=\"file\" name=\"$NAME\"";
 
     if ( $VALUE ne "" ) {
-        print " VALUE=\"$VALUE\"";
+        print " value=\"$VALUE\"";
     }
 
     if ( $SIZE ne "" ) {
-        print " SIZE=\"$SIZE\"";
+        print " size=\"$SIZE\"";
     }
 
     if ( int($MAXLENGTH) > 0 ) {
-        print " MAXLENGTH=\"$MAXLENGTH\"";
+        print " maxlength=\"$MAXLENGTH\"";
     }
 
     print '>';
@@ -183,18 +186,18 @@ sub HTMLInputFile {
 sub HTMLInputPassword {
     my ( $NAME, $SIZE, $VALUE, $MAXLENGTH ) = @_;
 
-    print '<INPUT TYPE="password" NAME="', $NAME, '"';
+    print '<input type="password" name="', $NAME, '"';
 
     if ( $VALUE ne "" ) {
-        print ' VALUE="', $VALUE, '"';
+        print ' value="', $VALUE, '"';
     }
 
     if ( $SIZE ne "" ) {
-        print ' SIZE=', $SIZE;
+        print ' size=', $SIZE;
     }
 
     if ( int($MAXLENGTH) > 0 ) {
-        print ' MAXLENGTH="', int($MAXLENGTH), '"';
+        print ' maxlength="', int($MAXLENGTH), '"';
     }
 
     print '>';
@@ -219,16 +222,16 @@ sub HTMLTextArea {
     if ( $WIDTH == 0 )  { $WIDTH  = 45; }
     if ( $HEIGHT == 0 ) { $HEIGHT = 10; }
 
-    print "\n<TEXTAREA NAME=\"$NAME\" ROWS=$HEIGHT COLS=$WIDTH ";
+    print "\n<textarea name=\"$NAME\" rows=$HEIGHT cols=$WIDTH ";
     if ( uc $WRAP eq "BOTH" ) {
-        print "WRAP=HARD WRAP=PHYSICAL ";
+        print "wrap=hard wrap=physical ";
     }
     elsif ( $WRAP ne "" ) {
-        print "WRAP=\"$WRAP\" ";
+        print "wrap=\"$WRAP\" ";
     }
     print " >";
     print $VALUE;
-    print "</TEXTAREA>";
+    print "</textarea>";
 }
 
 # Begin-Doc
@@ -240,7 +243,7 @@ sub HTMLTextArea {
 # End-Doc
 sub HTMLLink {
     my ( $URL, $NAME ) = @_;
-    print "<A HREF=\"$URL\">$NAME</A>";
+    print "<a href=\"$URL\">$NAME</A>";
 }
 
 # Begin-Doc
@@ -255,8 +258,8 @@ sub HTMLLink {
 sub HTMLRadioButton {
     my ( $NAME, $VALUE, $ON, $TEXT ) = @_;
 
-    print '<INPUT TYPE="radio" NAME="', $NAME, '" VALUE="', $VALUE, '" ';
-    print " CHECKED " if $ON;
+    print '<input type="radio" name="', $NAME, '" value="', $VALUE, '" ';
+    print " checked " if $ON;
     print '>';
 
     if ( $TEXT ne "" ) {
@@ -274,7 +277,7 @@ sub HTMLRadioButton {
 # End-Doc
 sub HTMLHidden {
     my ( $NAME, $VALUE ) = @_;
-    print "<INPUT TYPE=\"hidden\" NAME=\"$NAME\" VALUE=\"$VALUE\">";
+    print "<input type=\"hidden\" name=\"$NAME\" value=\"$VALUE\">";
 }
 
 # Begin-Doc
@@ -287,9 +290,9 @@ sub HTMLHidden {
 sub HTMLCheckbox {
     my ( $NAME, $ON ) = @_;
 
-    print '<INPUT TYPE="checkbox" NAME="', $NAME, '"';
+    print '<input type="checkbox" name="', $NAME, '"';
 
-    print " CHECKED " if $ON;
+    print " checked " if $ON;
 
     print '>';
 }
@@ -304,10 +307,10 @@ sub HTMLSubmit {
     my ( $LABEL, $NAME ) = @_;
 
     if ( $NAME ne "" ) {
-        print "<INPUT TYPE=\"submit\" VALUE=\"$LABEL\" NAME=\"$NAME\">";
+        print "<input type=\"submit\" value=\"$LABEL\" name=\"$NAME\">";
     }
     else {
-        print "<INPUT TYPE=\"submit\" VALUE=\"$LABEL\">";
+        print "<input type=\"submit\" value=\"$LABEL\">";
     }
 }
 
@@ -318,7 +321,7 @@ sub HTMLSubmit {
 # Syntax: &HTMLReset();
 # End-Doc
 sub HTMLReset {
-    print '<INPUT TYPE="reset">';
+    print '<input type="reset">';
 }
 
 # Begin-Doc
@@ -338,7 +341,7 @@ sub HTMLStartForm {
         $METHOD = "POST";
     }
 
-    print "<FORM METHOD=$METHOD ACTION=\"$ACTION\">";
+    print "<form method=$METHOD action=\"$ACTION\">";
 }
 
 # Begin-Doc
@@ -353,7 +356,7 @@ sub HTMLStartMultiForm {
     if ( $ACTION eq "" ) { $ACTION = &HTMLScriptURL(); }
 
     print
-      "<FORM METHOD=POST ENCTYPE=\"multipart/form-data\" ACTION=\"$ACTION\">";
+      "<form method=POST enctype=\"multipart/form-data\" action=\"$ACTION\">";
 }
 
 # Begin-Doc
@@ -363,7 +366,7 @@ sub HTMLStartMultiForm {
 # Syntax: &HTMLEndForm();
 # End-Doc
 sub HTMLEndForm {
-    print "</FORM>";
+    print "</form>";
 }
 
 # Begin-Doc
@@ -380,14 +383,14 @@ sub HTMLStartSelect {
     my $multopt = "";
 
     if ($MULTIPLE) {
-        $multopt = "MULTIPLE";
+        $multopt = "multiple";
     }
 
     if ( $SIZE ne "" ) {
-        print "<SELECT NAME=\"$NAME\" SIZE=\"$SIZE\" $multopt>";
+        print "<select name=\"$NAME\" size=\"$SIZE\" $multopt>";
     }
     else {
-        print "<SELECT NAME=\"$NAME\" $multopt>";
+        print "<select name=\"$NAME\" $multopt>";
     }
 }
 
@@ -403,7 +406,7 @@ sub HTMLStartSelect {
 # and place at the top of the select box.
 # End-Doc
 sub HTMLSelectAssocArray {
-    my ( $NAME, $SIZE, $BLANK, $SELECT, %DATA ) = @_;
+    my ( $NAME, $SIZE, $BLANK, $select, %DATA ) = @_;
     my (@TEMP);
     my (%TEMPASSOC);
 
@@ -412,11 +415,11 @@ sub HTMLSelectAssocArray {
     if ( $#TEMP > 0 ) {
         &HTMLStartSelect( $NAME, int($SIZE) );
 
-        if ( $SELECT ne "" ) {
-            if ( $DATA{$SELECT} eq "" ) {
-                $DATA{$SELECT} = "Unknown ($SELECT)";
+        if ( $select ne "" ) {
+            if ( $DATA{$select} eq "" ) {
+                $DATA{$select} = "Unknown ($select)";
             }
-            &HTMLSelectItem( $SELECT, $DATA{$SELECT}, 1 );
+            &HTMLSelectItem( $select, $DATA{$select}, 1 );
         }
 
         if ($BLANK) {
@@ -432,7 +435,7 @@ sub HTMLSelectAssocArray {
         }
 
         foreach my $VALUE ( sort( keys(%TEMPASSOC) ) ) {
-            if ( $SELECT eq $TEMPASSOC{$VALUE} ) {
+            if ( $select eq $TEMPASSOC{$VALUE} ) {
 
                 #			&HTMLSelectItem($TEMPASSOC{$VALUE}, $VALUE, 1);
             }
@@ -479,7 +482,7 @@ sub HTMLSelectArray {
 # Syntax: &HTMLEndSelect();
 # End-Doc
 sub HTMLEndSelect {
-    print "</SELECT>";
+    print "</select>";
 }
 
 # Begin-Doc
@@ -491,12 +494,12 @@ sub HTMLEndSelect {
 # with a special value= if $value is non-empty, and the contents will be $name.
 # End-Doc
 sub HTMLSelectItem {
-    my ( $VALUE, $NAME, $SELECTED ) = @_;
+    my ( $VALUE, $NAME, $selected ) = @_;
 
-    print "<OPTION VALUE=\"$VALUE\" ";
+    print "<option value=\"$VALUE\" ";
 
-    if ($SELECTED) {
-        print " SELECTED ";
+    if ($selected) {
+        print " selected ";
     }
 
     print ">$NAME\n";
@@ -523,7 +526,7 @@ sub HTMLButton {
 # Syntax: &HTMLRule;
 # End-Doc
 sub HTMLRule {
-    print "<HR>";
+    print "<hr>";
 }
 
 # Begin-Doc
@@ -533,7 +536,7 @@ sub HTMLRule {
 # Syntax: &HTMLEndPre;
 # End-Doc
 sub HTMLPre {
-    print "<PRE>";
+    print "<pre>";
 }
 
 # Begin-Doc
@@ -543,7 +546,7 @@ sub HTMLPre {
 # Syntax: &HTMLEndPre;
 # End-Doc
 sub HTMLEndPre {
-    print "</PRE>";
+    print "</pre>";
 }
 
 # Begin-Doc
@@ -557,8 +560,8 @@ sub HTMLEndPre {
 sub HTMLTitle {
     my ($TEXT) = @_;
 
-    print "<TITLE>$TEXT</TITLE>\n";
-    print "<CENTER><H1>$TEXT</H1></CENTER>\n";
+    print "<title>$TEXT</title>\n";
+    print "<center><h1>$TEXT</h1></center>\n";
 }
 
 # Begin-Doc
@@ -572,9 +575,9 @@ sub HTMLTitle {
 sub HTMLAddress {
     my ($ADDR) = @_;
 
-    print "<ADDRESS>";
+    print "<address>";
     &HTMLLink( "mailto:$ADDR", $ADDR );
-    print "</ADDRESS>";
+    print "</address>";
 
 }
 
@@ -652,6 +655,13 @@ sub HTMLGetRequest {
         $main::rqpairs{$key} = join( " ", $CGI->param($key) );
     }
     *main::in = *main::rqpairs;
+
+# If we're running under mod_perl, to keep semantics, export into callers namespace as well
+    my ($pkg) = caller(0);
+    if ( $pkg =~ /^ModPerl/ ) {
+        no strict "refs";
+        *{ $pkg . "::rqpairs" } = *main::rqpairs;
+    }
 }
 
 # Begin-Doc
@@ -718,8 +728,7 @@ sub HTMLSetCookies {
             else                   { $change = 0 }
             @date = gmtime( $time + $change );
 
-            # this seems to work, fucked up MSIE doesn't follow
-            # the rfc for cookies DD-MON-YYYY date format
+# this seems to work, MSIE doesn't follow the rfc for cookies DD-MON-YYYY date format
             $datestr = sprintf(
                 "%s, %.2d %s %.4d %.2d:%.2d:%.2d GMT",
                 $days[ $date[6] ],
