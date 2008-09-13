@@ -569,6 +569,68 @@ sub SQL_ExecQuery {
 
 =begin
 Begin-Doc
+Name: SQL_DoQuery
+Type: method
+Description: executes a sql query, returns single row
+Syntax: $res = $obj->SQL_ExecQuery($qry, [@params])
+Comments: Executes an SQL query.  This function can be used whenever an
+        SQL command needs to be executed on the database server for a single
+        record retrieval.  If the optional array of values is
+        included, all instances of &quot;?&quot; in the query will be
+        replaced with the corresponding value from @values.  The number of
+        array elements must match the number of question marks.  The array of
+        replacement values should be used if a bound query was created using
+        SQL_OpenBoundQuery (see above).
+        SQL_DoQuery returns undef if failure, and row contents otherwise.
+
+End-Doc
+=cut
+
+sub SQL_DoQuery {
+    my ( $self, $qry, @params ) = @_;
+    my ( $res, $cid );
+    my @results;
+
+    if ( !ref($qry) ) {
+        $cid                 = $self->dbhandle->prepare($qry);
+        $self->{last_query}  = $qry;
+        $self->{last_params} = [@params];
+
+        unless ( defined($cid) ) {
+            $self->checkerr;
+            return;
+        }
+    }
+    else {
+        $cid                 = $qry;
+        $self->{last_query}  = $self->{cid_to_query}->{$cid};
+        $self->{last_params} = [@params];
+    }
+
+    $res = $cid->execute(@params);
+    unless ($res) {
+        $self->checkerr;
+        return;
+    }
+
+    @results = $cid->fetchrow;
+
+    if ( !ref($qry) ) {
+        $res = $cid->finish;
+        unless ( $res >= 0 ) {
+            $self->checkerr;
+            return;
+        }
+    }
+
+    # Record the sthandle of the last executed query
+    $self->sthandle($cid);
+
+    return @results;
+}
+
+=begin
+Begin-Doc
 Name: SQL_AssocArray
 Type: method
 Description: runs query and returns keyed hash, useful for lookup tables
