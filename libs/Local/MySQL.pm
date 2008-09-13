@@ -93,7 +93,7 @@ sub SQL_ExecQuery {
 }
 
 sub SQL_DoQuery {
-    return $DBH->SQL_DoQuery(@_);
+    return $MYSQL_DBH->SQL_DoQuery(@_);
 }
 
 sub SQL_FetchRow {
