@@ -542,11 +542,6 @@ sub SQL_ExecQuery {
             $self->checkerr;
             return 0;
         }
-
-# I _think_ this is safe to remove
-# Causes a memory leak otherwise, unfortunately not sure that this would otherwise
-# ever be needed, so this might break pretty error handling in some edge cases
-#$self->{cid_to_query}->{$cid} = $qry;
     }
     else {
         $cid                 = $qry;
