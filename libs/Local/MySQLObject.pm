@@ -725,11 +725,13 @@ sub SQL_AutoCommit {
 
 =begin
 Begin-Doc
-Name: SQL_FetchAllRows
+Name: SQL_ColumnInfo
 Type: method
-Description: returns array ref with all rows from a query
-Syntax: $arrayref = $obj->SQL_FetchAllRows($cid);
-Comments: 
+Description: returns info on returned columns in a query
+Syntax: $hash = $obj->SQL_ColumnInfo($cid);
+Comments: Returns a hash with keys numcols, colnames, coltypes, precision, scale. All except numcols are
+arrays. Column types, precision, and scale are going to be database driver specific. See DBD::Oracle documentation
+for more specifics. Typically use only the colnames element, or use all of the fields for comparison purposes.
 End-Doc
 =cut
 
