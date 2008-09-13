@@ -92,6 +92,10 @@ sub SQL_ExecQuery {
     return $MYSQL_DBH->SQL_ExecQuery(@_);
 }
 
+sub SQL_DoQuery {
+    return $DBH->SQL_DoQuery(@_);
+}
+
 sub SQL_FetchRow {
     return $MYSQL_DBH->SQL_FetchRow(@_);
 }

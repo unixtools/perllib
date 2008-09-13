@@ -93,6 +93,10 @@ sub SQL_ExecQuery {
     return $DBH->SQL_ExecQuery(@_);
 }
 
+sub SQL_DoQuery {
+    return $DBH->SQL_DoQuery(@_);
+}
+
 sub SQL_FetchRow {
     return $DBH->SQL_FetchRow(@_);
 }
