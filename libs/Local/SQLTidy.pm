@@ -28,7 +28,7 @@ use Text::Balanced qw(extract_delimited extract_tagged gen_extract_tagged);
 # Description: Reads from stdin and writes to stdout formatted sql
 # Syntax: &SQLTidyWrapper()
 # Comments: This is a simple wrapper around SQLTidy to allow use via:
-# Comments: perl -I/local/umrperl/libs -MLocal::SQLTidy -e SQLTidyWrapper
+# Comments: perl -I/local/perllib/libs -MLocal::SQLTidy -e SQLTidyWrapper
 # End-Doc
 sub SQLTidyWrapper {
     my $text = do { local $/; <> };
@@ -135,7 +135,13 @@ sub SQLTidy {
             # vim-hilite: "'
 
             $text = "";
-            push( @pieces, $1 );
+
+            if ($keep_case) {
+                push( @pieces, $1 );
+            }
+            else {
+                push( @pieces, lc $1 );
+            }
         }
         else {
             if ( $text =~ m|^(.*?)([,\'\"\(\)\s\=\+\-\*\/<\>])|smo ) {
@@ -319,7 +325,7 @@ sub SQLTidy {
             $cur_line = "";
             $cur_indent++;
         }
-        elsif ( $lp =~ m{^(from|else|where|order by|group by|having)$} ) {
+        elsif ( $lp =~ m{^(from|else|where|order by|group by|having|union|minus)$} ) {
             $cur_line =~ s/^\s*//go;
             push( @outlines, "${initial_indent}${this_indent}${cur_line}" );
             $cur_indent--;
