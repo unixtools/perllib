@@ -219,6 +219,8 @@ sub Encode_HTMLEncode {
     $string =~ s/&/&amp;/gio;
     $string =~ s/</&lt;/gio;
     $string =~ s/>/&gt;/gio;
+    $string =~ s/"/&quot;/gio;
+    $string =~ s/\?/&#63;/gio;
 
     return $string;
 }
