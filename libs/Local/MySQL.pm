@@ -39,6 +39,7 @@ use Local::MySQLObject;
   SQL_OpenQuery
   SQL_CloseQuery
   SQL_ExecQuery
+  SQL_DoQuery
   SQL_FetchRow
   SQL_ErrorCode
   SQL_ErrorString
