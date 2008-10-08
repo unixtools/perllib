@@ -95,8 +95,7 @@ sub new {
             $config->{template_path} = $opts{template_path};
         }
     }
-    elsif ( $at_env_path =~ m|^http(s)://.*| ) {
-
+    elsif ( $at_env_path =~ m|^https*://.*| ) {
         # Only permit setting a remote template path via URL
         $config->{template_path} = [$at_env_path];
     }
