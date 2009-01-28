@@ -52,19 +52,29 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
   HTMLFooter
   HTMLStatusHeader
   HTMLContentType
+  HTMLSentContentType
   HTMLGetRequest
 
   HTMLGetCookies
   HTMLSetCookies
+
+  %rqpairs
 );
 
 BEGIN {
-
-    # since we may not be running under cgiwrap
-    open( STDERR, ">&STDOUT" );
+    # since we may not be running under cgiwrap, for easier error management
+    if ( $ENV{REQUEST_METHOD} ) {
+       open( STDERR, ">&STDOUT" );
+    }
 }
 
 my $CGI;
+
+# Begin-Doc
+# Name: HTMLUtil_Sent_CType
+# Description: package var to keep track of whether content type was sent
+# End-Doc
+my $HTMLUtil_Sent_CType = 0;
 
 # Begin-Doc
 # Name: HTMLGetCGI
@@ -620,6 +630,24 @@ sub HTMLContentType {
     if ( $TYPE eq "" ) { $TYPE = "text/html"; }
 
     print "Content-type: $TYPE\n\n";
+
+    $HTMLUtil_Sent_CType = 1;
+}
+
+# Begin-Doc
+# Name: HTMLSentContentType
+# Type: function
+# Description: returns if the HTMLContentType routine has been used, also can be used to set that state
+# Syntax: $was_sent = &HTMLSentContentType()
+# Syntax: &HTMLSentContentType(0|1);
+# End-Doc
+sub HTMLSentContentType {
+    my $val = shift;
+
+    if ( defined($val) ) {
+        $HTMLUtil_Sent_CType = ( $val != 0 );
+    }
+    return $HTMLUtil_Sent_CType;
 }
 
 # Begin-Doc
@@ -644,7 +672,6 @@ sub HTMLGetFile {
 # array %rqpairs. Entries that result from multiple selections in a list
 # box will be stored into a single element, with the values separated by
 # whitespace.
-# Comments: Note - Does not handle multipart forms (file upload)
 # End-Doc
 sub HTMLGetRequest {
     my ( $request, $key, $val, $tmp, %tmp, $entry );
@@ -748,8 +775,8 @@ sub HTMLSetCookies {
         $cookie_string .= "\n";
     }
     @date = gmtime($time);
-    $datestr =
-        "Date: "
+    $datestr
+        = "Date: "
       . $days[ $date[6] ]
       . ", $date[3] $months[$date[4]] "
       . ( $date[5] + 1900 )

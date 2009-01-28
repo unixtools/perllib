@@ -40,12 +40,13 @@ End-Doc
 
 =cut
 
+use strict;
+
 package Local::HTMLRelatedMenu;
 require 5.000;
 require Exporter;
 
-use Data::Dumper;
-
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
@@ -142,7 +143,9 @@ sub GenerateHead {
     my $res      = "";
     my $basename = $opts{basename} || $self->{basename} || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname = $opts{secondaryname} || $self->{secondaryname} || "secondary";
+    my $secname  = $opts{secondaryname}
+        || $self->{secondaryname}
+        || "secondary";
 
     if ( !$self->{procname} ) {
         $self->{procname} = $opts{procname} || "process_related_${basename}";
@@ -158,8 +161,8 @@ sub GenerateHead {
     $res .= "<SCRIPT LANGUAGE=\"JavaScript\">\n";
     $res .= "<!-- \n";
 
-    $res .=
-        "function $pname($var_oe,$var_os) {\n"
+    $res
+        .= "function $pname($var_oe,$var_os) {\n"
       . "\twith ($var_oe) {\n"
       . "\t\tfor (var $var_i=options.length-1;$var_i>0;$var_i--) options[$var_i]=null;\n"
       . "\t}\n";
@@ -175,8 +178,10 @@ sub GenerateHead {
         my @slabs = @{ $self->{secondary_labels}->{ $pvals[$i] } };
 
         for ( $j = 0 ; $j <= $#svals ; $j++ ) {
-            $res .=
-              "\t\t\tnew Option(\"" . $slabs[$j] . "\",\"" . $svals[$j] . "\")";
+            $res
+                .= "\t\t\tnew Option(\""
+                . $slabs[$j] . "\",\""
+                . $svals[$j] . "\")";
             if ( $j != $#svals ) { $res .= ", "; }
             $res .= "\n";
         }
@@ -184,8 +189,8 @@ sub GenerateHead {
         $res .= "\t\t);\n\t}\n";
     }
 
-    $res .=
-        "\twith ($var_oe) {\n"
+    $res
+        .= "\twith ($var_oe) {\n"
       . "\t\tfor (var $var_i=0;$var_i<$var_newlist.length;$var_i++) options[$var_i]="
       . $var_newlist
       . "[$var_i];\n"
@@ -214,21 +219,21 @@ sub GenerateBody {
 
     my $basename = $opts{basename}    || $self->{basename}    || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname = $opts{secondaryname} || $self->{secondaryname} || "secondary";
+    my $secname = $opts{secondaryname}
+        || $self->{secondaryname}
+        || "secondary";
 
     my $pname = $opts{procname} || $self->{procname};
 
-    my $primary_selected =
-         $opts{primary_selected}
+    my $primary_selected = $opts{primary_selected}
       || $self->{primary_selected}
       || undef;
-    my $secondary_selected =
-         $opts{secondary_selected}
+    my $secondary_selected = $opts{secondary_selected}
       || $self->{secondary_selected}
       || undef;
 
-    $res .=
-"<SELECT NAME=\"$priname\" onChange=\"$pname(this.form.$secname, this.selectedIndex)\">\n";
+    $res
+        .= "<SELECT NAME=\"$priname\" onChange=\"$pname(this.form.$secname, this.selectedIndex)\">\n";
 
     my ( $i, $j );
     my @pvals = @{ $self->{primary_values} };

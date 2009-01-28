@@ -1,5 +1,5 @@
 
-=pre
+=begin
 
 Begin-Doc
 Name: Local::AppTemplate
@@ -35,6 +35,9 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use LWP::Simple;
 use File::Path;
+use Local::HTMLUtil;
+use HTML::Entities;
+use URI::Escape;
 
 @ISA    = qw();
 @EXPORT = qw();
@@ -59,17 +62,52 @@ use File::Path;
 #  refresh_url - instead of refreshing to same page, refresh to this URL
 #  template_path - scalar or array of scalars pointing at locations to try accessing the template
 #  template_cache_dir - override default location where remote templates are cached
+#  disable_auto_header - disable automatically sending page header on exit or error routines
+#  disable_auto_ctype - disable automatically sending content-type when PageHeader is called if it hasn't been detectably sent
 #
 #
 # End-Doc
 sub new {
     my $self  = shift;
     my $class = ref($self) || $self;
-    my %opts  = @_;
+
     my $tmp   = {};
+    bless $tmp, $class;
 
     my $config = {};
     $tmp->{config} = $config;
+
+    $tmp->reset();
+    $tmp->configure(@_);
+
+    return $tmp;
+}
+
+# Begin-Doc
+# Name: reset
+# Type: method
+# Description: routine to reset state of template, such as currently open blocks and row number
+# Syntax: $obj->reset();
+# End-Doc
+sub reset {
+    my $self = shift;
+
+    # private state tracking data
+    $self->{open_blocks}      = [];
+    $self->{inner_row_number} = 0;
+}
+
+# Begin-Doc
+# Name: configure
+# Type: method
+# Description: routine to configure object after creation - takes same parameters as 'new' function
+# Syntax: $obj->configure(%params)
+# End-Doc
+sub configure {
+    my $self = shift;
+    my %opts = @_;
+
+    my $config = $self->{config};
 
     # parameters loaded from initialization
     $config->{title}         = $opts{title} || "Web Application";
@@ -85,6 +123,9 @@ sub new {
     $config->{refresh_time} = $opts{refresh_time};
     $config->{refresh_url}  = $opts{refresh_url};
 
+    $config->{disable_auto_header} = $opts{disable_auto_header};
+    $config->{disable_auto_ctype}  = $opts{disable_auto_ctype};
+
     my $at_env_path = $ENV{APPTEMPLATE_PATH};
 
     if ( defined( $opts{template_path} ) ) {
@@ -96,13 +137,11 @@ sub new {
         }
     }
     elsif ( $at_env_path =~ m|^https*://.*| ) {
-        # Only permit setting a remote template path via URL
         $config->{template_path} = [$at_env_path];
     }
-    elsif ( !$config->{template_path} ) {
+    else {
         $config->{template_path} = ["/local/apptmpl/html"];
     }
-
     $config->{template_cache_dir} = $opts{template_cache_dir};
 
     if ( $opts{quiet} ) {
@@ -111,12 +150,6 @@ sub new {
     else {
         $config->{quiet} = 0;
     }
-
-    # internal tracking data
-    $tmp->{open_blocks}      = [];
-    $tmp->{inner_row_number} = 0;
-
-    return bless $tmp, $class;
 }
 
 #
@@ -189,13 +222,17 @@ sub _load_template {
       # use a simple 256 bit checksum for the cache file name
       # feed it some extra parameters to get a touch more randomness in the name
                 my $cachefilename = $cache . "/"
-                  . sprintf( "%.8X",
-                    unpack( "%256C*", join( "-", $location, $<, $>, $cache ) )
+                    . sprintf(
+                    "%.8X",
+                    unpack(
+                        "%256C*", join( "-", $location, $<, $>, $cache )
+                    )
                   );
 
 # don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
                 my @tmpstat = stat($cachefilename);
-                unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 ) {
+                unless ( time - $tmpstat[10] < 30 || time - $tmpstat[9] < 30 )
+                {
                     my $res = mirror( $location, "$cachefilename" );
                 }
 
@@ -212,10 +249,10 @@ sub _load_template {
     }
 
     if ( !$text ) {
-        $self->{template_text_header} =
-          "<!-- unable to load template header -->";
-        $self->{template_text_footer} =
-          "<!-- unable to load template footer -->";
+        $self->{template_text_header}
+            = "<!-- unable to load template header -->";
+        $self->{template_text_footer}
+            = "<!-- unable to load template footer -->";
     }
     else {
         my ( $header, $footer ) = split( /__APP_CONTENT__/, $text, 2 );
@@ -230,6 +267,19 @@ sub _load_template {
 #
 # Routines to track nesting of blocks
 #
+sub _check_block_ever_pushed {
+    my $self  = shift;
+    my $block = shift;
+
+    foreach my $bref ( @{ $self->{open_blocks} } ) {
+        if ( $bref eq $block ) {
+            return 1;
+            last;
+        }
+    }
+    return 0;
+}
+
 sub _push_block {
     my $self  = shift;
     my $block = shift;
@@ -390,8 +440,20 @@ sub PageHeader {
     my $self   = shift;
     my $config = $self->{config};
 
+# We were called without a content-type being sent using HTMLUtil, and we are not
+    if ( !&HTMLSentContentType() && !$config->{disable_auto_ctype} ) {
+        &HTMLContentType();
+    }
+
     $self->_load_template();
     print $self->_filter( $self->{template_text_header} );
+
+    if ( $self->_check_block_ever_pushed("Page") ) {
+        print "<!-- Page block already open! -->";
+        $self->ErrorWarn(
+            "Invalid block nesting. Attempted open of 'Page' inside an already open 'Page'."
+        );
+    }
 
     $self->_push_block("Page");
 }
@@ -460,7 +522,7 @@ sub _CloseNonPageBlocks {
 # Name: RequirePriv
 # Type: method
 # Description: wrapper routine around privsys privilege check
-# Syntax: $obj->RequirePriv($errmsg);
+# Syntax: $obj->RequirePriv($code);
 # End-Doc
 sub RequirePriv {
     my $self = shift;
@@ -477,6 +539,54 @@ sub RequirePriv {
 }
 
 # Begin-Doc
+# Name: RequireAnyPriv
+# Type: method
+# Description: wrapper routine around privsys privilege check, require at least one of the listed privileges
+# Syntax: $obj->RequireAnyPriv($code, [$code2, ...]);
+# Comments: at least one code must be specified
+# End-Doc
+sub RequireAnyPriv {
+    my $self  = shift;
+    my @codes = shift;
+
+    eval "use Local::PrivSys";
+
+    foreach my $code (@codes) {
+        if ( &PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) ) {
+            return;
+        }
+    }
+
+    $self->PrivErrorExit( join( "\nor\n", @codes ) );
+}
+
+# Begin-Doc
+# Name: RequireAllPrivs
+# Type: method
+# Description: wrapper routine around privsys privilege check, require all of the listed privileges
+# Syntax: $obj->RequireAllPrivs($code, [$code2, ...]);
+# Comments: at least one code must be specified
+# End-Doc
+sub RequireAllPrivs {
+    my $self  = shift;
+    my @codes = shift;
+
+    eval "use Local::PrivSys";
+
+    foreach my $code (@codes) {
+        if ( !&PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) ) {
+            $self->PrivErrorExit( join( "\nand\n", @codes ) );
+        }
+    }
+
+    if ( !@codes ) {
+        $self->ErrorExit("No code specified for RequireAllPrivs");
+    }
+
+    return;
+}
+
+# Begin-Doc
 # Name: PrivErrorExit
 # Type: method
 # Description: prints a privilege required error msg in a block and terminates
@@ -485,6 +595,13 @@ sub RequirePriv {
 sub PrivErrorExit {
     my $self = shift;
     my $code = shift;
+    my $config = $self->{config};
+
+    if (   !$self->_check_block_ever_pushed("Page")
+        && !$config->{disable_auto_header} )
+    {
+        $self->PageHeader();
+    }
 
     eval "use Local::PrivSys";
 
@@ -535,6 +652,13 @@ sub PrivErrorExit {
 sub Exit {
     my $self  = shift;
     my $error = shift;
+    my $config = $self->{config};
+
+    if (   !$self->_check_block_ever_pushed("Page")
+        && !$config->{disable_auto_header} )
+    {
+        $self->PageHeader();
+    }
 
     $self->_CloseNonPageBlocks();
     $self->PageFooter();
@@ -550,6 +674,13 @@ sub Exit {
 sub ErrorExit {
     my $self  = shift;
     my $error = shift;
+    my $config = $self->{config};
+
+    if (   !$self->_check_block_ever_pushed("Page")
+        && !$config->{disable_auto_header} )
+    {
+        $self->PageHeader();
+    }
 
     $self->_CloseNonPageBlocks();
 
@@ -581,6 +712,13 @@ sub ErrorExit {
 sub ErrorWarn {
     my $self  = shift;
     my $error = shift;
+    my $config = $self->{config};
+
+    if (   !$self->_check_block_ever_pushed("Page")
+        && !$config->{disable_auto_header} )
+    {
+        $self->PageHeader();
+    }
 
     $self->_CloseNonPageBlocks();
 
@@ -623,6 +761,13 @@ sub ErrorExitSQL {
     my $error = shift;
     my $db    = shift;
     my $quiet = $self->{quiet};
+    my $config = $self->{config};
+
+    if (   !$self->_check_block_ever_pushed("Page")
+        && !$config->{disable_auto_header} )
+    {
+        $self->PageHeader();
+    }
 
     if ( $self->{_in_error_exit} ) {
         print "<!-- error exit recursed, terminating app -->";
@@ -739,13 +884,20 @@ sub Encode {
     my $self = shift;
     my $txt  = shift;
 
-    $txt =~ s/&/&amp;/gio;
-    $txt =~ s/</&lt;/gio;
-    $txt =~ s/>/&gt;/gio;
-    $txt =~ s/"/&quot;/gio;
-    $txt =~ s/\?/&#63;/gio;
+    return encode_entities($txt);
+}
 
-    return $txt;
+# Begin-Doc
+# Name: Decode
+# Type: method
+# Description: html decodes any html entities in the passed in string
+# Syntax: $str = $obj->Decode($str);
+# End-Doc
+sub Decode {
+    my $self = shift;
+    my $txt  = shift;
+
+    return decode_entities($txt);
 }
 
 # Begin-Doc
@@ -757,24 +909,22 @@ sub Encode {
 # End-Doc
 sub URLEncode {
     my $self = shift;
-    my ($string) = @_;
-    my ( @tmp, @res, $tmp );
+    my $string = shift;
 
-    @res = ();
-    @tmp = split( '', $string );
-    foreach $tmp (@tmp) {
-        if ( $tmp =~ /[A-Za-z0-9-_]/ ) {
-            push( @res, $tmp );
-        }
-        else {
-            $tmp = unpack( "C", $tmp );
-            $tmp = "%" . sprintf( "%.2X", $tmp );
-            push( @res, $tmp );
-        }
+    return uri_escape($string);
     }
 
-    $string = join( "", @res );
-    return $string;
+# Begin-Doc
+# Name: URLDecode
+# Type: method
+# Description: Decode a string in URL encoded format
+# Syntax: $string = $obj->URLDecode($string)
+# End-Doc
+sub URLDecode {
+    my $self   = shift;
+    my $string = shift;
+
+    return uri_unescape($string);
 }
 
 # Begin-Doc
@@ -868,6 +1018,22 @@ sub StartInnerRow {
 }
 
 # Begin-Doc
+# Name: StartInnerRowSame
+# Type: method
+# Description: starts an inner row, but keep same row parity as last row
+# Syntax: $obj->StartInnerRowSame()
+# End-Doc
+sub StartInnerRowSame {
+    my $self = shift;
+
+    $self->{inner_row_number}--;
+    if ( $self->{inner_row_number} < 0 ) {
+        $self->{inner_row_number} = 0;
+    }
+    return $self->StartInnerRow();
+}
+
+# Begin-Doc
 # Name: StartInnerHeaderRow
 # Type: method
 # Description: starts an inner header row and reset the even/odd coloring state
@@ -931,6 +1097,17 @@ sub EndInnerRow {
 
     $self->_pop_block("InnerRow");
     print "</tr>\n";
+}
+
+# Begin-Doc
+# Name: EndInnerRowSame
+# Type: method
+# Description: end a inner row, for convenience in matching calls only
+# Syntax: $obj->EndInnerRowSame()
+# End-Doc
+sub EndInnerRowSame {
+    my $self = shift;
+    return $self->EndInnerRow();
 }
 
 # Begin-Doc

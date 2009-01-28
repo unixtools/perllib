@@ -44,7 +44,6 @@ package Local::MSSQLObject;
 require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
-use Local::Arch;
 use Local::UsageLogger;
 use Local::AuthSrv;
 use strict;
@@ -64,7 +63,7 @@ Begin-Doc
 Name: new
 Type: method
 Description: creates new oracle object
-Syntax: $obj = new Local::OracleObject
+Syntax: $obj = new Local::MSSQLObject
 End-Doc
 =cut
 
@@ -478,7 +477,7 @@ Begin-Doc
 Name: SQL_DoQuery
 Type: method
 Description: executes a sql query, returns single row
-Syntax: $res = $obj->SQL_ExecQuery($qry, [@params])
+Syntax: @res = $obj->SQL_DoQuery($qry, [@params])
 Comments: Executes an SQL query.  This function can be used whenever an
         SQL command needs to be executed on the database server for a single
         record retrieval.  If the optional array of values is

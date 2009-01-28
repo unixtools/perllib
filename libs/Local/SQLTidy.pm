@@ -302,7 +302,8 @@ sub SQLTidy {
 
             $cur_indent = pop @paren_levels;
             if ( $cur_indent eq "" ) {
-                warn "popped all paren levels!";
+
+                # we popped all paren levels, probably invalid sql
             }
             $cur_line = $p;
         }
@@ -325,7 +326,9 @@ sub SQLTidy {
             $cur_line = "";
             $cur_indent++;
         }
-        elsif ( $lp =~ m{^(from|else|where|order by|group by|having|union|minus)$} ) {
+        elsif ( $lp
+            =~ m{^(from|else|where|order by|group by|having|union|minus)$} )
+        {
             $cur_line =~ s/^\s*//go;
             push( @outlines, "${initial_indent}${this_indent}${cur_line}" );
             $cur_indent--;
