@@ -47,10 +47,14 @@ package Local::OracleObject;
 require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
-use Local::UsageLogger;
-use Local::Env;
 use Local::AuthSrv;
 use strict;
+
+# Need to verify performance impact of this if any, but seems ok
+use utf8;
+
+# Commenting for now, concerned about any impacts of forcibly setting this
+#$ENV{'NLS_NCHAR'} = 'AL32UTF8';
 
 use vars qw (@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -62,7 +66,6 @@ BEGIN {
         $ENV{ORACLE_HOME} = "/usr/oracle";
     }
 
-    &LogAPIUsage();
 }
 
 =begin
@@ -82,8 +85,6 @@ sub new {
     $tmp->{"dbhandle"}   = undef;
     $tmp->{"lastserial"} = undef;
     $tmp->{"debug"}      = undef;
-
-    &LogAPIUsage();
 
     bless $tmp, $class;
 
@@ -352,17 +353,6 @@ sub SQL_OpenDatabase {
     my ( $user, $pass, $host, $port );
     $user = $info{"user"};
     $pass = $info{"passwd"};
-
-    if ( $database =~ m|^(.*)\*$|o ) {
-        my $base   = $1;
-        my $env    = &UMR_Env();
-        my %suffix = (
-            "prod" => "p",
-            "test" => "t",
-            "dev"  => "d",
-        );
-        $database = $base . $suffix{$env};
-    }
 
     if ( !defined $user or $user eq "" ) {
 

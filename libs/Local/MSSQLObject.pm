@@ -44,7 +44,6 @@ package Local::MSSQLObject;
 require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
-use Local::UsageLogger;
 use Local::AuthSrv;
 use strict;
 
@@ -53,7 +52,6 @@ use vars qw (@ISA @EXPORT);
 @EXPORT = qw();
 
 BEGIN {
-    &LogAPIUsage();
 }
 
 $ENV{SYBASE} = "/usr";
@@ -75,8 +73,6 @@ sub new {
     $tmp->{"dbhandle"}   = undef;
     $tmp->{"lastserial"} = undef;
     $tmp->{"debug"}      = undef;
-
-    &LogAPIUsage();
 
     return bless $tmp, $class;
 }
