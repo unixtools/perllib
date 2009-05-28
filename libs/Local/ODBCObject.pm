@@ -124,6 +124,9 @@ sub SQL_OpenDatabase {
         $self->dbhandle->{ChopBlanks} = 1;
         $self->dbhandle->{PrintError} = 0;
         $self->dbhandle->{RaiseError} = 0;    # don't generate a die
+
+	$self->dbhandle->{LongReadLen} = 32760;
+	$self->dbhandle->{LongTruncOk} = 1;
     }
     return defined( $self->dbhandle );
 }
