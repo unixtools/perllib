@@ -34,12 +34,13 @@ require Exporter;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+use Local::CurrentUser;
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-  AuthSrv_Fetch
-  AuthSrv_Authenticate
-  AuthSrv_Unauthenticate
+    AuthSrv_Fetch
+    AuthSrv_Authenticate
+    AuthSrv_Unauthenticate
 );
 
 $| = 1;
@@ -63,46 +64,30 @@ my $AUTHSRV_AUTH_EXEC = "authsrv-exec";
 sub AuthSrv_Fetch {
     my (%opts) = @_;
     my $instance = $opts{instance} || return undef;
-    my $user     = $opts{user}     || ( getpwuid($<) )[0];
+    my $user = $opts{user};
+    if ( !defined($user) ) {
+        $user = &Local_CurrentUser();
+    }
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
-        if ( -e $AUTHSRV_DECRYPT || -e "/usr/bin/$AUTHSRV_DECRYPT" ) {
-            open( AUTHSRV_SV_STDERR, ">&STDERR" );
-            close(STDERR);
+        open( AUTHSRV_SV_STDERR, ">&STDERR" );
+        close(STDERR);
 
+        if ( $^O !~ /Win/ ) {
             open( AUTHSRV_FETCH_IN, "-|" )
-              || exec( $AUTHSRV_DECRYPT, $user, $instance );
-            while ( my $line = <AUTHSRV_FETCH_IN> ) {
-                chomp($line);
-                $passwd .= $line;
-            }
-            close(AUTHSRV_FETCH_IN);
-
-            open( STDERR, ">&AUTHSRV_SV_STDERR" );
+                || exec( $AUTHSRV_DECRYPT, $user, $instance );
         }
-
-        #
-        # This is an ugly stop-gap, but allows for code transparency
-        # between linux and windows. And it's still better than passwords
-        # in the script itself.
-        #
-        elsif ( -e "C:\\Windows\\authsrv.dat" ) {
-            my $line;
-            open( AUTHSRV_FETCH_IN, "C:\\Windows\\authsrv.dat" );
-            my $adata = join( "", <AUTHSRV_FETCH_IN> );
-            close(AUTHSRV_FETCH_IN);
-            foreach my $line ( split( /[\r\n]+/, $adata ) ) {
-                my ( $file_user, $file_instance, $file_pw ) =
-                  split( ' ', $line, 4 );
-
-                if ( $file_user eq $user && $file_instance eq $instance ) {
-                    $passwd = $file_pw;
-                    last;
-                }
-            }
-            close(AUTHSRV_FETCH_IN);
+        else {
+            open( AUTHSRV_FETCH_IN, "$AUTHSRV_DECRYPT $user $instance|" );
         }
+        while ( my $line = <AUTHSRV_FETCH_IN> ) {
+            chomp($line);
+            $passwd .= $line;
+        }
+        close(AUTHSRV_FETCH_IN);
+
+        open( STDERR, ">&AUTHSRV_SV_STDERR" );
 
         $AUTHSRV_CACHE->{$user}->{$instance} = $passwd;
     }
@@ -140,15 +125,19 @@ sub AuthSrv_Fetch {
 # End-Doc
 sub AuthSrv_Authenticate {
     my (%opts) = @_;
-    my $user                = $opts{user}                || ( getpwuid($<) )[0];
+    my $user = $opts{user};
     my $keep_ccache         = $opts{keep_ccache}         || 0;
     my $use_existing_ccache = $opts{use_existing_ccache} || 0;
+
+    if ( !$user ) {
+        $user = &Local_CurrentUser();
+    }
 
     &LogAPIUsage();
 
     if ( !$use_existing_ccache ) {
-        $ENV{KRB5CCNAME} =
-          "FILE:/tmp/krb5cc_authsrv_u" . $< . "_p" . $$ . "_" . time;
+        $ENV{KRB5CCNAME}
+            = "FILE:/tmp/krb5cc_authsrv_u" . $< . "_p" . $$ . "_" . time;
     }
     elsif ($use_existing_ccache) {
         if ( !defined( $ENV{KRB5CCNAME} ) ) {
