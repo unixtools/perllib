@@ -372,7 +372,8 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $self->dbhandle( DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
+        $self->dbhandle(
+            DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
 
         if ( defined $self->dbhandle ) {
             $self->dbhandle->{PrintError}  = 0;
@@ -562,7 +563,7 @@ Begin-Doc
 Name: SQL_DoQuery
 Type: method
 Description: executes a sql query, returns single row
-Syntax: $res = $obj->SQL_ExecQuery($qry, [@params])
+Syntax: $res = $obj->SQL_DoQuery($qry, [@params])
 Comments: Executes an SQL query.  This function can be used whenever an
         SQL command needs to be executed on the database server for a single
         record retrieval.  If the optional array of values is
@@ -776,6 +777,10 @@ sub SQL_ColumnInfo {
     my $self = shift;
     my $cid  = shift;
     my (%info);
+
+    unless ( ref $cid ) {
+        $cid = $self->sthandle;
+    }
 
     $info{numcols}   = $cid->{NUM_OF_FIELDS};
     $info{colnames}  = [ @{ $cid->{NAME} } ];
