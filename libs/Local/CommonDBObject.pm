@@ -49,7 +49,6 @@ package Local::CommonDBObject;
 require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
-use Local::UsageLogger;
 use strict;
 
 use vars qw (@ISA @EXPORT);
@@ -582,7 +581,7 @@ sub SQL_AssocArray {
 
     $VALUES = join( ", ", @VAL_FIELDS );
 
-    $qry = "select unique $KEY, $VALUES from $TABLE";
+    $qry = "select distinct $KEY, $VALUES from $TABLE";
     if ( $WHERE ne "" ) {
         $qry .= " where " . $WHERE;
     }
