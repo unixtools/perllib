@@ -616,6 +616,24 @@ sub SQL_FetchRow {
 
 =begin
 Begin-Doc
+Name: SQL_FetchRowRef
+Type: method
+Description: fetches a single row, returns array reference
+Syntax: $rowarrayref = $obj->SQL_FetchRowRef($cid)
+Comments: Returns a single row from a query.  Columns are returned in
+        the order specified in the SQL query.  The function returns a value of
+        &quot;undef&quot; when no more rows remain.
+
+End-Doc
+=cut
+
+sub SQL_FetchRowRef {
+    my ( $self, $cid ) = @_;
+    return $cid->fetchrow_arrayref;
+}
+
+=begin
+Begin-Doc
 Name: SQL_FetchAllRows
 Type: method
 Description: returns array ref with all rows from a query
