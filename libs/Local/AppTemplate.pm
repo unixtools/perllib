@@ -356,8 +356,8 @@ sub _filter {
 
     my $app_header_image = $config->{headerimage};
 
-    my $app_head_pre;
-    my $app_head_post;
+    my $app_head_pre = "";
+    my $app_head_post = "";
 
     if ( $app_env ne "prod" ) {
         my $app_env_label =
