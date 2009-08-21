@@ -11,7 +11,6 @@ use Net::LDAP::LDIF;
 use Net::DNS;
 use Local::AuthSrv;
 use Math::BigInt;    # should do with eval instead perhaps
-use Sys::Syslog;
 
 # Begin-Doc
 # Name: Local::ADSObject
@@ -422,6 +421,8 @@ sub SetPassword {
     my ( $userid, $password, $upn, $dn, $res );
     $userid   = $info{userid}   || return "need a userid\n";
     $password = $info{password} || return "need new password\n";
+
+    eval "use Sys::Syslog;";
 
     syslog( "info",
             "ADSObject SetPassword ($userid) by "
