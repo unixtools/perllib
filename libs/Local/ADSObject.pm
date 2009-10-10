@@ -117,10 +117,10 @@ sub new {
     my $use_gc        = $info{use_gc} || 0;
     my $domain        = $info{domain} || "mst.edu";
 
-    my $server;
+    my $server = $info{server};
 
-    if ( $domain eq "mst.edu" ) {
-        $server = $info{server} || "mst-dc.mst.edu";
+    if ( $domain eq "mst.edu" && ! $server ) {
+        $server = "mst-dc.mst.edu";
         if ($use_gc) {
 
             # cosmetic only, they are the same server
