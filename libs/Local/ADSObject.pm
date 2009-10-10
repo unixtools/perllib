@@ -180,8 +180,12 @@ sub new {
             $tmp->{"basedn"} = "DC=edu";
         }
         else {
-
-            #warn "Unable to determine default basedn.\n";
+		my @tmp;
+		foreach my $piece ( split(/\./,$domain) )
+		{
+			push(@tmp, "DC=$piece");
+		}
+		$tmp->{"basedn"} = join(",",@tmp);
         }
     }
     $tmp->{"domain"} = $domain;
