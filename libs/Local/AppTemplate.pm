@@ -68,10 +68,10 @@ use URI::Escape;
 #
 # End-Doc
 sub new {
-    my $self  = shift;
+    my $self = shift;
     my $class = ref($self) || $self;
 
-    my $tmp   = {};
+    my $tmp = {};
     bless $tmp, $class;
 
     my $config = {};
@@ -209,25 +209,26 @@ sub _load_template {
                 }
             }
 
-     #
-     # If we have a cache, mirror the document, otherwise just do a straight GET
-     # Might want to consider defining a minimum caching period, so we do not
-     # attempt to cache the template repeatedly. There is also a potential
-     # locking issue here, so we might want to use a temporary file if the LWP
-     # mirror method isn't implemented atomically internally. (Looks like
-     # mirror does a unlink+rename which should be good enough.)
-     #
+   #
+   # If we have a cache, mirror the document, otherwise just do a straight GET
+   # Might want to consider defining a minimum caching period, so we do not
+   # attempt to cache the template repeatedly. There is also a potential
+   # locking issue here, so we might want to use a temporary file if the LWP
+   # mirror method isn't implemented atomically internally. (Looks like
+   # mirror does a unlink+rename which should be good enough.)
+   #
             if ( defined($cache) ) {
 
-      # use a simple 256 bit checksum for the cache file name
-      # feed it some extra parameters to get a touch more randomness in the name
-                my $cachefilename = $cache . "/"
+    # use a simple 256 bit checksum for the cache file name
+    # feed it some extra parameters to get a touch more randomness in the name
+                my $cachefilename 
+                    = $cache . "/"
                     . sprintf(
                     "%.8X",
                     unpack(
                         "%256C*", join( "-", $location, $<, $>, $cache )
                     )
-                  );
+                    );
 
 # don't try remirroring if we've modified the inode of the cache file in the last 30 seconds
                 my @tmpstat = stat($cachefilename);
@@ -297,7 +298,7 @@ sub _pop_block {
     if ( $block ne $actual ) {
         print "<!-- pop block attempted for $block, got $actual -->";
         $self->ErrorExit(
-"Invalid block nesting. Attempted closure of '$block', got '$actual'."
+            "Invalid block nesting. Attempted closure of '$block', got '$actual'."
         );
     }
 
@@ -356,32 +357,33 @@ sub _filter {
 
     my $app_header_image = $config->{headerimage};
 
-    my $app_head_pre = "";
+    my $app_head_pre  = "";
     my $app_head_post = "";
 
     if ( $app_env ne "prod" ) {
-        my $app_env_label =
-          "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
+        my $app_env_label
+            = "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
         $title .= " - $app_env";
-        $apptitle = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
+        $apptitle
+            = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
     }
 
     if (   $ENV{REMOTE_USER_IMPERSONATE}
         && $ENV{REMOTE_USER_IMPERSONATE} ne $ENV{REMOTE_USER_REAL} )
     {
         $title .= " [Impersonating: "
-          . $self->Encode( $ENV{REMOTE_USER_IMPERSONATE} ) . "]";
+            . $self->Encode( $ENV{REMOTE_USER_IMPERSONATE} ) . "]";
     }
 
     if ( $config->{stylesheet} ) {
-        $app_head_post .=
-            "<link rel=\"stylesheet\" href=\""
-          . $config->{stylesheet}
-          . "\" type=\"text/css\" />";
+        $app_head_post
+            .= "<link rel=\"stylesheet\" href=\""
+            . $config->{stylesheet}
+            . "\" type=\"text/css\" />";
     }
     if ( $config->{style} ) {
-        $app_head_post .=
-          "<style type=\"text/css\">" . $config->{style} . "</style>";
+        $app_head_post
+            .= "<style type=\"text/css\">" . $config->{style} . "</style>";
     }
     if ( $config->{head_extra} ) {
         $app_head_post .= $config->{head_extra};
@@ -392,12 +394,12 @@ sub _filter {
 
         if ( $config->{refresh_url} ) {
             my $url = $config->{refresh_url};
-            $app_head_pre .=
-              "<meta http-equiv=\"Refresh\" CONTENT=\"${time};url=${url}\">";
+            $app_head_pre
+                .= "<meta http-equiv=\"Refresh\" CONTENT=\"${time};url=${url}\">";
         }
         else {
-            $app_head_pre .=
-              "<meta http-equiv=\"Refresh\" CONTENT=\"${time}\">";
+            $app_head_pre
+                .= "<meta http-equiv=\"Refresh\" CONTENT=\"${time}\">";
         }
     }
 
@@ -490,7 +492,7 @@ sub _CloseNonPageBlocks {
 
     if ( $self->{closing_non_page_blocks} ) {
         print
-          "<!-- CloseNonPageBlocks is non-recursive. Forcing termination. -->";
+            "<!-- CloseNonPageBlocks is non-recursive. Forcing termination. -->";
         return;
     }
     $self->{closing_non_page_blocks} = 1;
@@ -593,8 +595,8 @@ sub RequireAllPrivs {
 # Syntax: $obj->PrivErrorExit($errmsg);
 # End-Doc
 sub PrivErrorExit {
-    my $self = shift;
-    my $code = shift;
+    my $self   = shift;
+    my $code   = shift;
     my $config = $self->{config};
 
     if (   !$self->_check_block_ever_pushed("Page")
@@ -620,13 +622,13 @@ sub PrivErrorExit {
     $self->StartInnerRow();
     print "<td colspan=2 align=left>";
     print
-"<p>You do not have the permissions required to access this application.\n";
+        "<p>You do not have the permissions required to access this application.\n";
     print
-"</p><p>Please contact the owner or administrator of this application in order\n";
+        "</p><p>Please contact the owner or administrator of this application in order\n";
     print
-"to obtain the necessary access if you want to use it.<\/p><p>Please include\n";
+        "to obtain the necessary access if you want to use it.<\/p><p>Please include\n";
     print
-"the URL of this application as well as the privilege code below in any\n";
+        "the URL of this application as well as the privilege code below in any\n";
     print "support request<\/p>.";
     print "</td>\n";
     $self->EndInnerRow();
@@ -650,8 +652,8 @@ sub PrivErrorExit {
 # Syntax: $obj->Exit();
 # End-Doc
 sub Exit {
-    my $self  = shift;
-    my $error = shift;
+    my $self   = shift;
+    my $error  = shift;
     my $config = $self->{config};
 
     if (   !$self->_check_block_ever_pushed("Page")
@@ -672,8 +674,8 @@ sub Exit {
 # Syntax: $obj->ErrorExit($errmsg);
 # End-Doc
 sub ErrorExit {
-    my $self  = shift;
-    my $error = shift;
+    my $self   = shift;
+    my $error  = shift;
     my $config = $self->{config};
 
     if (   !$self->_check_block_ever_pushed("Page")
@@ -694,7 +696,9 @@ sub ErrorExit {
 
     print "<center>";
     if ($error) {
-        print $self->Encode($error);
+        $error = $self->Encode($error);
+        $error =~ s/\n/<br \/>/g;
+        print $error;
     }
     print "</center>";
 
@@ -710,8 +714,8 @@ sub ErrorExit {
 # Syntax: $obj->ErrorWarn($errmsg);
 # End-Doc
 sub ErrorWarn {
-    my $self  = shift;
-    my $error = shift;
+    my $self   = shift;
+    my $error  = shift;
     my $config = $self->{config};
 
     if (   !$self->_check_block_ever_pushed("Page")
@@ -726,7 +730,9 @@ sub ErrorWarn {
 
     print "<center>";
     if ($error) {
-        print $self->Encode($error);
+        $error = $self->Encode($error);
+        $error =~ s/\n/<br \/>/g;
+        print $error;
     }
     print "</center>";
 
@@ -757,10 +763,10 @@ sub ErrorWarnSQL {
 # Comments: If $db is passed in, will use that to display last query and query arguments
 # End-Doc
 sub ErrorExitSQL {
-    my $self  = shift;
-    my $error = shift;
-    my $db    = shift;
-    my $quiet = $self->{quiet};
+    my $self   = shift;
+    my $error  = shift;
+    my $db     = shift;
+    my $quiet  = $self->{quiet};
     my $config = $self->{config};
 
     if (   !$self->_check_block_ever_pushed("Page")
@@ -800,15 +806,17 @@ sub ErrorSQLHelper {
 
     print "<center>";
     if ($error) {
-        print $self->Encode($error);
+        $error = $self->Encode($error);
+        $error =~ s/\n/<br \/>/g;
+        print $error;
     }
 
     if ( !$quiet ) {
         print "<br><font size=-1>";
         print
-"<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
+            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
         print
-"<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
+            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
         print "</font>\n";
     }
 
@@ -849,10 +857,11 @@ sub ErrorSQLHelper {
 
                 if ( $#params >= 0 ) {
                     $self->StartInnerHeaderRow();
-                    print "<td colspan=2 align=center>Query Parameters</td>\n";
+                    print
+                        "<td colspan=2 align=center>Query Parameters</td>\n";
                     $self->EndInnerHeaderRow();
 
-                    for ( my $i = 0 ; $i <= $#params ; $i++ ) {
+                    for ( my $i = 0; $i <= $#params; $i++ ) {
                         $self->StartInnerRow();
                         print "<td colspan=2><b>$i: </b>\n";
                         print $self->Encode( $params[$i] ), "</td>\n";
@@ -908,11 +917,11 @@ sub Decode {
 # Comments: All chars other than [A-Za-z0-9-_] are converted to %XX hex notation
 # End-Doc
 sub URLEncode {
-    my $self = shift;
+    my $self   = shift;
     my $string = shift;
 
     return uri_escape($string);
-    }
+}
 
 # Begin-Doc
 # Name: URLDecode
