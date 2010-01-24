@@ -48,11 +48,11 @@ $| = 1;
 
 my $AUTHSRV_CACHE = {};
 
-my $AUTHSRV_ENCRYPT   = "authsrv-encrypt";
-my $AUTHSRV_DECRYPT   = "authsrv-decrypt";
-my $AUTHSRV_DELETE    = "authsrv-delete";
-my $AUTHSRV_AUTH      = "authsrv-auth";
-my $AUTHSRV_AUTH_EXEC = "authsrv-exec";
+my $AUTHSRV_ENCRYPT;
+my $AUTHSRV_DECRYPT;
+my $AUTHSRV_DELETE;
+my $AUTHSRV_AUTH;
+my $AUTHSRV_AUTH_EXEC;
 
 BEGIN {
     &AuthSrv_SetPathPrefix();
