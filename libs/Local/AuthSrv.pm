@@ -54,9 +54,7 @@ my $AUTHSRV_DELETE;
 my $AUTHSRV_AUTH;
 my $AUTHSRV_AUTH_EXEC;
 
-BEGIN {
-    &AuthSrv_SetPathPrefix();
-}
+&AuthSrv_SetPathPrefix();
 
 # Begin-Doc
 # Name: AuthSrv_SetPathPrefix
