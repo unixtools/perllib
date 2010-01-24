@@ -64,7 +64,7 @@ my $AUTHSRV_AUTH_EXEC;
 # Comments: Prefix should end in "/" (or other platform appropriate path separator)
 # End-Doc
 sub AuthSrv_SetPathPrefix {
-    my $prefix = "";
+    my $prefix = shift;
 
     $AUTHSRV_ENCRYPT   = $prefix . "authsrv-encrypt";
     $AUTHSRV_DECRYPT   = $prefix . "authsrv-decrypt";
