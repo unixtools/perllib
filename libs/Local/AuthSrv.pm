@@ -41,6 +41,7 @@ use Local::CurrentUser;
     AuthSrv_Fetch
     AuthSrv_Authenticate
     AuthSrv_Unauthenticate
+    AuthSrv_SetPathPrefix
 );
 
 $| = 1;
@@ -52,6 +53,27 @@ my $AUTHSRV_DECRYPT   = "authsrv-decrypt";
 my $AUTHSRV_DELETE    = "authsrv-delete";
 my $AUTHSRV_AUTH      = "authsrv-auth";
 my $AUTHSRV_AUTH_EXEC = "authsrv-exec";
+
+BEGIN {
+    &AuthSrv_SetPathPrefix();
+}
+
+# Begin-Doc
+# Name: AuthSrv_SetPathPrefix
+# Type: function
+# Description: sets prefix for authsrv executables to allow use when not installed in path
+# Syntax: &AuthSrv_SetPathPrefix($prefix);
+# Comments: Prefix should end in "/" (or other platform appropriate path separator)
+# End-Doc
+sub AuthSrv_SetPathPrefix {
+    my $prefix = "";
+
+    $AUTHSRV_ENCRYPT   = $prefix . "authsrv-encrypt";
+    $AUTHSRV_DECRYPT   = $prefix . "authsrv-decrypt";
+    $AUTHSRV_DELETE    = $prefix . "authsrv-delete";
+    $AUTHSRV_AUTH      = $prefix . "authsrv-auth";
+    $AUTHSRV_AUTH_EXEC = $prefix . "authsrv-exec";
+}
 
 # Begin-Doc
 # Name: AuthSrv_Fetch
