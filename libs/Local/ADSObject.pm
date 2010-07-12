@@ -22,7 +22,7 @@ use Math::BigInt;    # should do with eval instead perhaps
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
-my $retries = 4;    # Set this to one higher than the number of DCs.
+my $retries = 4;     # Set this to one higher than the number of DCs.
 
 # Last Error Message
 $ErrorMsg = "no error";
@@ -64,13 +64,8 @@ my $UAC_DES_ONLY               = 0x00200000;
 my $UAC_PW_NOT_REQUIRED        = 0x00000020;
 my $UAC_CANNOT_CHANGE_PW       = 0x00000040;
 my $UAC_NORMAL_ACCOUNT         = $UAC_INITIALIZED | $UAC_NEVER_EXPIRES;
-
-my $UAC_COMPUTER_ACCOUNT =
-  $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_DES_ONLY |
-  $UAC_TRUSTED_FOR_DELEGATION;
-
-my $UAC_UNIXHOST_ACCOUNT =
-  $UAC_NORMAL_ACCOUNT | $UAC_TRUSTED_FOR_DELEGATION | $UAC_DES_ONLY;
+my $UAC_COMPUTER_ACCOUNT       = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST
+    | $UAC_TRUSTED_FOR_DELEGATION;
 
 #
 # Flag bits for group type field
@@ -119,7 +114,7 @@ sub new {
 
     my $server = $info{server};
 
-    if ( $domain eq "mst.edu" && ! $server ) {
+    if ( $domain eq "mst.edu" && !$server ) {
         $server = "mst-dc.mst.edu";
         if ($use_gc) {
 
@@ -180,12 +175,11 @@ sub new {
             $tmp->{"basedn"} = "DC=edu";
         }
         else {
-		my @tmp;
-		foreach my $piece ( split(/\./,$domain) )
-		{
-			push(@tmp, "DC=$piece");
-		}
-		$tmp->{"basedn"} = join(",",@tmp);
+            my @tmp;
+            foreach my $piece ( split( /\./, $domain ) ) {
+                push( @tmp, "DC=$piece" );
+            }
+            $tmp->{"basedn"} = join( ",", @tmp );
         }
     }
     $tmp->{"domain"} = $domain;
@@ -429,10 +423,10 @@ sub SetPassword {
     eval "use Sys::Syslog;";
 
     syslog( "info",
-            "ADSObject SetPassword ($userid) by "
-          . $ENV{REMOTE_USER}
-          . " from host "
-          . $ENV{REMOTE_HOST} );
+              "ADSObject SetPassword ($userid) by "
+            . $ENV{REMOTE_USER}
+            . " from host "
+            . $ENV{REMOTE_HOST} );
 
     $dn = $self->_GetDN($userid);
     if ( !$dn ) {
@@ -472,13 +466,13 @@ sub SetPassword {
 
 sub _gen_random_pw {
     my $pw;
-    my @chars =
-      split( '',
+    my @chars
+        = split( '',
         join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 
     $pw = "";
-    for ( my $i = 0 ; $i < 22 ; $i++ ) {
+    for ( my $i = 0; $i < 22; $i++ ) {
         my $rnd = int( rand( $#chars + 1 ) );
         $pw .= $chars[$rnd];
     }
@@ -520,8 +514,9 @@ sub CreateUser {
             SamAccountName    => "$samName",
             DisplayName       => "$dispName",
             UserPrincipalName => "$userPN\@mst.edu",
-            objectclass => [ 'top', 'person', 'organizationalPerson', 'user' ],
-            unicodePwd  => $self->_MakeUnicode( $self->_gen_random_pw() ),
+            objectclass =>
+                [ 'top', 'person', 'organizationalPerson', 'user' ],
+            unicodePwd => $self->_MakeUnicode( $self->_gen_random_pw() ),
             userAccountControl => 0,
         ]
     );
@@ -630,7 +625,7 @@ sub UpdateSecurityGroupDetails {
                 "smtp:ng-$group\@mst.edu", "smtp:ng-$group\@missouri.edu"
             ],
             legacyExchangeDN => "/O=University of Missouri/OU=Rolla"
-              . "/cn=Recipients/OU=Netgroups/cn=$group",
+                . "/cn=Recipients/OU=Netgroups/cn=$group",
         ]
     );
 
@@ -657,11 +652,12 @@ sub Create_Unix_Host {
     $hn =~ s|\..*||gio;
 
     $dispName = $fqdn;
-    $samName  = "host-$hn";
+    $samName  = "$hn\$";
 
     my $realm = "MST.EDU";
 
     my $cn = $fqdn;
+    my $cn = $hn;
     my $dn = "CN=$cn,OU=Unix,OU=Servers,DC=mst,DC=edu";
 
     #------
@@ -671,6 +667,7 @@ sub Create_Unix_Host {
     $self->debug && print "fqdn- $fqdn\n";
     $self->debug && print "samName - $samName\n";
     if ( length($samName) > 15 ) {
+        die "name too long!";
 
         #just in case too long
         $samName = substr( $samName, 0, 15 );
@@ -678,9 +675,12 @@ sub Create_Unix_Host {
     $origsamName = $samName;
     my $found = 1;
     while ( $self->_GetDN($samName) ) {
+        die "conflict!";
+
         $samName = $origsamName . $count;
         if ( length($samName) > 15 ) {
-            $samName = substr( $origsamName, 0, 15 - length($count) ) . $count;
+            $samName
+                = substr( $origsamName, 0, 15 - length($count) ) . $count;
         }
         $count++;
     }
@@ -689,22 +689,26 @@ sub Create_Unix_Host {
     $crtprinc = $self->{ldap}->add(
         dn   => "$dn",
         attr => [
-            sAMAccountName       => $samName,
-            userPrincipalName    => "host/$fqdn\@$realm",
-            servicePrincipalName => [ "host/$fqdn", "cifs/$fqdn" ],
-            dNSHostName          => $fqdn,
-            cn                   => $cn,
-            objectclass =>
-              [ 'top', 'person', 'organizationalPerson', 'user', 'computer' ],
+            sAMAccountName    => $samName,
+            userPrincipalName => "host/$fqdn\@$realm",
+            servicePrincipalName =>
+                [ "host/$fqdn", "cifs/$fqdn", "host/$hn" ],
+            dNSHostName => $fqdn,
+            cn          => $cn,
+            objectclass => [
+                'top',                  'person',
+                'organizationalPerson', 'user',
+                'computer'
+            ],
 
             unicodePwd         => $self->_MakeUnicode($pw),
-            userAccountControl => $UAC_UNIXHOST_ACCOUNT,
+            userAccountControl => $UAC_COMPUTER_ACCOUNT,
         ]
     );
     if ( $crtprinc->code ) {
         $ErrorMsg = "create principal failed: " . $crtprinc->error . "\n";
         $self->debug
-          && print "Create princ failed: " . $crtprinc->error . "\n";
+            && print "Create princ failed: " . $crtprinc->error . "\n";
         return "create principal failed: " . $crtprinc->error . "\n";
     }
 
@@ -715,6 +719,7 @@ sub Create_Unix_Host {
     if ($res) { return $res; }
 
     return undef;
+
 }
 
 # Begin-Doc
@@ -752,7 +757,8 @@ sub Delete_Unix_Host {
     my $hn = $fqdn;
     $hn =~ s|\..*||gio;
 
-    foreach my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" )
+    foreach
+        my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" )
     {
         foreach my $suffix ( "", "1", "2" ) {
             my $userid = $baseuser . $suffix;
@@ -777,13 +783,12 @@ sub Delete_Unix_Host {
     }
 
     my $dn = $self->_GetHostDN($fqdn);
-    if (
-        $dn
+    if ($dn
         && (   $dn =~ /host/i
             || $dn =~ /computers/i
             || $dn =~ /servers/i
             || $dn =~ /workstations/i )
-      )
+        )
     {
 
         #print "dn for $fqdn = $dn\n";
@@ -842,7 +847,7 @@ sub GetUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+        || return undef;
     my @users = ();
     my $res;
 
@@ -886,7 +891,7 @@ sub GetUnityUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+        || return undef;
     my @users = ();
     my $res;
 
@@ -930,7 +935,7 @@ sub GetMailboxUserList {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+        || return undef;
     my @users = ();
     my $res;
 
@@ -1134,8 +1139,8 @@ sub GetAttributesMatch {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+        || return undef;
     my $cookie;
 
     $info = {};
@@ -1152,7 +1157,7 @@ sub GetAttributesMatch {
         $self->debug && print "Using max records = $maxrecords\n";
 
         $page = new Net::LDAP::Control::Paged( size => $maxrecords )
-          || return undef;
+            || return undef;
     }
 
     my $matches = [];
@@ -1196,8 +1201,8 @@ sub GetAttributesMatch {
 
                 if ( $name =~ /(.*);range=/o ) {
                     my $aname = $1;
-                    $info->{$aname} =
-                      $self->_GetLargeAttribute( $entry->dn, $aname );
+                    $info->{$aname}
+                        = $self->_GetLargeAttribute( $entry->dn, $aname );
                 }
                 else {
 
@@ -1236,8 +1241,8 @@ sub _WrapCB {
 
             if ( $name =~ /(.*);range=/o ) {
                 my $aname = $1;
-                $info->{$aname} =
-                  $self->_GetLargeAttribute( $entry->dn, $aname );
+                $info->{$aname}
+                    = $self->_GetLargeAttribute( $entry->dn, $aname );
             }
             else {
 
@@ -1264,7 +1269,7 @@ sub _GetLargeAttribute {
     my $allvalues = [];
 
     $self->debug
-      && print "_GetLargeAttribute called for $dn for attr $attr.\n";
+        && print "_GetLargeAttribute called for $dn for attr $attr.\n";
 
     my $low  = "0";
     my $high = "*";
@@ -1305,12 +1310,12 @@ sub _GetLargeAttribute {
 
                 if ( $aname ne $attr ) {
                     $self->debug
-                      && print "skipping unrequested attr $aname\n";
+                        && print "skipping unrequested attr $aname\n";
                     next;
                 }
 
                 $self->debug
-                  && print "got $aname from $got_low to $got_high\n";
+                    && print "got $aname from $got_low to $got_high\n";
                 if ( ref($values) ) {
                     push( @$allvalues, @{$values} );
                 }
@@ -1355,8 +1360,8 @@ sub GetAttributesMatchCB {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+        || return undef;
     my $cookie;
 
     $info = {};
@@ -1373,7 +1378,7 @@ sub GetAttributesMatchCB {
         $self->debug && print "Using max records = $maxrecords\n";
 
         $page = new Net::LDAP::Control::Paged( size => $maxrecords )
-          || return undef;
+            || return undef;
     }
 
     my $count = 0;
@@ -1503,7 +1508,7 @@ sub DumpLDIF {
     my $self = shift;
     my $ldap = $self->{ldap};
     my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-      || return undef;
+        || return undef;
     my $fh      = shift;
     my %options = @_;
     my $res;
@@ -1640,8 +1645,8 @@ sub GetUserAccountControl {
     my $self = shift;
     my $userid = shift || return "must specify userid";
 
-    my $info =
-      $self->GetAttributes( $userid, attributes => [userAccountControl] );
+    my $info
+        = $self->GetAttributes( $userid, attributes => [userAccountControl] );
     if ( defined($info) ) {
         my ($uac) = @{ $info->{userAccountControl} };
         return int($uac);
@@ -1770,8 +1775,8 @@ sub ParseProtocolSettings {
 
     my ( $type, @subfields ) = split( /\xC2\xA7/, $ps );
     if ( $type eq "POP3" ) {
-        my ( $enable, $defaults, $mime, $charset, $richtext, @others ) =
-          @subfields;
+        my ( $enable, $defaults, $mime, $charset, $richtext, @others )
+            = @subfields;
 
         if   ( $enable == 1 ) { push( @res, "POP3-Enabled" ); }
         else                  { push( @res, "POP3-Disabled" ); }
@@ -1859,7 +1864,7 @@ sub _ModifyUACBits {
     $debug && print "old uac = $old_uac\n";
 
     $debug && print join( "\n", $self->ParseUserAccountControl($old_uac) ),
-      "\n";
+        "\n";
 
     #	$debug && printf "\t%.8X/%d | %.8X/%d == %.8X/%d\n",
     #		$new_uac, $new_uac, $set, $set,
@@ -1876,7 +1881,7 @@ sub _ModifyUACBits {
     # Add in bits that should be set
     $debug && print "new uac = $new_uac\n";
     $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ),
-      "\n";
+        "\n";
 
     my $res = $self->SetAttributes(
         userid     => $userid,
@@ -1886,8 +1891,8 @@ sub _ModifyUACBits {
     my $changed_uac = $self->GetUserAccountControl($userid);
     $debug && print "changed uac = $changed_uac\n";
     $debug
-      && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
-      "\n";
+        && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
+        "\n";
 
     return $res;
 }
@@ -1908,10 +1913,10 @@ sub MoveUser {
     my $ldap  = $self->{ldap};
 
     my $userid = $info{userid};
-    my $dn =
-         $info{dn}
-      || $self->_GetDN($userid)
-      || return "need a dn or userid";
+    my $dn 
+        = $info{dn}
+        || $self->_GetDN($userid)
+        || return "need a dn or userid";
     my $target = $info{target} || return "need target OU\n";
 
     my $tmpres = $ldap->search(
