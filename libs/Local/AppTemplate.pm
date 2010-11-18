@@ -668,12 +668,12 @@ sub Exit {
 }
 
 # Begin-Doc
-# Name: ErrorExit
+# Name: ErrorExitRaw
 # Type: method
-# Description: prints an error msg in a block and exits
-# Syntax: $obj->ErrorExit($errmsg);
+# Description: prints an error msg in a block and exits, does not htmlencode error msg contents
+# Syntax: $obj->ErrorExitRaw($errmsg);
 # End-Doc
-sub ErrorExit {
+sub ErrorExitRaw {
     my $self   = shift;
     my $error  = shift;
     my $config = $self->{config};
@@ -694,13 +694,11 @@ sub ErrorExit {
 
     $self->StartErrorBlockTable( "Error Message", 600 );
 
-    print "<center>";
     if ($error) {
-        $error = $self->Encode($error);
-        $error =~ s/\n/<br \/>/g;
+        print "<center>";
         print $error;
+        print "</center>";
     }
-    print "</center>";
 
     $self->EndErrorBlockTable();
     $self->PageFooter();
@@ -708,12 +706,30 @@ sub ErrorExit {
 }
 
 # Begin-Doc
-# Name: ErrorWarn
+# Name: ErrorExit
 # Type: method
-# Description: prints an error msg in a block and continues, for warnings
-# Syntax: $obj->ErrorWarn($errmsg);
+# Description: prints an error msg in a block and exits, htmlencodes error message contents
+# Syntax: $obj->ErrorExit($errmsg);
 # End-Doc
-sub ErrorWarn {
+sub ErrorExit {
+    my $self  = shift;
+    my $error = shift;
+
+    if ($error) {
+        $error = $self->Encode($error);
+        $error =~ s/\n/<br \/>/g;
+    }
+
+    return $self->ErrorExitRaw($error);
+}
+
+# Begin-Doc
+# Name: ErrorWarnRaw
+# Type: method
+# Description: prints an error msg in a block and continues, for warnings, does not htmlencode error message content
+# Syntax: $obj->ErrorWarnRaw($errmsg);
+# End-Doc
+sub ErrorWarnRaw {
     my $self   = shift;
     my $error  = shift;
     my $config = $self->{config};
@@ -728,15 +744,31 @@ sub ErrorWarn {
 
     $self->StartErrorBlockTable( "Error Warning", 600 );
 
-    print "<center>";
+    if ($error) {
+        print "<center>";
+        print $error;
+        print "</center>";
+    }
+
+    $self->EndErrorBlockTable();
+}
+
+# Begin-Doc
+# Name: ErrorWarn
+# Type: method
+# Description: prints an error msg in a block and continues, for warnings, htmlencodes error message content
+# Syntax: $obj->ErrorWarn($errmsg);
+# End-Doc
+sub ErrorWarn {
+    my $self  = shift;
+    my $error = shift;
+
     if ($error) {
         $error = $self->Encode($error);
         $error =~ s/\n/<br \/>/g;
-        print $error;
     }
-    print "</center>";
 
-    $self->EndErrorBlockTable();
+    return $self->ErrorWarnRaw($error);
 }
 
 # Begin-Doc
