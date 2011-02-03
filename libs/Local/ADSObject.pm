@@ -1943,7 +1943,7 @@ sub MoveUser {
 
 # Begin-Doc
 # Name: LookupDC
-# Syntax: @hosts = &UMR::SysProg::ADSObject::LookupDC($domain)
+# Syntax: @hosts = &Local::LookupDC($domain)
 # Syntax: @hosts = $self->LookupDC($domain)
 # Description: Looks up domain controllers via SRV records in DNS for a domain, returns in preferred order
 # End-Doc
@@ -1960,14 +1960,20 @@ sub LookupDC {
 
     eval "use Net::DNS qw(rrsort);";
 
-    my $res = new Net::DNS::Resolver();
+    my $tgt = "_ldap._tcp.dc._msdcs.${domain}";
 
-    my $query = $res->query( "_ldap._tcp.dc._msdcs.${domain}", "SRV" );
+    my $res = new Net::DNS::Resolver();
+    my $query = $res->query( $tgt, "SRV" );
+
     my @rr;
 
     if ($query) {
-        foreach my $rr ( grep { $_->type eq 'SRV' } $query->answer ) {
-            push( @rr, $rr );
+        my @rr_array = $query->answer;
+        foreach my $rr ( rrsort("SRV", "priority", @rr_array) ) {
+            if ( $rr )
+            {
+                push(@rr, $rr->target);
+            }
         }
     }
     else {
@@ -1975,13 +1981,12 @@ sub LookupDC {
         return ();
     }
 
-    my @prisorted = rrsort( "SRV", "priority", @rr );
-    return map { $_->target } @prisorted;
+    return @rr;
 }
 
 # Begin-Doc
 # Name: LookupGC
-# Syntax: @hosts = &UMR::SysProg::ADSObject::LookupGC($domain)
+# Syntax: @hosts = &Local::LookupGC($domain)
 # Syntax: @hosts = $self->LookupGC($domain)
 # Description: Looks up global catalogs via SRV records in DNS for a domain, returns in preferred order
 # Comments: NOTE - this is hardwired right now to look up the same as the DC... needs to be reworked to look up forest/etc.
