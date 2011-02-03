@@ -39,21 +39,21 @@ my $UAC_BIT_INFO = [
     [ 0x00000010, "",                    "Locked Out" ],
     [ 0x00000020, "Password Required",   "Password Not Required" ],
     [ 0x00000040, "Can Change Password", "Cannot Change Password" ],
-    [ 0x00000080, "", "Store PW with Reversible Encryption" ],
-    [ 0x00000100, "", "Temporary Duplicate Account" ],
-    [ 0x00000200, "", "Normal Account" ],
-    [ 0x00000400, "", "Unk1024" ],
-    [ 0x00000800, "", "Interdomain Trust Account" ],
-    [ 0x00001000, "", "Workstation Trust Account" ],
-    [ 0x00002000, "", "Server Trust Account" ],
-    [ 0x00010000, "", "Password never expires" ],
-    [ 0x00020000, "", "MNS Logon Account" ],
-    [ 0x00040000, "", "Smart Card Required for Logon" ],
-    [ 0x00080000, "", "Account trusted for delegation" ],
-    [ 0x00100000, "", "Account cannot be delegated" ],
-    [ 0x00200000, "", "Use DES enctypes" ],
-    [ 0x00400000, "", "No preauth required" ],
-    [ 0x00800000, "", "Password Expired" ],
+    [ 0x00000080, "",                    "Store PW with Reversible Encryption" ],
+    [ 0x00000100, "",                    "Temporary Duplicate Account" ],
+    [ 0x00000200, "",                    "Normal Account" ],
+    [ 0x00000400, "",                    "Unk1024" ],
+    [ 0x00000800, "",                    "Interdomain Trust Account" ],
+    [ 0x00001000, "",                    "Workstation Trust Account" ],
+    [ 0x00002000, "",                    "Server Trust Account" ],
+    [ 0x00010000, "",                    "Password never expires" ],
+    [ 0x00020000, "",                    "MNS Logon Account" ],
+    [ 0x00040000, "",                    "Smart Card Required for Logon" ],
+    [ 0x00080000, "",                    "Account trusted for delegation" ],
+    [ 0x00100000, "",                    "Account cannot be delegated" ],
+    [ 0x00200000, "",                    "Use DES enctypes" ],
+    [ 0x00400000, "",                    "No preauth required" ],
+    [ 0x00800000, "",                    "Password Expired" ],
 ];
 my $UAC_DISABLED               = 0x00000002;
 my $UAC_INITIALIZED            = 0x00000200;
@@ -64,8 +64,7 @@ my $UAC_DES_ONLY               = 0x00200000;
 my $UAC_PW_NOT_REQUIRED        = 0x00000020;
 my $UAC_CANNOT_CHANGE_PW       = 0x00000040;
 my $UAC_NORMAL_ACCOUNT         = $UAC_INITIALIZED | $UAC_NEVER_EXPIRES;
-my $UAC_COMPUTER_ACCOUNT       = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST
-    | $UAC_TRUSTED_FOR_DELEGATION;
+my $UAC_COMPUTER_ACCOUNT       = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_TRUSTED_FOR_DELEGATION;
 
 #
 # Flag bits for group type field
@@ -114,13 +113,15 @@ sub new {
 
     my $server = $info{server};
 
-    if ( $domain eq "mst.edu" && !$server ) {
-        $server = "mst-dc.mst.edu";
-        if ($use_gc) {
+    # Override with default from SRV record unless specified via DNS
+    if ($use_gc) {
 
-            # cosmetic only, they are the same server
-            $server = "mst-gc.mst.edu";
-        }
+        # This is not going to work usually since it's not the forest, but hardwired
+        # response will work for now
+        $server ||= &LookupGC($domain);
+    }
+    else {
+        $server ||= &LookupDC($domain);
     }
 
     $pref_debug && print "using server ($server)\n";
@@ -422,11 +423,7 @@ sub SetPassword {
 
     eval "use Sys::Syslog;";
 
-    syslog( "info",
-              "ADSObject SetPassword ($userid) by "
-            . $ENV{REMOTE_USER}
-            . " from host "
-            . $ENV{REMOTE_HOST} );
+    syslog( "info", "ADSObject SetPassword ($userid) by " . $ENV{REMOTE_USER} . " from host " . $ENV{REMOTE_HOST} );
 
     $dn = $self->_GetDN($userid);
     if ( !$dn ) {
@@ -466,9 +463,7 @@ sub SetPassword {
 
 sub _gen_random_pw {
     my $pw;
-    my @chars
-        = split( '',
-        join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
+    my @chars = split( '', join( "", "a" .. "z", "A" .. "Z", "0" .. "9", "-=;,./-=;,./" ) );
     my $reason;
 
     $pw = "";
@@ -511,12 +506,11 @@ sub CreateUser {
     $crtusr = $self->{ldap}->add(
         dn   => "$dn",
         attr => [
-            SamAccountName    => "$samName",
-            DisplayName       => "$dispName",
-            UserPrincipalName => "$userPN\@mst.edu",
-            objectclass =>
-                [ 'top', 'person', 'organizationalPerson', 'user' ],
-            unicodePwd => $self->_MakeUnicode( $self->_gen_random_pw() ),
+            SamAccountName     => "$samName",
+            DisplayName        => "$dispName",
+            UserPrincipalName  => "$userPN\@mst.edu",
+            objectclass        => [ 'top', 'person', 'organizationalPerson', 'user' ],
+            unicodePwd         => $self->_MakeUnicode( $self->_gen_random_pw() ),
             userAccountControl => 0,
         ]
     );
@@ -624,8 +618,7 @@ sub UpdateSecurityGroupDetails {
                 "SMTP:$group\@mst.edu",    "smtp:$group\@missouri.edu",
                 "smtp:ng-$group\@mst.edu", "smtp:ng-$group\@missouri.edu"
             ],
-            legacyExchangeDN => "/O=University of Missouri/OU=Rolla"
-                . "/cn=Recipients/OU=Netgroups/cn=$group",
+            legacyExchangeDN => "/O=University of Missouri/OU=Rolla" . "/cn=Recipients/OU=Netgroups/cn=$group",
         ]
     );
 
@@ -679,8 +672,7 @@ sub Create_Unix_Host {
 
         $samName = $origsamName . $count;
         if ( length($samName) > 15 ) {
-            $samName
-                = substr( $origsamName, 0, 15 - length($count) ) . $count;
+            $samName = substr( $origsamName, 0, 15 - length($count) ) . $count;
         }
         $count++;
     }
@@ -689,17 +681,12 @@ sub Create_Unix_Host {
     $crtprinc = $self->{ldap}->add(
         dn   => "$dn",
         attr => [
-            sAMAccountName    => $samName,
-            userPrincipalName => "host/$fqdn\@$realm",
-            servicePrincipalName =>
-                [ "host/$fqdn", "cifs/$fqdn", "host/$hn" ],
-            dNSHostName => $fqdn,
-            cn          => $cn,
-            objectclass => [
-                'top',                  'person',
-                'organizationalPerson', 'user',
-                'computer'
-            ],
+            sAMAccountName       => $samName,
+            userPrincipalName    => "host/$fqdn\@$realm",
+            servicePrincipalName => [ "host/$fqdn", "cifs/$fqdn", "host/$hn" ],
+            dNSHostName          => $fqdn,
+            cn                   => $cn,
+            objectclass          => [ 'top', 'person', 'organizationalPerson', 'user', 'computer' ],
 
             unicodePwd         => $self->_MakeUnicode($pw),
             userAccountControl => $UAC_COMPUTER_ACCOUNT,
@@ -757,9 +744,7 @@ sub Delete_Unix_Host {
     my $hn = $fqdn;
     $hn =~ s|\..*||gio;
 
-    foreach
-        my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" )
-    {
+    foreach my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" ) {
         foreach my $suffix ( "", "1", "2" ) {
             my $userid = $baseuser . $suffix;
             my $dn     = $self->_GetDN($userid);
@@ -1139,7 +1124,7 @@ sub GetAttributesMatch {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
         || return undef;
     my $cookie;
 
@@ -1201,8 +1186,7 @@ sub GetAttributesMatch {
 
                 if ( $name =~ /(.*);range=/o ) {
                     my $aname = $1;
-                    $info->{$aname}
-                        = $self->_GetLargeAttribute( $entry->dn, $aname );
+                    $info->{$aname} = $self->_GetLargeAttribute( $entry->dn, $aname );
                 }
                 else {
 
@@ -1241,8 +1225,7 @@ sub _WrapCB {
 
             if ( $name =~ /(.*);range=/o ) {
                 my $aname = $1;
-                $info->{$aname}
-                    = $self->_GetLargeAttribute( $entry->dn, $aname );
+                $info->{$aname} = $self->_GetLargeAttribute( $entry->dn, $aname );
             }
             else {
 
@@ -1360,7 +1343,7 @@ sub GetAttributesMatchCB {
     my $whichattrib = $opts{attributes};
     my $maxrecords  = $opts{maxrecords};
     my $base        = $opts{base} || $self->{basedn};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
+    my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
         || return undef;
     my $cookie;
 
@@ -1645,8 +1628,7 @@ sub GetUserAccountControl {
     my $self = shift;
     my $userid = shift || return "must specify userid";
 
-    my $info
-        = $self->GetAttributes( $userid, attributes => [userAccountControl] );
+    my $info = $self->GetAttributes( $userid, attributes => [userAccountControl] );
     if ( defined($info) ) {
         my ($uac) = @{ $info->{userAccountControl} };
         return int($uac);
@@ -1775,8 +1757,7 @@ sub ParseProtocolSettings {
 
     my ( $type, @subfields ) = split( /\xC2\xA7/, $ps );
     if ( $type eq "POP3" ) {
-        my ( $enable, $defaults, $mime, $charset, $richtext, @others )
-            = @subfields;
+        my ( $enable, $defaults, $mime, $charset, $richtext, @others ) = @subfields;
 
         if   ( $enable == 1 ) { push( @res, "POP3-Enabled" ); }
         else                  { push( @res, "POP3-Disabled" ); }
@@ -1863,8 +1844,7 @@ sub _ModifyUACBits {
 
     $debug && print "old uac = $old_uac\n";
 
-    $debug && print join( "\n", $self->ParseUserAccountControl($old_uac) ),
-        "\n";
+    $debug && print join( "\n", $self->ParseUserAccountControl($old_uac) ), "\n";
 
     #	$debug && printf "\t%.8X/%d | %.8X/%d == %.8X/%d\n",
     #		$new_uac, $new_uac, $set, $set,
@@ -1880,8 +1860,7 @@ sub _ModifyUACBits {
 
     # Add in bits that should be set
     $debug && print "new uac = $new_uac\n";
-    $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ),
-        "\n";
+    $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ), "\n";
 
     my $res = $self->SetAttributes(
         userid     => $userid,
@@ -1960,6 +1939,55 @@ sub MoveUser {
         return $ErrorMsg;
     }
     return undef;
+}
+
+# Begin-Doc
+# Name: LookupDC
+# Syntax: @hosts = &UMR::SysProg::ADSObject::LookupDC($domain)
+# Syntax: @hosts = $self->LookupDC($domain)
+# Description: Looks up domain controllers via SRV records in DNS for a domain, returns in preferred order
+# End-Doc
+sub LookupDC {
+    my $domain = shift;
+    if ( ref($domain) ) {
+        $domain = shift;
+    }
+
+    # Hardwire for efficiency
+    if ( $domain eq "mst.edu" ) {
+        return ("mst-dc.mst.edu");
+    }
+
+    eval "use Net::DNS qw(rrsort);";
+
+    my $res = new Net::DNS::Resolver();
+
+    my $query = $res->query( "_ldap._tcp.dc._msdcs.${domain}", "SRV" );
+    my @rr;
+
+    if ($query) {
+        foreach my $rr ( grep { $_->type eq 'SRV' } $query->answer ) {
+            push( @rr, $rr );
+        }
+    }
+    else {
+        $UMR::SysProg::ADSObject::ErrorMsg = "dns query failed for domain ($domain): " . $res->errorstring;
+        return ();
+    }
+
+    my @prisorted = rrsort( "SRV", "priority", @rr );
+    return map { $_->target } @prisorted;
+}
+
+# Begin-Doc
+# Name: LookupGC
+# Syntax: @hosts = &UMR::SysProg::ADSObject::LookupGC($domain)
+# Syntax: @hosts = $self->LookupGC($domain)
+# Description: Looks up global catalogs via SRV records in DNS for a domain, returns in preferred order
+# Comments: NOTE - this is hardwired right now to look up the same as the DC... needs to be reworked to look up forest/etc.
+# End-Doc
+sub LookupGC {
+    return &LookupDC(@_);
 }
 
 1;
