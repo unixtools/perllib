@@ -118,10 +118,12 @@ sub new {
 
         # This is not going to work usually since it's not the forest, but hardwired
         # response will work for now
-        $server ||= &LookupGC($domain);
+        my ($srv) = &LookupGC($domain);
+        $server ||= $srv;
     }
     else {
-        $server ||= &LookupDC($domain);
+        my ($srv) = &LookupDC($domain);
+        $server ||= $srv;
     }
 
     $pref_debug && print "using server ($server)\n";
