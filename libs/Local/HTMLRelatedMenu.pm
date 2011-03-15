@@ -1,3 +1,9 @@
+#
+# This file is licensed under the Perl Artistic License 2.0 - http://www.opensource.org/licenses/artistic-license-2.0
+# Development copy of this package available from: http://svn.unixtools.org/perllib
+# Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
+#
+
 
 =pod
 
