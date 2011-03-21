@@ -15,6 +15,8 @@ Requires: authorization in privsys to actually stash password, and host set up t
 Comment: Note - modules such as the oracle module typically default to using AuthSrv
 behind the scenes, so you shouldn't usually have to use AuthSrv directly yourself.
 
+Authsrv tools themselves must also be installed.
+
 Example: 
 use Local::OracleObject;
 use Local::AuthSrv;
