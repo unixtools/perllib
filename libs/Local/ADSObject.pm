@@ -15,6 +15,7 @@ use Net::LDAP::Constant qw( LDAP_CONTROL_PAGED );
 use Net::LDAP::LDIF;
 use Net::DNS;
 use Local::AuthSrv;
+use Local::CurrentUser;
 use Math::BigInt;    # should do with eval instead perhaps
 
 # Begin-Doc
@@ -164,7 +165,10 @@ sub new {
         }
     }
 
-    my $user = $info{user}     || ( getpwuid($>) )[0];
+    my $user = $info{user};
+    if ( !$user ) {
+        $user = &Local_CurrentUser();
+    }
     my $pw   = $info{password} || &AuthSrv_Fetch(
         user     => $user,
         instance => 'ads'
