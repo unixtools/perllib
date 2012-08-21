@@ -98,6 +98,8 @@ sub AuthSrv_Fetch {
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
+        no warnings;
+
         open( AUTHSRV_SV_STDERR, ">&STDERR" );
         close(STDERR);
 
