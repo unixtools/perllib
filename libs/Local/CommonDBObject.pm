@@ -186,7 +186,7 @@ sub SQL_LastParams {
 Begin-Doc
 Name: SQL_Error
 Type: method
-Description: generates a textual error message with oracle error info
+Description: generates a textual error message with query error info
 Syntax: $obj->SQL_Error($qry);
 Comments: Prints out an plain text error message with '$qry' listed in
                 the error message for reference.
@@ -210,7 +210,7 @@ sub SQL_Error {
 Begin-Doc
 Name: SQL_HTMLError
 Type: method
-Description: generates a html error message with oracle error info
+Description: generates a html error message with query error info
 Syntax: $obj->SQL_HTMLError($qry);
 Comments: Prints out an HTML'ized error message with '$qry' listed in
                 the error message for reference.
@@ -570,7 +570,6 @@ Name: SQL_AssocArray
 Type: method
 Description: runs query and returns keyed hash, useful for lookup tables
 Syntax: %hash = $obj->SQL_AssocArray($where, $table, $key, $valuefields);
-Comments: Don't use this.
 End-Doc
 =cut
 
@@ -609,15 +608,15 @@ Type: method
 Description: fetches a single row
 Syntax: @row = $obj->SQL_FetchRow($cid)
 Comments: Returns a single row from a query.  Columns are returned in
-        the order specified in the SQL query.  The function returns a value of
-        &quot;undef&quot; when no more rows remain.
+        the order specified in the SQL query.  The function returns 
+        an empty array when no more rows remain.
 
 End-Doc
 =cut
 
 sub SQL_FetchRow {
     my ( $self, $cid ) = @_;
-    return $cid->fetchrow;
+    return $cid->fetchrow_array;
 }
 
 =begin
@@ -626,9 +625,9 @@ Name: SQL_FetchRowRef
 Type: method
 Description: fetches a single row, returns array reference
 Syntax: $rowarrayref = $obj->SQL_FetchRowRef($cid)
-Comments: Returns a single row from a query.  Columns are returned in
-        the order specified in the SQL query.  The function returns a value of
-        &quot;undef&quot; when no more rows remain.
+Comments: Returns a single row from a query as an array reference.  
+        Columns are returned in the order specified in the SQL query.  
+        The function returns undef when no more rows remain.
 
 End-Doc
 =cut
@@ -732,7 +731,7 @@ Type: method
 Description: returns information on columns returned by a query
 Syntax: $hash = $obj->SQL_ColumnInfo()
 Comments: Returns a hash with keys numcols, colnames, coltypes, precision, scale. All except numcols are
-arrays. Column types, precision, and scale are going to be database driver specific. See DBD::Oracle documentation
+arrays. Column types, precision, and scale are going to be database driver specific. See DBI documentation
 for more specifics. Typically use only the colnames element, or use all of the fields for comparison purposes.
 End-Doc
 =cut
