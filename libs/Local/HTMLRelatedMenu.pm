@@ -228,14 +228,15 @@ sub GenerateBody {
 
     my $pname = $opts{procname} || $self->{procname};
 
-    my $primary_selected 
-        = $opts{primary_selected}
-        || $self->{primary_selected}
-        || undef;
-    my $secondary_selected 
-        = $opts{secondary_selected}
-        || $self->{secondary_selected}
-        || undef;
+    my $primary_selected   = $opts{primary_selected};
+    my $secondary_selected = $opts{secondary_selected};
+
+    if ( !defined($primary_selected) ) {
+        $primary_selected = $self->{primary_selected};
+    }
+    if ( !defined($secondary_selected) ) {
+        $secondary_selected = $self->{secondary_selected};
+    }
 
     $res .= "<SELECT NAME=\"$priname\" onChange=\"$pname(this.form.$secname, this.selectedIndex)\">\n";
 
