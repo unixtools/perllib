@@ -613,6 +613,9 @@ sub UpdateSecurityGroupDetails {
     my $uid    = $info{uid};
     my $dname  = $info{displayname} || "S&T $group";
 
+    my $pdname = $dname;
+    $pdname =~ s/\&//go;
+
     my @uid;
     if ($uid) {
         push( @uid, "msSFU30GidNumber" => $uid );
@@ -622,7 +625,7 @@ sub UpdateSecurityGroupDetails {
         userid     => $group,
         attributes => [
             displayName          => $dname,
-            displayNamePrintable => $dname,
+            displayNamePrintable => $pdname,
             mail                 => "$group\@mst.edu",
             mailNickname         => $group,
             @uid,
@@ -661,7 +664,6 @@ sub Create_Unix_Host {
 
     my $realm = "MST.EDU";
 
-    my $cn = $fqdn;
     my $cn = $hn;
     my $dn = "CN=$cn,OU=Unix,OU=Servers,DC=mst,DC=edu";
 
@@ -711,14 +713,13 @@ sub Create_Unix_Host {
         return "create principal failed: " . $crtprinc->error . "\n";
     }
 
-    my $res = $self->_ModifyUACBits(
+    $res = $self->_ModifyUACBits(
         userid => $samName,
         reset  => $UAC_PW_NOT_REQUIRED,
     );
     if ($res) { return $res; }
 
     return undef;
-
 }
 
 # Begin-Doc
@@ -968,7 +969,7 @@ sub GetMailboxUserList {
 # Name: GetAttributes
 # Type: method
 # Description: Returns all attributes associated with a userid
-# Syntax: $info = $ad->GetAttributes($userid, [attributes => [attriblist], [base => "basedn"])
+# Syntax: $info = $ad->GetAttributes($userid, [attributes => [attriblist]], [base => "basedn"])
 # Returns: hash reference, elements are the ldap keys for each attribute, values are array references
 # Comments: In most cases, the array will only have a single element, in some there will be multiple elements.
 # Comments: can optionally specify list of specific attributes to retrieve,
@@ -1917,7 +1918,7 @@ sub MoveUser {
     );
     if ( $tmpres->code ) {
         $self->debug && print "Search failed: " . $res->error . "\n";
-        $ErrorMsg = "create failed: " . $res->error;
+        $ErrorMsg = "search failed: " . $res->error;
         return $ErrorMsg;
     }
 
