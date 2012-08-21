@@ -566,6 +566,9 @@ sub CreateSecurityGroup {
     $group = $info{group};
     my $dname = $info{displayname} || "S&T $group";
 
+    my $pdname = $dname;
+    $pdname =~ s/\&//go;
+
     my $ou = "OU=Netgroups,OU=Services - Campus," . $self->{basedn};
     my $dn = "CN=$group,$ou";
 
@@ -578,7 +581,7 @@ sub CreateSecurityGroup {
             sAMAccountName       => $group,
             name                 => $group,
             displayName          => $dname,
-            displayNamePrintable => $dname,
+            displayNamePrintable => $pdname,
             objectclass          => [ 'top', 'group' ],
             groupType            => -2147483640
         ]
