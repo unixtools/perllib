@@ -432,7 +432,7 @@ sub SetPassword {
     $userid   = $info{userid}   || return "need a userid\n";
     $password = $info{password} || return "need new password\n";
 
-    eval "use Sys::Syslog;";
+    eval "use Sys::Syslog";
     if ( !$@ ) {
         my $rh = $ENV{HTTP_X_FORWARDED_FOR} || $ENV{REMOTE_HOST};
         syslog( "info", "ADSObject SetPassword ($userid) by " . $ENV{REMOTE_USER} . " from host " . $rh );
