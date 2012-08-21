@@ -7,7 +7,6 @@
 package Local::ADSObject;
 require 5.000;
 require Exporter;
-use DBI;
 use Net::LDAPS;
 use Net::LDAP;
 use Net::LDAP::Search;
@@ -854,7 +853,7 @@ sub GetUserList {
         );
         if ( $res->code ) {
             $self->debug && print "Search failed: " . $res->error . "\n";
-            $ErrorMsg = "create failed: " . $res->error;
+            $ErrorMsg = "search failed: " . $res->error;
             return undef;
         }
 
