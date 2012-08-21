@@ -291,7 +291,7 @@ sub _pop_block {
     my $actual = $self->_peek_block();
     if ( $block ne $actual ) {
         print "<!-- pop block attempted for $block, got $actual -->";
-        $self->ErrorExit( "Invalid block nesting. Attempted closure of '$block', got '$actual'." );
+        $self->ErrorExit("Invalid block nesting. Attempted closure of '$block', got '$actual'.");
     }
 
     pop( @{ $self->{open_blocks} } );
@@ -435,7 +435,7 @@ sub PageHeader {
 
     if ( $self->_check_block_ever_pushed("Page") ) {
         print "<!-- Page block already open! -->";
-        $self->ErrorWarn( "Invalid block nesting. Attempted open of 'Page' inside an already open 'Page'." );
+        $self->ErrorWarn("Invalid block nesting. Attempted open of 'Page' inside an already open 'Page'.");
     }
 
     $self->_push_block("Page");
