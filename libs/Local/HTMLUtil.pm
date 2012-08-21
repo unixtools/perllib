@@ -88,6 +88,7 @@ my $HTMLUtil_Sent_CType = 0;
 # Syntax: $cgi = &HTMLGetCGI();
 # Description: Returns reference to the CGI module object that HTMLUtil uses internally
 # Comments: Must be called AFTER &HTMLGetRequest.
+# End-Doc
 sub HTMLGetCGI {
     return $CGI;
 }
@@ -344,12 +345,12 @@ sub HTMLReset {
 # Name: HTMLStartForm
 # Type: function
 # Description: Prints out an opening form tag
-# Syntax: &HTMLStartForm($action,$method);
-# Comments: Prints out an opening form tag, method of POST, with action
+# Syntax: &HTMLStartForm($action,[$method,[$name]]);
+# Comments: Prints out an opening form tag, method of POST (or $method), with action $action, and optional form name $name
 # being $url.
 # End-Doc
 sub HTMLStartForm {
-    my ( $ACTION, $METHOD, $ENCODING ) = @_;
+    my ( $ACTION, $METHOD, $NAME ) = @_;
 
     if ( $ACTION eq "" ) { $ACTION = &HTMLScriptURL(); }
 
@@ -357,21 +358,30 @@ sub HTMLStartForm {
         $METHOD = "POST";
     }
 
-    print "<form method=$METHOD action=\"$ACTION\">";
+    print "<form method=$METHOD action=\"$ACTION\" ";
+    if ( $NAME ne "" ) {
+        print " name=\"$NAME\" ";
+    }
+    print ">";
 }
 
 # Begin-Doc
 # Name: HTMLStartMultiForm
 # Type: function
 # Description: Prints out an open form tag for a multipart form
-# Syntax: &HTMLStartForm($action);
+# Syntax: &HTMLStartForm($action, [$name]);
+# Comments: Prints out an opening form tag, method must be POST, with action $action, and optional form name $name
 # End-Doc
 sub HTMLStartMultiForm {
-    my ($ACTION) = @_;
+    my ( $ACTION, $NAME ) = @_;
 
     if ( $ACTION eq "" ) { $ACTION = &HTMLScriptURL(); }
 
-    print "<form method=POST enctype=\"multipart/form-data\" action=\"$ACTION\">";
+    print "<form method=POST enctype=\"multipart/form-data\" action=\"$ACTION\" ";
+    if ( $NAME ne "" ) {
+        print " name=\"$NAME\" ";
+    }
+    print ">";
 }
 
 # Begin-Doc
