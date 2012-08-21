@@ -572,6 +572,7 @@ sub CreateSecurityGroup {
 
     my $pdname = $dname;
     $pdname =~ s/\&//go;
+    $pdname =~ s/\_//go;
 
     my $ou = "OU=Netgroups,OU=Services - Campus," . $self->{basedn};
     my $dn = "CN=$group,$ou";
@@ -619,6 +620,7 @@ sub UpdateSecurityGroupDetails {
 
     my $pdname = $dname;
     $pdname =~ s/\&//go;
+    $pdname =~ s/\_//go;
 
     my @uid;
     if ($uid) {
