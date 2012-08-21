@@ -72,6 +72,9 @@ my $AUTHSRV_AUTH_EXEC;
 # End-Doc
 sub AuthSrv_SetPathPrefix {
     my $prefix = shift;
+    if ( !defined($prefix) ) {
+        $prefix = "";
+    }
 
     $AUTHSRV_ENCRYPT   = $prefix . "authsrv-encrypt";
     $AUTHSRV_DECRYPT   = $prefix . "authsrv-decrypt";
