@@ -115,25 +115,21 @@ sub configure {
     my $config = $self->{config};
 
     # parameters loaded from initialization
-    $config->{title}         = $opts{title} || "Web Application";
-    $config->{apptitle}      = $opts{apptitle};
-    $config->{headerimage}   = $opts{headerimage};
-    $config->{stylesheet}    = $opts{stylesheet};
-    $config->{style}         = $opts{style};
-    $config->{contact_url}   = $opts{contact_url};
-    $config->{app_url}       = $opts{app_url};
-    $config->{head_extra}    = $opts{head_extra};
-    $config->{contact_label} = $opts{contact_label};
-
-    $config->{refresh_time} = $opts{refresh_time};
-    $config->{refresh_url}  = $opts{refresh_url};
-
-    $config->{disable_auto_header} = $opts{disable_auto_header};
-    $config->{disable_auto_ctype}  = $opts{disable_auto_ctype};
+    if ( !$config->{title} ) {
+        $config->{title} = "Web Application";
+    }
+    foreach my $field (
+        qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype)
+        )
+    {
+        if ( exists( $opts{$field} ) ) {
+            $config->{$field} = $opts{$field};
+        }
+    }
 
     my $at_env_path = $ENV{APPTEMPLATE_PATH};
 
-    if ( defined( $opts{template_path} ) ) {
+    if ( exists( $opts{template_path} ) ) {
         if ( !ref( $opts{template_path} ) ) {
             $config->{template_path} = [ $opts{template_path} ];
         }
@@ -141,18 +137,20 @@ sub configure {
             $config->{template_path} = $opts{template_path};
         }
     }
-    elsif ( $at_env_path =~ m|^https*://.*| ) {
-        $config->{template_path} = [$at_env_path];
+    elsif ( !$config->{template_path} ) {
+        if ( $at_env_path =~ m|^https*://.*| ) {
+            $config->{template_path} = [$at_env_path];
+        }
     }
-    else {
-        $config->{template_path} = ["/local/apptmpl/html"];
-    }
-    $config->{template_cache_dir} = $opts{template_cache_dir};
 
-    if ( $opts{quiet} ) {
+    if ( exists( $opts{template_cache_dir} ) ) {
+        $config->{template_cache_dir} = $opts{template_cache_dir};
+    }
+
+    if ( exists( $opts{quiet} ) ) {
         $config->{quiet} = $opts{quiet};
     }
-    else {
+    elsif ( !exists( $config->{quiet} ) ) {
         $config->{quiet} = 0;
     }
 }
@@ -179,14 +177,14 @@ sub _load_template {
     my $text;
     foreach my $location ( @{ $config->{template_path} } ) {
         if ( -f $location ) {
-            open( TEMPLATE_IN, "<", $location );
-            $text = join( "", <TEMPLATE_IN> );
-            close(TEMPLATE_IN);
+            open( my $tfh, "<", $location );
+            $text = join( "", <$tfh> );
+            close($tfh);
         }
         elsif ( -f "$location/index.html" ) {
-            open( TEMPLATE_IN, "<", $location . "/index.html" );
-            $text = join( "", <TEMPLATE_IN> );
-            close(TEMPLATE_IN);
+            open( my $tfh, "<", $location . "/index.html" );
+            $text = join( "", <$tfh> );
+            close($tfh);
         }
         elsif ( $location =~ m{^(http|https|ftp|file)://} ) {
             my $cache = $config->{template_cache_dir};
@@ -236,9 +234,9 @@ sub _load_template {
                 }
 
                 if ( -f $cachefilename ) {
-                    open( TEMPLATE_IN, "<$cachefilename" );
-                    $text = join( "", <TEMPLATE_IN> );
-                    close(TEMPLATE_IN);
+                    open( my $tfh, "<$cachefilename" );
+                    $text = join( "", <$tfh> );
+                    close($tfh);
                 }
             }
             else {
@@ -351,8 +349,8 @@ sub _filter {
 
     my $app_header_image = $config->{headerimage};
 
-    my $app_head_pre  = "";
-    my $app_head_post = "";
+    my $app_head_pre;
+    my $app_head_post;
 
     if ( $app_env ne "prod" ) {
         my $app_env_label = "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
@@ -400,7 +398,7 @@ sub _filter {
     my $remuser = $self->Encode( $ENV{REMOTE_USER} );
     $text =~ s/__REMOTE_USER__/$remuser/g;
 
-    my $remhost = $self->Encode( $ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} );
+    my $remhost = $self->Encode( $ENV{HTTP_X_FORWARDED_FOR} || $ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} );
     $text =~ s/__REMOTE_HOST__/$remhost/g;
 
     my $elaptime = ( time - $^T ) . " seconds";
@@ -531,7 +529,7 @@ sub RequirePriv {
 # End-Doc
 sub RequireAnyPriv {
     my $self  = shift;
-    my @codes = shift;
+    my @codes = @_;
 
     eval "use Local::PrivSys";
 
@@ -553,7 +551,7 @@ sub RequireAnyPriv {
 # End-Doc
 sub RequireAllPrivs {
     my $self  = shift;
-    my @codes = shift;
+    my @codes = @_;
 
     eval "use Local::PrivSys";
 
@@ -605,9 +603,9 @@ sub PrivErrorExit {
     print "<td colspan=2 align=left>";
     print "<p>You do not have the permissions required to access this application.\n";
     print "</p><p>Please contact the owner or administrator of this application in order\n";
-    print "to obtain the necessary access if you want to use it.<\/p><p>Please include\n";
+    print "to obtain the necessary access if you want to use it.</p><p>Please include\n";
     print "the URL of this application as well as the privilege code below in any\n";
-    print "support request<\/p>.";
+    print "support request.</p>";
     print "</td>\n";
     $self->EndInnerRow();
 
@@ -822,11 +820,11 @@ sub ErrorSQLHelper {
     }
 
     if ( !$quiet ) {
-        print "<br><font size=-1>";
+        print "<br/><font size=-1>";
         print
-            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
+            "<a href=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsShow';void(0)\">Show Details</a> | ";
         print
-            "<A HREF=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
+            "<a href=\"javascript:document.getElementById('errorBlockDetails').className='errorBlockDetailsHide';void(0)\">Hide Details</a>\n";
         print "</font>\n";
     }
 
@@ -1003,7 +1001,8 @@ sub StartInnerTable {
         foreach my $header (@headers) {
             my $th = $header;
             $th = $self->Encode($header);
-            $th =~ s/&lt;br&gt;/<br>/gio;
+            $th =~ s|&lt;br&gt;|<br/>|gio;
+            $th =~ s|&lt;br/&gt;|<br/>|gio;
             print "<th><b>${th}</b></th>\n";
         }
         $self->EndInnerHeaderRow();
