@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -27,50 +26,51 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-  HTMLGetCGI
+    HTMLGetCGI
 
-  HTMLScriptURL
-  HTMLInputFile
-  HTMLGetFile
-  HTMLInputText
-  HTMLInputPassword
-  HTMLTextArea
-  HTMLLink
-  HTMLRadioButton
-  HTMLHidden
-  HTMLCheckbox
-  HTMLSubmit
-  HTMLReset
-  HTMLStartMultiForm
-  HTMLStartForm
-  HTMLEndForm
-  HTMLStartSelect
-  HTMLSelectAssocArray
-  HTMLSelectArray
-  HTMLEndSelect
-  HTMLSelectItem
-  HTMLButton
-  HTMLRule
-  HTMLPre
-  HTMLEndPre
-  HTMLTitle
-  HTMLAddress
-  HTMLFooter
-  HTMLStatusHeader
-  HTMLContentType
-  HTMLSentContentType
-  HTMLGetRequest
+    HTMLScriptURL
+    HTMLInputFile
+    HTMLGetFile
+    HTMLInputText
+    HTMLInputPassword
+    HTMLTextArea
+    HTMLLink
+    HTMLRadioButton
+    HTMLHidden
+    HTMLCheckbox
+    HTMLSubmit
+    HTMLReset
+    HTMLStartMultiForm
+    HTMLStartForm
+    HTMLEndForm
+    HTMLStartSelect
+    HTMLSelectAssocArray
+    HTMLSelectArray
+    HTMLEndSelect
+    HTMLSelectItem
+    HTMLButton
+    HTMLRule
+    HTMLPre
+    HTMLEndPre
+    HTMLTitle
+    HTMLAddress
+    HTMLFooter
+    HTMLStatusHeader
+    HTMLContentType
+    HTMLSentContentType
+    HTMLGetRequest
 
-  HTMLGetCookies
-  HTMLSetCookies
+    HTMLGetCookies
+    HTMLSetCookies
 
-  %rqpairs
+    %rqpairs
 );
 
 BEGIN {
+
     # since we may not be running under cgiwrap, for easier error management
     if ( $ENV{REQUEST_METHOD} ) {
-       open( STDERR, ">&STDOUT" );
+        open( STDERR, ">&STDOUT" );
     }
 }
 
@@ -371,8 +371,7 @@ sub HTMLStartMultiForm {
 
     if ( $ACTION eq "" ) { $ACTION = &HTMLScriptURL(); }
 
-    print
-      "<form method=POST enctype=\"multipart/form-data\" action=\"$ACTION\">";
+    print "<form method=POST enctype=\"multipart/form-data\" action=\"$ACTION\">";
 }
 
 # Begin-Doc
@@ -689,7 +688,7 @@ sub HTMLGetRequest {
     }
     *main::in = *main::rqpairs;
 
-# If we're running under mod_perl, to keep semantics, export into callers namespace as well
+    # If we're running under mod_perl, to keep semantics, export into callers namespace as well
     my ($pkg) = caller(0);
     if ( $pkg =~ /^ModPerl/ ) {
         no strict "refs";
@@ -734,14 +733,10 @@ sub HTMLGetCookies {
 sub HTMLSetCookies {
     my @cookies = @_;
     my $time    = time;
-    my ( $cookie, $exp, $offset, $unit, $change, @date, $datestr,
-        $cookie_string );
+    my ( $cookie, $exp, $offset, $unit, $change, @date, $datestr, $cookie_string );
 
     my @days = ( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
-    my @months = (
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    );
+    my @months = ( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
 
     foreach $cookie (@cookies) {
         my %data = %{$cookie};
@@ -761,7 +756,7 @@ sub HTMLSetCookies {
             else                   { $change = 0 }
             @date = gmtime( $time + $change );
 
-# this seems to work, MSIE doesn't follow the rfc for cookies DD-MON-YYYY date format
+            # this seems to work, MSIE doesn't follow the rfc for cookies DD-MON-YYYY date format
             $datestr = sprintf(
                 "%s, %.2d %s %.4d %.2d:%.2d:%.2d GMT",
                 $days[ $date[6] ],
@@ -783,10 +778,10 @@ sub HTMLSetCookies {
     @date = gmtime($time);
     $datestr
         = "Date: "
-      . $days[ $date[6] ]
-      . ", $date[3] $months[$date[4]] "
-      . ( $date[5] + 1900 )
-      . " $date[2]:$date[1]:$date[0] GMT";
+        . $days[ $date[6] ]
+        . ", $date[3] $months[$date[4]] "
+        . ( $date[5] + 1900 )
+        . " $date[2]:$date[1]:$date[0] GMT";
     $cookie_string .= $datestr . "\n";
 
     print $cookie_string;
