@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =pod
 
 Begin-Doc
@@ -79,9 +78,7 @@ sub AUTOLOAD {
         my $a = shift @args;
         if ( scalar(@args) > 0 ) {
             my $b = shift @args;
-            push( @content_pieces,
-                      URI::Escape::uri_escape($a) . "="
-                    . URI::Escape::uri_escape($b) );
+            push( @content_pieces, URI::Escape::uri_escape($a) . "=" . URI::Escape::uri_escape($b) );
         }
         else {
             push( @content_pieces, URI::Escape::uri_escape($a) );
@@ -204,8 +201,7 @@ sub new {
 
     $tmp->{password} = $opts{password};
     if ( $tmp->{authenticate} && !defined( $tmp->{password} ) ) {
-        $tmp->{password}
-            = &AuthSrv_Fetch( user  => $tmp->{user}, instance => "ads" )
+        $tmp->{password} = &AuthSrv_Fetch( user => $tmp->{user}, instance => "ads" )
             || &AuthSrv_Fetch( user => $tmp->{user}, instance => "afs" );
     }
 
