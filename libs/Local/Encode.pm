@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 Begin-Doc
 Name: Local::Encode
@@ -24,10 +23,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-  Encode_URLEncode
-  Encode_URLDecode
-  Encode_HTMLEncode
-  Encode_HTMLDecode
+    Encode_URLEncode
+    Encode_URLDecode
+    Encode_HTMLEncode
+    Encode_HTMLDecode
 );
 
 # Begin-Doc

@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -49,8 +48,7 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $dsn
-            = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=$database";
+        $dsn = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=$database";
         my $dbh = DBI->connect($dsn);
         return undef unless $dbh;
 

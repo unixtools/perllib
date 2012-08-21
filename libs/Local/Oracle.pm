@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -36,13 +35,13 @@ use Local::OracleObject;
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(SQL_Error SQL_HTMLError SQL_AssocArray
-  SQL_OpenDatabase SQL_CloseDatabase SQL_OpenQuery
-  SQL_CloseQuery SQL_ExecQuery SQL_DoQuery SQL_FetchRow SQL_ErrorCode
-  SQL_ErrorString SQL_SerialNumber SQL_CurrentDatabase
-  SQL_QuoteString SQL_Databases SQL_OpenBoundQuery
-  SQL_Commit SQL_RollBack SQL_AutoCommit SQL_FetchAllRows
-  SQL_RowCount
-  SQL_ColumnInfo
+    SQL_OpenDatabase SQL_CloseDatabase SQL_OpenQuery
+    SQL_CloseQuery SQL_ExecQuery SQL_DoQuery SQL_FetchRow SQL_ErrorCode
+    SQL_ErrorString SQL_SerialNumber SQL_CurrentDatabase
+    SQL_QuoteString SQL_Databases SQL_OpenBoundQuery
+    SQL_Commit SQL_RollBack SQL_AutoCommit SQL_FetchAllRows
+    SQL_RowCount
+    SQL_ColumnInfo
 );
 
 $DBH = new Local::OracleObject;

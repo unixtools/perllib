@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -60,7 +59,6 @@ sub checkerr {
     }
 }
 
-
 =begin
 Begin-Doc
 Name: SQL_OpenDatabase
@@ -104,8 +102,7 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $self->dbhandle(
-            DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
+        $self->dbhandle( DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
 
         if ( defined $self->dbhandle ) {
             $self->dbhandle->{PrintError}  = 0;
@@ -114,8 +111,8 @@ sub SQL_OpenDatabase {
         }
     }
 
-# Reset signal handler to default that was set in perl instead of the dorked up one provided by oracle
-# This looks like a no-op, but it gets the state in perl back to the real state
+    # Reset signal handler to default that was set in perl instead of the dorked up one provided by oracle
+    # This looks like a no-op, but it gets the state in perl back to the real state
     $SIG{INT} = $SIG{INT};
 
     return defined( $self->dbhandle );

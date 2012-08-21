@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 Begin-Doc
 Name: Local::ParallelRun
@@ -268,7 +267,7 @@ sub _startjob {
         my $dcore = $ret & 127;
         my $sig   = $ret & 128;
         $self->{debug}
-          && print "$$: return=$ret res=$res dcore=$dcore sig=$sig\n";
+            && print "$$: return=$ret res=$res dcore=$dcore sig=$sig\n";
         $self->{debug} && print "$$: done\n";
         exit( $? >> 8 );
     }
@@ -320,7 +319,7 @@ sub run {
             my $wait_corestatus = $? & 128;
 
             $self->{debug}
-              && print "Pid ($wait_pid) died with status ($wait_exitstatus).\n";
+                && print "Pid ($wait_pid) died with status ($wait_exitstatus).\n";
             my $tag = $self->{pid_to_job}->{$wait_pid};
             if ( $tag >= 0 ) {
                 $self->{jobstate}->{$tag} = $STATE_DONE;

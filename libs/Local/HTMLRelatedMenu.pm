@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =pod
 
 Begin-Doc
@@ -149,7 +148,8 @@ sub GenerateHead {
     my $res      = "";
     my $basename = $opts{basename} || $self->{basename} || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname  = $opts{secondaryname}
+    my $secname 
+        = $opts{secondaryname}
         || $self->{secondaryname}
         || "secondary";
 
@@ -169,25 +169,21 @@ sub GenerateHead {
 
     $res
         .= "function $pname($var_oe,$var_os) {\n"
-      . "\twith ($var_oe) {\n"
-      . "\t\tfor (var $var_i=options.length-1;$var_i>0;$var_i--) options[$var_i]=null;\n"
-      . "\t}\n";
+        . "\twith ($var_oe) {\n"
+        . "\t\tfor (var $var_i=options.length-1;$var_i>0;$var_i--) options[$var_i]=null;\n" . "\t}\n";
 
     my ( $i, $j );
     my @pvals = @{ $self->{primary_values} };
 
-    for ( $i = 0 ; $i <= $#pvals ; $i++ ) {
+    for ( $i = 0; $i <= $#pvals; $i++ ) {
         $res .= "\tif ($var_os==$i){\n";
         $res .= "\t\t$var_newlist = new Array(\n";
 
         my @svals = @{ $self->{secondary_values}->{ $pvals[$i] } };
         my @slabs = @{ $self->{secondary_labels}->{ $pvals[$i] } };
 
-        for ( $j = 0 ; $j <= $#svals ; $j++ ) {
-            $res
-                .= "\t\t\tnew Option(\""
-                . $slabs[$j] . "\",\""
-                . $svals[$j] . "\")";
+        for ( $j = 0; $j <= $#svals; $j++ ) {
+            $res .= "\t\t\tnew Option(\"" . $slabs[$j] . "\",\"" . $svals[$j] . "\")";
             if ( $j != $#svals ) { $res .= ", "; }
             $res .= "\n";
         }
@@ -197,10 +193,10 @@ sub GenerateHead {
 
     $res
         .= "\twith ($var_oe) {\n"
-      . "\t\tfor (var $var_i=0;$var_i<$var_newlist.length;$var_i++) options[$var_i]="
-      . $var_newlist
-      . "[$var_i];\n"
-      . "\t\toptions[0].selected=true;\n" . "\t}\n";
+        . "\t\tfor (var $var_i=0;$var_i<$var_newlist.length;$var_i++) options[$var_i]="
+        . $var_newlist
+        . "[$var_i];\n"
+        . "\t\toptions[0].selected=true;\n" . "\t}\n";
 
     $res .= "}\n";
 
@@ -225,27 +221,29 @@ sub GenerateBody {
 
     my $basename = $opts{basename}    || $self->{basename}    || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname = $opts{secondaryname}
+    my $secname 
+        = $opts{secondaryname}
         || $self->{secondaryname}
         || "secondary";
 
     my $pname = $opts{procname} || $self->{procname};
 
-    my $primary_selected = $opts{primary_selected}
-      || $self->{primary_selected}
-      || undef;
-    my $secondary_selected = $opts{secondary_selected}
-      || $self->{secondary_selected}
-      || undef;
+    my $primary_selected 
+        = $opts{primary_selected}
+        || $self->{primary_selected}
+        || undef;
+    my $secondary_selected 
+        = $opts{secondary_selected}
+        || $self->{secondary_selected}
+        || undef;
 
-    $res
-        .= "<SELECT NAME=\"$priname\" onChange=\"$pname(this.form.$secname, this.selectedIndex)\">\n";
+    $res .= "<SELECT NAME=\"$priname\" onChange=\"$pname(this.form.$secname, this.selectedIndex)\">\n";
 
     my ( $i, $j );
     my @pvals = @{ $self->{primary_values} };
     my @plabs = @{ $self->{primary_labels} };
 
-    for ( $i = 0 ; $i <= $#pvals ; $i++ ) {
+    for ( $i = 0; $i <= $#pvals; $i++ ) {
         $res .= "<OPTION VALUE=\"$pvals[$i]\"";
         if ( $pvals[$i] eq $primary_selected ) {
             $res .= " SELECTED";
@@ -264,7 +262,7 @@ sub GenerateBody {
 
     my @svals = @{ $self->{secondary_values}->{$primary_selected} };
     my @slabs = @{ $self->{secondary_labels}->{$primary_selected} };
-    for ( $i = 0 ; $i <= $#svals ; $i++ ) {
+    for ( $i = 0; $i <= $#svals; $i++ ) {
         $res .= "<OPTION VALUE=\"$svals[$i]\"";
         if ( $svals[$i] eq $secondary_selected ) {
             $res .= " SELECTED";

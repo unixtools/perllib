@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 Begin-Doc
 Name: Local::MSSQLObject
@@ -71,8 +70,7 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $self->dbhandle(
-            DBI->connect( "DBI:Sybase:server=$database", $user, $pass ) );
+        $self->dbhandle( DBI->connect( "DBI:Sybase:server=$database", $user, $pass ) );
     }
 
     return defined( $self->dbhandle );

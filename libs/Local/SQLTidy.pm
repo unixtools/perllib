@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -74,13 +73,12 @@ sub SQLTidy {
         # Replace tabs with 4 spaces by coding standard
         $initial_indent = $2;
         $initial_indent =~ s/\t/    /go;
-        $debug && print "Initial indent: ", length($initial_indent),
-            " spaces.\n";
+        $debug && print "Initial indent: ", length($initial_indent), " spaces.\n";
     }
 
-#
-# Special handling to allow inline selection of a perl sql query with surrounding quotes
-#
+    #
+    # Special handling to allow inline selection of a perl sql query with surrounding quotes
+    #
     if ( $text =~ /^\s*(")(.*)("\s*;*)\s*/so ) {
         $prefix = $1;
         $text   = $2;
@@ -164,9 +162,7 @@ sub SQLTidy {
 
                 if ( $chunk1 ne "" ) {
                     $debug
-                        && print "stripping "
-                        . length($chunk1)
-                        . " bytes ($chunk1) off text (ch1).\n";
+                        && print "stripping " . length($chunk1) . " bytes ($chunk1) off text (ch1).\n";
                     $text = substr( $text, length($chunk1) );
                     $debug && print "text now: $text\n";
                 }
@@ -179,9 +175,7 @@ sub SQLTidy {
 
                 if ( $chunk2 !~ /^[\'\"]/ ) {
                     $debug
-                        && print "stripping "
-                        . length($chunk2)
-                        . " bytes ($chunk2) off text (ch2).\n";
+                        && print "stripping " . length($chunk2) . " bytes ($chunk2) off text (ch2).\n";
                     if ( $chunk2 ne "" ) {
                         $text = substr( $text, length($chunk2) );
                     }
@@ -194,8 +188,7 @@ sub SQLTidy {
             }
             else {
                 if (wantarray) {
-                    return ( $origtext,
-                        "unable to pull off chunk. CurText($text)" );
+                    return ( $origtext, "unable to pull off chunk. CurText($text)" );
                 }
                 else {
                     return $origtext;
@@ -332,9 +325,7 @@ sub SQLTidy {
             $cur_line = "";
             $cur_indent++;
         }
-        elsif ( $lp
-            =~ m{^(from|else|where|order by|group by|having|union|minus)$} )
-        {
+        elsif ( $lp =~ m{^(from|else|where|order by|group by|having|union|minus)$} ) {
             $cur_line =~ s/^\s*//go;
             push( @outlines, "${initial_indent}${this_indent}${cur_line}" );
             $cur_indent--;
@@ -410,8 +401,7 @@ sub SQLTidy {
 
     if ( $orig_data ne $new_data ) {
         $outtext = $origtext;
-        $status
-            = "failed data comparison, failsafe return\n\n$orig_data\n\nvs\n\n$new_data";
+        $status  = "failed data comparison, failsafe return\n\n$orig_data\n\nvs\n\n$new_data";
     }
 
     if (wantarray) {

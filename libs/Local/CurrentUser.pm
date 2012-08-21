@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -44,7 +43,7 @@ sub Local_CurrentUser {
         $user = undef;
     }
 
-# Cache results to avoid repeated getpwuid calls for same uid in same app invocation
+    # Cache results to avoid repeated getpwuid calls for same uid in same app invocation
     if ( !defined($user) ) {
         $cached_curuid = $<;
         eval { $user = ( getpwuid($cached_curuid) )[0]; };

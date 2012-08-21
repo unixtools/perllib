@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -54,7 +53,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-  HTMLImpersonate
+    HTMLImpersonate
 );
 
 # Begin-Doc
@@ -93,17 +92,13 @@ sub HTMLImpersonate {
         $ENV{REMOTE_USER_REAL}        = $realuser;
         $ENV{REMOTE_USER}             = $newuser;
 
-  # write out a log entry here to record the impersonation for tracking purposes
-        syslog "debug",
-          "HTMLImpersonate: %s impersonating %s for application %s",
-          $realuser, $newuser, $0;
+        # write out a log entry here to record the impersonation for tracking purposes
+        syslog "debug", "HTMLImpersonate: %s impersonating %s for application %s", $realuser, $newuser, $0;
     }
     else {
 
-  # write out a log entry here to record the impersonation for tracking purposes
-        syslog "debug",
-          "HTMLImpersonate: %s denied impersonation of %s for application %s",
-          $realuser, $newuser, $0;
+        # write out a log entry here to record the impersonation for tracking purposes
+        syslog "debug", "HTMLImpersonate: %s denied impersonation of %s for application %s", $realuser, $newuser, $0;
     }
 
     return;

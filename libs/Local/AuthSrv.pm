@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 Begin-Doc
 Name: Local::AuthSrv
@@ -164,8 +163,7 @@ sub AuthSrv_Authenticate {
     &LogAPIUsage();
 
     if ( !$use_existing_ccache ) {
-        $ENV{KRB5CCNAME}
-            = "FILE:/tmp/krb5cc_authsrv_u" . $< . "_p" . $$ . "_" . time;
+        $ENV{KRB5CCNAME} = "FILE:/tmp/krb5cc_authsrv_u" . $< . "_p" . $$ . "_" . time;
     }
     elsif ($use_existing_ccache) {
         if ( !defined( $ENV{KRB5CCNAME} ) ) {

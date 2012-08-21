@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -575,8 +574,7 @@ End-Doc
 
 sub SQL_AssocArray {
     my ( $self, $WHERE, $TABLE, $KEY, @VALUE_FIELDS ) = @_;
-    my ( %ASSOC_ARRAY, $KEYVAL, $VALVAL, $qry, $cid, $VALUES, @VAL_FIELDS,
-        @VALVAL );
+    my ( %ASSOC_ARRAY, $KEYVAL, $VALVAL, $qry, $cid, $VALUES, @VAL_FIELDS, @VALVAL );
 
     foreach $VALUES (@VALUE_FIELDS) {
         if ( $VALUES ne "" ) {
@@ -798,7 +796,6 @@ End-Doc
 sub SQL_SerialNumber {
     die "Routine not implemented for this database.";
 }
-
 
 1;
 
