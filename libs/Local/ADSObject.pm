@@ -169,7 +169,7 @@ sub new {
     if ( !$user ) {
         $user = &Local_CurrentUser();
     }
-    my $pw   = $info{password} || &AuthSrv_Fetch(
+    my $pw = $info{password} || &AuthSrv_Fetch(
         user     => $user,
         instance => 'ads'
     );
@@ -1986,10 +1986,9 @@ sub LookupDC {
 
     if ($query) {
         my @rr_array = $query->answer;
-        foreach my $rr ( rrsort("SRV", "priority", @rr_array) ) {
-            if ( $rr )
-            {
-                push(@rr, $rr->target);
+        foreach my $rr ( rrsort( "SRV", "priority", @rr_array ) ) {
+            if ($rr) {
+                push( @rr, $rr->target );
             }
         }
     }
