@@ -165,7 +165,6 @@ sub AuthSrv_Authenticate {
         $user = &Local_CurrentUser();
     }
 
-    &LogAPIUsage();
 
     if ( !$use_existing_ccache ) {
         $ENV{KRB5CCNAME} = "FILE:/tmp/krb5cc_authsrv_u" . $< . "_p" . $$ . "_" . time;
@@ -192,8 +191,6 @@ sub AuthSrv_Authenticate {
 # AuthSrv_Authenticate() is used to clean up tokens that are no longer needed.
 # End-Doc
 sub AuthSrv_Unauthenticate {
-    &LogAPIUsage();
-
     if ( defined( $ENV{KRB5CCNAME} ) ) {
         system("kdestroy >/dev/null 2>&1");
     }
