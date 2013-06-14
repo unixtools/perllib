@@ -338,7 +338,8 @@ sub HTMLSubmit {
 # Syntax: &HTMLReset();
 # End-Doc
 sub HTMLReset {
-    print '<input type="reset">';
+    my ($LABEL) = @_;
+    print "<input type=\"reset\" value=\"$LABEL\">";
 }
 
 # Begin-Doc
