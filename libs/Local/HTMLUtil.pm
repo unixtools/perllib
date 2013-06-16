@@ -339,7 +339,12 @@ sub HTMLSubmit {
 # End-Doc
 sub HTMLReset {
     my ($LABEL) = @_;
-    print "<input type=\"reset\" value=\"$LABEL\">";
+    if ($LABEL) {
+        print "<input type=\"reset\" value=\"$LABEL\">";
+    }
+    else {
+        print "<input type=\"reset\">";
+    }
 }
 
 # Begin-Doc
