@@ -699,6 +699,7 @@ sub HTMLGetRequest {
 
     $CGI = new CGI();
 
+    %main::rqpairs = ();
     foreach my $key ( $CGI->param ) {
         $main::rqpairs{$key} = join( " ", $CGI->param($key) );
     }
