@@ -102,7 +102,12 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $self->dbhandle( DBI->connect( "DBI:Oracle:$database", $user, $pass ) );
+        my @ora_default_signals = ("INT");
+        $self->dbhandle(
+            DBI->connect(
+                "DBI:Oracle:$database", $user, $pass, { ora_connect_with_default_signals => \@ora_default_signals }
+            )
+        );
 
         if ( defined $self->dbhandle ) {
             $self->dbhandle->{PrintError}  = 0;
