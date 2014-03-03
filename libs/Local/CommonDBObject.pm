@@ -668,17 +668,15 @@ End-Doc
 sub SQL_FetchRow_Hash {
     my ( $self, $cid ) = @_;
 
-    my $row = {};
+    my $row  = {};
     my @cols = @{ $cid->{NAME} };
 
     my $fetched = $cid->fetchrow_arrayref;
-    if ( $fetched )
-    {
+    if ($fetched) {
         @$row{@cols} = @$fetched;
         return $row;
     }
-    else
-    {
+    else {
         return ();
     }
 }
@@ -702,13 +700,11 @@ sub SQL_FetchRow_LowerHash {
     my @cols = map { lc($_) } @{ $cid->{NAME} };
 
     my $fetched = $cid->fetchrow_arrayref;
-    if ( $fetched )
-    {
+    if ($fetched) {
         @$row{@cols} = @$fetched;
         return $row;
     }
-    else
-    {
+    else {
         return ();
     }
 }
