@@ -637,6 +637,84 @@ sub SQL_FetchRowRef {
 
 =begin
 Begin-Doc
+Name: SQL_FetchRow_Array
+Type: method
+Description: fetches a single row, returns array reference
+Syntax: $rowarrayref = $obj->SQL_FetchRow_Array($cid)
+Comments: Returns a single row from a query as an array reference.  
+        Columns are returned in the order specified in the SQL query.  
+        The function returns undef when no more rows remain.
+
+End-Doc
+=cut
+
+sub SQL_FetchRow_Array {
+    my ( $self, $cid ) = @_;
+    return $cid->fetchrow_arrayref;
+}
+
+=begin
+Begin-Doc
+Name: SQL_FetchRow_Hash
+Type: method
+Description: fetches a single row, returns hash reference, keys are column names
+Syntax: $rowhashref = $obj->SQL_FetchRow_Hash($cid)
+Comments: Returns a single row from a query as a hash reference.  
+        The function returns undef when no more rows remain.
+
+End-Doc
+=cut
+
+sub SQL_FetchRow_Hash {
+    my ( $self, $cid ) = @_;
+
+    my $row = {};
+    my @cols = @{ $cid->{NAME} };
+
+    my $fetched = $cid->fetchrow_arrayref;
+    if ( $fetched )
+    {
+        @$row{@cols} = @$fetched;
+        return $row;
+    }
+    else
+    {
+        return ();
+    }
+}
+
+=begin
+Begin-Doc
+Name: SQL_FetchRow_LowerHash
+Type: method
+Description: fetches a single row, returns hash reference, keys are lc column names
+Syntax: $rowhashref = $obj->SQL_FetchRow_LowerHash($cid)
+Comments: Returns a single row from a query as a hash reference.  
+        The function returns undef when no more rows remain.
+
+End-Doc
+=cut
+
+sub SQL_FetchRow_LowerHash {
+    my ( $self, $cid ) = @_;
+
+    my $row = {};
+    my @cols = map { lc($_) } @{ $cid->{NAME} };
+
+    my $fetched = $cid->fetchrow_arrayref;
+    if ( $fetched )
+    {
+        @$row{@cols} = @$fetched;
+        return $row;
+    }
+    else
+    {
+        return ();
+    }
+}
+
+=begin
+Begin-Doc
 Name: SQL_FetchAllRows
 Type: method
 Description: returns array ref with all rows from a query
