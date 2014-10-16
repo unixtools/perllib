@@ -248,8 +248,15 @@ sub CallRPC {
     $debug && print "request: $req_content\n";
     $req->content($req_content);
 
-    my $ua  = $self->{ua};
-    my $res = $ua->request($req);
+    my $ua = $self->{ua};
+    my $res;
+    eval {
+        # Exit will be ugly, but will at least function as a timeout
+        local $SIG{ALRM} = sub { die "Timeout in SimpleRPC\n" };
+        alarm( $self->{timeout} );
+        $res = $ua->request($req);
+        alarm(0);
+    };
 
     if ( !$res ) {
         $self->{error} = "Error performing LWP request.";
