@@ -46,6 +46,7 @@ use Local::CurrentUser;
 @ISA    = qw(Exporter);
 @EXPORT = qw(
     AuthSrv_Fetch
+    AuthSrv_FetchRaw
     AuthSrv_Authenticate
     AuthSrv_Unauthenticate
     AuthSrv_SetPathPrefix
@@ -117,6 +118,47 @@ sub AuthSrv_Fetch {
             chomp($line);
             $passwd .= $line;
         }
+        close(AUTHSRV_FETCH_IN);
+
+        open( STDERR, ">&AUTHSRV_SV_STDERR" );
+
+        $AUTHSRV_CACHE->{$user}->{$instance} = $passwd;
+    }
+
+    return $AUTHSRV_CACHE->{$user}->{$instance};
+}
+
+# Begin-Doc
+# Name: AuthSrv_FetchRaw
+# Type: function
+# Description: fetch a stashed password raw - not just a single line
+# Syntax: $pw = &AuthSrv_FetchRaw(instance => $instance, [user => $userid] );
+# Comments: Returns stashed content. 'user' defaults to the
+#       current userid on unix.
+# End-Doc
+sub AuthSrv_FetchRaw {
+    my (%opts) = @_;
+    my $instance = $opts{instance} || return undef;
+    my $user = $opts{user};
+    if ( !defined($user) ) {
+        $user = &Local_CurrentUser();
+    }
+    my $passwd;
+
+    if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
+        no warnings;
+
+        open( AUTHSRV_SV_STDERR, ">&STDERR" );
+        close(STDERR);
+
+        if ( $^O !~ /Win/ ) {
+            open( AUTHSRV_FETCH_IN, "-|" )
+                || exec( $AUTHSRV_DECRYPT, $user, $instance );
+        }
+        else {
+            open( AUTHSRV_FETCH_IN, "$AUTHSRV_DECRYPT $user $instance|" );
+        }
+        $passwd = join("",<AUTHSRV_FETCH_IN>);
         close(AUTHSRV_FETCH_IN);
 
         open( STDERR, ">&AUTHSRV_SV_STDERR" );
