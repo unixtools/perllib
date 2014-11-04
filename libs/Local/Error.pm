@@ -55,7 +55,6 @@ End-Doc
 =cut
 
 package Local::Error;
-require 5.000;
 require Exporter;
 use strict;
 

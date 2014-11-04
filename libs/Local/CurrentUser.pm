@@ -17,7 +17,6 @@ End-Doc
 =cut
 
 package Local::CurrentUser;
-require 5.000;
 require Exporter;
 use strict;
 

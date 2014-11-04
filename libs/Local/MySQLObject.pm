@@ -21,7 +21,6 @@ End-Doc
 =cut
 
 package Local::MySQLObject;
-require 5.000;
 use Exporter;
 use strict;
 

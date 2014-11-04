@@ -36,7 +36,6 @@ End-Doc
 =cut
 
 package Local::AuthSrv;
-require 5.000;
 require Exporter;
 use strict;
 

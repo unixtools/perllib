@@ -15,7 +15,6 @@ End-Doc
 =cut
 
 package Local::HTMLUtil;
-require 5.000;
 require Exporter;
 use strict;
 

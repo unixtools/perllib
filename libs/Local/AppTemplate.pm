@@ -33,7 +33,6 @@ End-Doc
 =cut
 
 package Local::AppTemplate;
-require 5.000;
 require Exporter;
 use strict;
 

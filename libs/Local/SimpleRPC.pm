@@ -16,7 +16,6 @@ End-Doc
 =cut
 
 package Local::SimpleRPC;
-require 5.000;
 require Exporter;
 use strict;
 

@@ -48,7 +48,6 @@ End-Doc
 use strict;
 
 package Local::HTMLRelatedMenu;
-require 5.000;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);

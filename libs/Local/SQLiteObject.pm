@@ -22,7 +22,6 @@ End-Doc
 =cut
 
 package Local::SQLiteObject;
-require 5.000;
 use Exporter;
 use strict;
 

@@ -17,7 +17,6 @@ End-Doc
 =cut
 
 package Local::SQLTidy;
-require 5.000;
 require Exporter;
 use strict;
 
