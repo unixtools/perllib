@@ -13,7 +13,6 @@ End-Doc
 =cut
 
 package Local::Encode;
-require 5.000;
 require Exporter;
 use strict;
 use URI::Escape;

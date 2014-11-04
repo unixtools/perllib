@@ -5,7 +5,6 @@
 #
 
 package Local::ADSObject;
-require 5.000;
 require Exporter;
 use Net::LDAPS;
 use Net::LDAP;

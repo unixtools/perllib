@@ -22,7 +22,6 @@ End-Doc
 =cut
 
 package Local::OracleObject;
-require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
 use Local::Env;

@@ -11,7 +11,6 @@ End-Doc
 =cut
 
 package Local::SetUID;
-require 5.000;
 require Exporter;
 use strict;
 

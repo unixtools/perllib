@@ -51,7 +51,6 @@ End-Doc
 =cut
 
 package Local::CommonDBObject;
-require 5.000;
 use Exporter;
 use DBI qw (:sql_types);
 use strict;

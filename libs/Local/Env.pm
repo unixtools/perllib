@@ -12,7 +12,6 @@ End-Doc
 =cut
 
 package Local::Env;
-require 5.000;
 require Exporter;
 use strict;
 

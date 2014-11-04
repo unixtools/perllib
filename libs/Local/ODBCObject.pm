@@ -22,7 +22,6 @@ End-Doc
 =cut
 
 package Local::ODBCObject;
-require 5.000;
 use Exporter;
 use strict;
 

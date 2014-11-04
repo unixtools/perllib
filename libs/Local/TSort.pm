@@ -18,7 +18,6 @@ End-Doc
 =cut
 
 package Local::TSort;
-require 5.000;
 use Exporter;
 use strict;
 
