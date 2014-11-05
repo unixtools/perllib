@@ -18,11 +18,11 @@ that all users of REMOTE_USER in the code are covered.
 
 NOTE: Be sure and update the bookmarklet with an appropriate base domain for the cookies.
 
-Bookmarklet (Prompts for user): <A HREF="javascript:imuser=prompt(&quot;Username&quot;,&quot;&quot;);document.cookie=&quot;REMOTE_USER_IMPERSONATE=&quot;+escape(imuser)+&quot;;domain=.mst.edu;path=/&quot;;location=location;">Impersonate</A>
+Bookmarklet (Prompts for user): <A HREF="javascript:imuser=prompt(&quot;Username&quot;,&quot;&quot;);document.cookie=&quot;REMOTE_USER_IMPERSONATE=&quot;+escape(imuser)+&quot;;domain=.example.com;path=/&quot;;location=location;">Impersonate</A>
 
-JavaScript (Prompts for user): javascript:imuser=prompt("Username","");document.cookie="REMOTE_USER_IMPERSONATE="+escape(imuser)+";domain=.mst.edu;path=/";location=location;
+JavaScript (Prompts for user): javascript:imuser=prompt("Username","");document.cookie="REMOTE_USER_IMPERSONATE="+escape(imuser)+";domain=.example.com;path=/";location=location;
 
-JavaScript (Hardwired to particular user): javascript:document.cookie="REMOTE_USER_IMPERSONATE=specificuser;domain=.mst.edu;path=/";location=location;
+JavaScript (Hardwired to particular user): javascript:document.cookie="REMOTE_USER_IMPERSONATE=specificuser;domain=.example.com;path=/";location=location;
 
 Example:
 
