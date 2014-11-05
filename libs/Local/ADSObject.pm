@@ -16,6 +16,7 @@ use Net::DNS;
 use Local::AuthSrv;
 use Local::CurrentUser;
 use Math::BigInt;    # should do with eval instead perhaps
+use Sys::Hostname;
 
 # Begin-Doc
 # Name: Local::ADSObject
@@ -27,7 +28,7 @@ use Math::BigInt;    # should do with eval instead perhaps
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
-my $retries = 4;     # Set this to one higher than the number of DCs.
+my $retries = 4;    # Set this to one higher than the number of DCs.
 
 # Last Error Message
 $ErrorMsg = "no error";
@@ -99,6 +100,19 @@ my $ATYPE_VALS = [
 ];
 
 # Begin-Doc
+# Name: _default_domain
+# Type: function
+# Description:  determines default domain name for this host
+# Syntax: $domain = &_default_domain();
+# Comments: Internal use only
+# End-Doc
+sub _default_domain {
+    my $hn = hostname;
+    $hn =~ s/^.*\.([^\.]+\.[^\.]+)$/\1/o;
+    return $hn;
+}
+
+# Begin-Doc
 # Name: new
 # Type: function
 # Description:  Binds to AD
@@ -114,7 +128,7 @@ sub new {
     my $pref_debug    = $info{debug} || 0;
     my $timeout       = $info{timeout} || 60;
     my $use_gc        = $info{use_gc} || 0;
-    my $domain        = $info{domain} || "mst.edu";
+    my $domain        = $info{domain} || &_default_domain();
 
     my $server = $info{server};
 
@@ -179,18 +193,16 @@ sub new {
     $tmp->{"debug"}  = $pref_debug;
     $tmp->{"basedn"} = $info{basedn};
     if ( !$tmp->{"basedn"} ) {
-        if ( $domain eq "mst.edu" && !$use_gc ) {
-            $tmp->{"basedn"} = "DC=mst,DC=edu";
+        my @tmp;
+        foreach my $piece ( split( /\./, $domain ) ) {
+            push( @tmp, "DC=$piece" );
         }
-        elsif ($use_gc) {
-            $tmp->{"basedn"} = "DC=edu";
-        }
-        else {
-            my @tmp;
-            foreach my $piece ( split( /\./, $domain ) ) {
-                push( @tmp, "DC=$piece" );
-            }
-            $tmp->{"basedn"} = join( ",", @tmp );
+        $tmp->{"basedn"} = join( ",", @tmp );
+
+        # If we flag to use GC and haven't specified domain, let's
+        # strip off first component
+        if ( $use_gc && $domain =~ /\.edu$/o ) {
+            $tmp->{"basedn"} =~ s/^DC=.*?,//o;
         }
     }
     $tmp->{"domain"} = $domain;
@@ -520,7 +532,7 @@ sub CreateUser {
         attr => [
             SamAccountName     => "$samName",
             DisplayName        => "$dispName",
-            UserPrincipalName  => "$userPN\@mst.edu",
+            UserPrincipalName  => "$userPN\@" . $self->{domain},
             objectclass        => [ 'top', 'person', 'organizationalPerson', 'user' ],
             unicodePwd         => $self->_MakeUnicode( $self->_gen_random_pw() ),
             userAccountControl => 0,
@@ -615,7 +627,7 @@ sub UpdateSecurityGroupDetails {
     my $ldap   = $self->{ldap};
     my $group  = $info{group};
     my $uid    = $info{uid};
-    my $dname  = $info{displayname} || "S&T $group";
+    my $dname  = $info{displayname} || $group;
 
     my $pdname = $dname;
     $pdname =~ s/\&//go;
@@ -626,18 +638,17 @@ sub UpdateSecurityGroupDetails {
         push( @uid, "msSFU30GidNumber" => $uid );
     }
 
+    my $dom = $self->{domain};
+
     my $res = $self->SetAttributes(
         userid     => $group,
         attributes => [
             displayName          => $dname,
             displayNamePrintable => $pdname,
-            mail                 => "$group\@mst.edu",
+            mail                 => "$group\@${dom}",
             mailNickname         => $group,
             @uid,
-            proxyAddresses => [
-                "SMTP:$group\@mst.edu",    "smtp:$group\@missouri.edu",
-                "smtp:ng-$group\@mst.edu", "smtp:ng-$group\@missouri.edu"
-            ],
+            proxyAddresses => [ "SMTP:$group\@${dom}", "smtp:$group\@missouri.edu", ],
             legacyExchangeDN => "/O=University of Missouri/OU=Rolla" . "/cn=Recipients/OU=Netgroups/cn=$group",
         ]
     );
@@ -647,82 +658,6 @@ sub UpdateSecurityGroupDetails {
         $ErrorMsg = "update failed: " . $res;
         return $ErrorMsg;
     }
-
-    return undef;
-}
-
-sub Create_Unix_Host {
-    my $self = shift;
-    my (%info) = @_;
-    my ( $fqdn, $pw, $samName, $dispName, $count, $name );
-    my $res;
-
-    $count = 1;
-    $fqdn  = $info{fqdn};
-    $pw    = $info{pw};
-
-    my $hn = $fqdn;
-    $hn =~ s|\..*||gio;
-
-    $dispName = $fqdn;
-    $samName  = "$hn\$";
-
-    my $realm = "MST.EDU";
-
-    my $cn = $hn;
-    my $dn = "CN=$cn,OU=Unix,OU=Servers,DC=mst,DC=edu";
-
-    #------
-    #  Look for the sAMAccountName in AD.
-    #  If it's already present start adding digits to the end.
-    #------
-    $self->debug && print "fqdn- $fqdn\n";
-    $self->debug && print "samName - $samName\n";
-    if ( length($samName) > 15 ) {
-        die "name too long!";
-
-        #just in case too long
-        $samName = substr( $samName, 0, 15 );
-    }
-    $origsamName = $samName;
-    my $found = 1;
-    while ( $self->_GetDN($samName) ) {
-        die "conflict!";
-
-        $samName = $origsamName . $count;
-        if ( length($samName) > 15 ) {
-            $samName = substr( $origsamName, 0, 15 - length($count) ) . $count;
-        }
-        $count++;
-    }
-    $self->debug && print "\nadd principal\n";
-
-    $crtprinc = $self->{ldap}->add(
-        dn   => "$dn",
-        attr => [
-            sAMAccountName       => $samName,
-            userPrincipalName    => "host/$fqdn\@$realm",
-            servicePrincipalName => [ "host/$fqdn", "cifs/$fqdn", "host/$hn" ],
-            dNSHostName          => $fqdn,
-            cn                   => $cn,
-            objectclass          => [ 'top', 'person', 'organizationalPerson', 'user', 'computer' ],
-
-            unicodePwd         => $self->_MakeUnicode($pw),
-            userAccountControl => $UAC_COMPUTER_ACCOUNT,
-        ]
-    );
-    if ( $crtprinc->code ) {
-        $ErrorMsg = "create principal failed: " . $crtprinc->error . "\n";
-        $self->debug
-            && print "Create princ failed: " . $crtprinc->error . "\n";
-        return "create principal failed: " . $crtprinc->error . "\n";
-    }
-
-    $res = $self->_ModifyUACBits(
-        userid => $samName,
-        reset  => $UAC_PW_NOT_REQUIRED,
-    );
-    if ($res) { return $res; }
 
     return undef;
 }
@@ -748,62 +683,21 @@ sub DeleteUser {
 }
 
 # Begin-Doc
-# Name: Delete_Unix_Host
+# Name: DeleteDN
 # Type: method
-# Description: Deletes a unix host principal
-# Syntax: $deluser = $ads->Delete_Unix_Host( fqdn => $fqdn);
+# Description: Deletes a DN from AD
+# Syntax: $deluser = $ads->DeleteDN( dn => $dn);
 # End-Doc
 
-sub Delete_Unix_Host {
+sub DeleteDN {
     my $self = shift;
-    my (%info) = @_;
-
-    my $fqdn = $info{fqdn} || return "Need the userid\n";
-    my $hn = $fqdn;
-    $hn =~ s|\..*||gio;
-
-    foreach my $baseuser ( "nfs-$hn", "host-$hn", "host-$hn\$", "$hn", "$hn\$" ) {
-        foreach my $suffix ( "", "1", "2" ) {
-            my $userid = $baseuser . $suffix;
-            my $dn     = $self->_GetDN($userid);
-            if ($dn) {
-                if (   $dn =~ /host/i
-                    || $dn =~ /computers/i
-                    || $dn =~ /servers/i
-                    || $dn =~ /workstations/i )
-                {
-
-                    #print "dn for $userid = $dn\n";
-                    $delusr = $self->{ldap}->delete($dn);
-
-                    #print "delete of $userid: ", $delusr->code, "\n";
-                    if ( $delusr->code ) {
-                        print "delete failed: " . $delusr->error . "\n";
-                    }
-                }
-            }
-        }
+    my %info = @_;
+    my ($upn);
+    my $dn = $info{dn} || return "Need the dn\n";
+    $delusr = $self->{ldap}->delete($dn);
+    if ( $delusr->code ) {
+        return "delete failed: " . $delusr->error . "\n";
     }
-
-    my $dn = $self->_GetHostDN($fqdn);
-    if ($dn
-        && (   $dn =~ /host/i
-            || $dn =~ /computers/i
-            || $dn =~ /servers/i
-            || $dn =~ /workstations/i )
-        )
-    {
-
-        #print "dn for $fqdn = $dn\n";
-        my $delusr = $self->{ldap}->delete($dn);
-
-        #print "delete of $userid: ", $delusr->code, "\n";
-        if ( $delusr->code ) {
-            print "delete failed: " . $delusr->error . "\n";
-        }
-
-    }
-
     return undef;
 }
 
@@ -909,50 +803,6 @@ sub GetUnityUserList {
         if ( $res->code ) {
             $self->debug && print "Search failed: " . $res->error . "\n";
             $ErrorMsg = "create failed: " . $res->error;
-            return undef;
-        }
-
-        foreach $entry ( $res->entries ) {
-            my $sa = lc $entry->get_value('sAMAccountName');
-            push( @users, $sa );
-        }
-
-        my ($resp) = $res->control(LDAP_CONTROL_PAGED) or last;
-
-        $cookie = $resp->cookie or last;
-        $page->cookie($cookie);
-    }
-
-    return @users;
-}
-
-# Begin-Doc
-# Name: GetMailboxUserList
-# Type: method
-# Description: Returns list of all ADS userids w/ exchange mailboxes
-# Syntax: @users = $ad->GetMailboxUserList()
-# Returns: Returns list of all ADS userids
-# End-Doc
-
-sub GetMailboxUserList {
-    my $self = shift;
-    my $ldap = $self->{ldap};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
-    my @users = ();
-    my $res;
-
-    while (1) {
-        $res = $self->{ldap}->search(
-            base    => $self->{basedn},
-            scope   => 'sub',
-            filter  => "(&(msExchHomeServerName=*UMR*))",
-            attrs   => ['sAMAccountName'],
-            control => [$page],
-        );
-        if ( $res->code ) {
-            $self->debug && print "Search failed: " . $res->error . "\n";
-            $ErrorMsg = "Search failed: " . $res->error;
             return undef;
         }
 
@@ -1910,7 +1760,7 @@ sub MoveUser {
     my $ldap  = $self->{ldap};
 
     my $userid = $info{userid};
-    my $dn 
+    my $dn
         = $info{dn}
         || $self->_GetDN($userid)
         || return "need a dn or userid";
@@ -1961,7 +1811,7 @@ sub MoveUser {
 
 # Begin-Doc
 # Name: LookupDC
-# Syntax: @hosts = &Local::LookupDC($domain)
+# Syntax: @hosts = &Local::ADSObject::LookupDC($domain)
 # Syntax: @hosts = $self->LookupDC($domain)
 # Description: Looks up domain controllers via SRV records in DNS for a domain, returns in preferred order
 # End-Doc
@@ -1994,7 +1844,7 @@ sub LookupDC {
         }
     }
     else {
-        $UMR::SysProg::ADSObject::ErrorMsg = "dns query failed for domain ($domain): " . $res->errorstring;
+        $Local::ADSObject::ErrorMsg = "dns query failed for domain ($domain): " . $res->errorstring;
         return ();
     }
 
@@ -2003,7 +1853,7 @@ sub LookupDC {
 
 # Begin-Doc
 # Name: LookupGC
-# Syntax: @hosts = &Local::LookupGC($domain)
+# Syntax: @hosts = &Local::ADSObject::LookupGC($domain)
 # Syntax: @hosts = $self->LookupGC($domain)
 # Description: Looks up global catalogs via SRV records in DNS for a domain, returns in preferred order
 # Comments: NOTE - this is hardwired right now to look up the same as the DC... needs to be reworked to look up forest/etc.
