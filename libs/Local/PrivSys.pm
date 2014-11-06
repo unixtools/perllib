@@ -7,17 +7,18 @@
 =begin
 
 Begin-Doc
-Name: Local::UsageLogger
+Name: Local::PrivSys
 Type: module
-Description: Stub no-op module to do usage tracking
+Description: Stub no-op module
 
 Override with another UsageLogger in search path to activate. Be sure and list the 'use lib' for override
 dir after the use lib for perllib itself.
+
 End-Doc
 
 =cut
 
-package Local::UsageLogger;
+package Local::PrivSys;
 require Exporter;
 use strict;
 
@@ -25,21 +26,26 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
-    LogAPIUsage
+    PrivSys_RequirePriv
+    PrivSys_QuietRequirePriv
+    PrivSys_FetchPrivs
 );
 
-# Begin-Doc
-# Name: LogAPIUsage
-# Type: subroutine
-# Description: track api usage
-# Access: public
-# Syntax: &LogAPIUsage($msg)
-#	Optional $msg will be recorded along with usage tracking
-# Comments: Should be called from anywhere you want to track usage
-# End-Doc
-sub LogAPIUsage {
-    return undef;
+sub PrivSys_RequirePriv
+{
+    die;
 }
+
+sub PrivSys_QuietRequirePriv
+{
+    die;
+}
+
+sub PrivSys_FetchPrivs
+{
+    return ();
+}
+
 
 1;
 

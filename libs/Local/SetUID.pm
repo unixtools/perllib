@@ -13,6 +13,7 @@ End-Doc
 package Local::SetUID;
 require Exporter;
 use strict;
+use Local::UsageLogger;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 

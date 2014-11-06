@@ -17,6 +17,7 @@ require Exporter;
 use strict;
 use URI::Escape;
 use HTML::Entities;
+use Local::UsageLogger;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 

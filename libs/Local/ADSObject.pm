@@ -15,6 +15,7 @@ use Net::LDAP::LDIF;
 use Net::DNS;
 use Local::AuthSrv;
 use Local::CurrentUser;
+use Local::UsageLogger;
 use Math::BigInt;    # should do with eval instead perhaps
 use Sys::Hostname;
 

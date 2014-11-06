@@ -61,6 +61,7 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use Data::Dumper;
+use Local::UsageLogger;
 
 @ISA    = qw(Exporter);
 @EXPORT = qw();

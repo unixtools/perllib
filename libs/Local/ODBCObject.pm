@@ -33,6 +33,7 @@ use DBI;
 
 use Local::AuthSrv;
 use Local::CommonDBObject;
+use Local::UsageLogger;
 
 =begin
 Begin-Doc

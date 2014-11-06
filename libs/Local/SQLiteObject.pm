@@ -32,6 +32,7 @@ use DBI;
 @EXPORT = qw();
 
 use Local::CommonDBObject;
+use Local::UsageLogger;
 
 # Begin-Doc
 # Name: SQL_OpenDatabase

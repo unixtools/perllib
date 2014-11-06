@@ -18,11 +18,13 @@ End-Doc
 package Local::SimpleRPC;
 require Exporter;
 use strict;
+use Local::UsageLogger;
 
 # Stub routines - autoloader only, used for easy referencing of remote routines
 package Local::SimpleRPC::Client::Stub;
 use Carp;
 use strict;
+use Local::UsageLogger;
 our $AUTOLOAD;
 
 # Begin-Doc
@@ -76,6 +78,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Data::Dumper;
 use Local::AuthSrv;
 use Local::CurrentUser;
+use Local::UsageLogger;
 use Carp;
 use LWP::UserAgent;
 use URI::Escape;
@@ -311,6 +314,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Data::Dumper;
 use Local::PrivSys;
 use Local::HTMLUtil;
+use Local::UsageLogger;
 use JSON;
 use Carp;
 use strict;
