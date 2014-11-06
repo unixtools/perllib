@@ -102,15 +102,26 @@ sub error {
 # Type: method
 # Access: public
 # Description: Retrieves token for a given scope
-# Syntax: $token = $obj->token( scope => $scope, [expires => $tstamp] );
-# Comments: If expires is not specified, defaults to 2 minutes.
+# Syntax: $token = $obj->token( scope => $scope, scopes => [$scope1,$scope2,...], [expires => $tstamp] );
+# Comments: If expires is not specified, defaults to 2 minutes. Either scope or scopes should be specified
+#
 # End-Doc
 sub token {
     my $self    = shift;
     my %opts    = @_;
     my $user    = $self->{user};
-    my $scope   = $opts{scope} || return undef;
+    my $scope   = $opts{scope};
+    my $scopes  = $opts{scopes};
     my $expires = $opts{expires};
+
+    if ($scopes) {
+        if ( ref($scopes) eq "ARRAY" ) {
+            $scope = join( " ", @$scopes );
+        }
+        else {
+            $scope = $scopes;
+        }
+    }
 
     $self->error(undef);
 
