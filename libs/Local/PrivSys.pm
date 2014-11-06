@@ -31,21 +31,24 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     PrivSys_FetchPrivs
 );
 
-sub PrivSys_RequirePriv
-{
+BEGIN {
+    &LogAPIUsage();
+}
+
+sub PrivSys_RequirePriv {
+    &LogAPIUsage();
     die;
 }
 
-sub PrivSys_QuietRequirePriv
-{
+sub PrivSys_QuietRequirePriv {
+    &LogAPIUsage();
     die;
 }
 
-sub PrivSys_FetchPrivs
-{
+sub PrivSys_FetchPrivs {
+    &LogAPIUsage();
     return ();
 }
-
 
 1;
 

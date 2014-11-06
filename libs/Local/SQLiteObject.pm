@@ -27,12 +27,15 @@ use strict;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use DBI;
+use Local::CommonDBObject;
+use Local::UsageLogger;
 
 @ISA    = qw(Local::CommonDBObject Exporter);
 @EXPORT = qw();
 
-use Local::CommonDBObject;
-use Local::UsageLogger;
+BEGIN {
+    &LogAPIUsage();
+}
 
 # Begin-Doc
 # Name: SQL_OpenDatabase

@@ -55,6 +55,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: new
 # Type: function
@@ -83,6 +87,8 @@ sub new {
     $tmp->{primary_labels}   = [];
     $tmp->{secondary_values} = {};
     $tmp->{secondary_labels} = {};
+
+    &LogAPIUsage();
 
     return bless $tmp, $class;
 }
@@ -148,7 +154,7 @@ sub GenerateHead {
     my $res      = "";
     my $basename = $opts{basename} || $self->{basename} || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname 
+    my $secname
         = $opts{secondaryname}
         || $self->{secondaryname}
         || "secondary";
@@ -221,7 +227,7 @@ sub GenerateBody {
 
     my $basename = $opts{basename}    || $self->{basename}    || "relmenu";
     my $priname  = $opts{primaryname} || $self->{primaryname} || "primary";
-    my $secname 
+    my $secname
         = $opts{secondaryname}
         || $self->{secondaryname}
         || "secondary";

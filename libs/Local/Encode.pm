@@ -29,6 +29,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     Encode_HTMLDecode
 );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: Encode_URLEncode
 # Type: function

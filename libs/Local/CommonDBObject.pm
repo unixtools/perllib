@@ -60,6 +60,10 @@ use vars qw (@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 =begin
 Begin-Doc
 Name: new
@@ -77,6 +81,8 @@ sub new {
     $tmp->{"dbhandle"}   = undef;
     $tmp->{"lastserial"} = undef;
     $tmp->{"debug"}      = undef;
+
+    &LogAPIUsage();
 
     bless $tmp, $class;
 

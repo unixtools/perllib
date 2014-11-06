@@ -66,6 +66,10 @@ use Local::UsageLogger;
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 our $obj = undef;
 
 # Begin-Doc

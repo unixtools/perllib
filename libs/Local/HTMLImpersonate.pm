@@ -56,6 +56,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     HTMLImpersonate
 );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: HTMLImpersonate
 # Type: function

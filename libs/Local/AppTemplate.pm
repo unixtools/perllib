@@ -48,6 +48,10 @@ use Local::PrivSys;
 @ISA    = qw();
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: new
 # Type: function
