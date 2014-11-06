@@ -18,6 +18,7 @@ use strict;
 use Local::UsageLogger;
 use Local::CurrentUser;
 use Local::AuthSrv;
+use HTML::Entities;
 use LWP;
 use JSON::WebToken;
 use JSON;
