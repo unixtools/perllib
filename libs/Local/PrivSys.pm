@@ -21,6 +21,7 @@ End-Doc
 package Local::PrivSys;
 require Exporter;
 use strict;
+use Local::UsageLogger;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
