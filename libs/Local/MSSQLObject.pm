@@ -29,6 +29,7 @@ use DBI qw (:sql_types);
 use Local::AuthSrv;
 use Local::CurrentUser;
 use Local::CommonDBObject;
+use Local::UsageLogger;
 use strict;
 
 use vars qw (@ISA @EXPORT);

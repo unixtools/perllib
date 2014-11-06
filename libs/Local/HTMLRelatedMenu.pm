@@ -49,6 +49,7 @@ use strict;
 
 package Local::HTMLRelatedMenu;
 require Exporter;
+use Local::UsageLogger;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);

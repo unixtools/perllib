@@ -44,8 +44,9 @@ package Local::HTMLImpersonate;
 require Exporter;
 use strict;
 
-eval "use Local::PrivSys;";
+use Local::PrivSys;
 use Local::HTMLUtil;
+use Local::UsageLogger;
 use Sys::Syslog;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);

@@ -32,6 +32,7 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use Local::MySQLObject;
+use Local::UsageLogger;
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(

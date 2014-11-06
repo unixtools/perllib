@@ -25,6 +25,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw( SQLTidy SQLTidyWrapper );
 use Text::Balanced qw(extract_delimited extract_tagged gen_extract_tagged);
+use Local::UsageLogger;
 
 # Begin-Doc
 # Name: SQLTidyWrapper

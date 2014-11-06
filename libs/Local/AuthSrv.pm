@@ -41,6 +41,7 @@ use strict;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Local::CurrentUser;
+use Local::UsageLogger;
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(

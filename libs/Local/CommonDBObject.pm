@@ -54,6 +54,7 @@ package Local::CommonDBObject;
 use Exporter;
 use DBI qw (:sql_types);
 use strict;
+use Local::UsageLogger;
 
 use vars qw (@ISA @EXPORT);
 @ISA    = qw(Exporter);

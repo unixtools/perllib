@@ -40,8 +40,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use LWP::Simple;
 use File::Path;
 use Local::HTMLUtil;
+use Local::UsageLogger;
 use HTML::Entities;
 use URI::Escape;
+use Local::PrivSys;
 
 @ISA    = qw();
 @EXPORT = qw();
@@ -509,8 +511,6 @@ sub RequirePriv {
     my $self = shift;
     my $code = shift;
 
-    eval "use Local::PrivSys";
-
     if ( &PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) ) {
         return;
     }
@@ -529,8 +529,6 @@ sub RequirePriv {
 sub RequireAnyPriv {
     my $self  = shift;
     my @codes = @_;
-
-    eval "use Local::PrivSys";
 
     foreach my $code (@codes) {
         if ( &PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) ) {
@@ -551,8 +549,6 @@ sub RequireAnyPriv {
 sub RequireAllPrivs {
     my $self  = shift;
     my @codes = @_;
-
-    eval "use Local::PrivSys";
 
     foreach my $code (@codes) {
         if ( !&PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) ) {
@@ -583,8 +579,6 @@ sub PrivErrorExit {
     {
         $self->PageHeader();
     }
-
-    eval "use Local::PrivSys";
 
     $self->_CloseNonPageBlocks();
 

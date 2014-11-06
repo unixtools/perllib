@@ -17,6 +17,7 @@ End-Doc
 package Local::HTMLUtil;
 require Exporter;
 use strict;
+use Local::UsageLogger;
 
 # We are now a wrapper around CGI for encoding/decoding routines
 use CGI qw/-private_tempfiles/;
