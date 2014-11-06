@@ -50,6 +50,10 @@ use Local::UsageLogger;
     AuthSrv_SetPathPrefix
 );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 $| = 1;
 
 my $AUTHSRV_CACHE = {};
@@ -92,6 +96,8 @@ sub AuthSrv_Fetch {
         $user = &Local_CurrentUser();
     }
     my $passwd;
+
+    &LogAPIUsage();
 
     if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
         no warnings;
