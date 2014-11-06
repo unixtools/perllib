@@ -22,6 +22,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     SetUID
 );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: SetUID
 # Description: switch real and effective uid to a particular user if we are running as root only

@@ -43,6 +43,10 @@ BEGIN {
 
 }
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 =begin
 Begin-Doc
 Name: checkerr

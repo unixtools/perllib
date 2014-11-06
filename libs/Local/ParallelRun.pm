@@ -29,6 +29,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 #
 # to avoid fork stdout weirdness
 #
@@ -58,6 +62,8 @@ sub new {
     $tmp->{tags}       = [];
     $tmp->{tag}        = 0;                   # last tag value used
     $tmp->{debug}      = $opts{debug} || 0;
+
+    &LogAPIUsage();
 
     return bless $tmp, $class;
 }

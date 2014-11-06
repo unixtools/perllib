@@ -27,6 +27,10 @@ use strict;
 use Local::UsageLogger;
 our $AUTOLOAD;
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: AUTOLOAD
 # Type: function
@@ -88,6 +92,10 @@ use strict;
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: new
 # Type: function
@@ -112,6 +120,8 @@ sub new {
     my %opts  = @_;
 
     my $tmp = {};
+
+    &LogAPIUsage();
 
     $tmp->{debug} = $opts{debug};
     $tmp->{error} = undef;
@@ -322,6 +332,10 @@ use strict;
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Begin-Doc
 # Name: new
 # Type: function
@@ -337,6 +351,8 @@ sub new {
     my %opts  = @_;
 
     my $tmp = {};
+
+    &LogAPIUsage();
 
     $tmp->{debug}  = $opts{debug};
     $tmp->{pretty} = $opts{pretty};

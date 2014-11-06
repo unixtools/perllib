@@ -36,6 +36,10 @@ use vars qw (@ISA @EXPORT);
 @ISA    = qw(Local::CommonDBObject Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 $ENV{SYBASE} = "/usr";
 
 =begin

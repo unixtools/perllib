@@ -74,6 +74,10 @@ BEGIN {
     }
 }
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 my $CGI;
 
 # Begin-Doc

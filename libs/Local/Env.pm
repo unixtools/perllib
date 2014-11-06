@@ -21,6 +21,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw( Local_Env );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 our $detected_env;
 
 # Begin-Doc

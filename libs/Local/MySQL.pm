@@ -55,6 +55,10 @@ use Local::UsageLogger;
     SQL_OpenBoundQuery
 );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 # Global DB Handle
 my $MYSQL_DBH = new Local::MySQLObject;
 

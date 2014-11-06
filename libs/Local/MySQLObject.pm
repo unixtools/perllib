@@ -27,14 +27,17 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use DBI;
-
-@ISA    = qw(Local::CommonDBObject Exporter);
-@EXPORT = qw();
-
 use Local::AuthSrv;
 use Local::CurrentUser;
 use Local::CommonDBObject;
 use Local::UsageLogger;
+
+@ISA    = qw(Local::CommonDBObject Exporter);
+@EXPORT = qw();
+
+BEGIN {
+    &LogAPIUsage();
+}
 
 =begin
 Begin-Doc

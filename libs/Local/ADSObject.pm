@@ -29,6 +29,10 @@ use Sys::Hostname;
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 my $retries = 4;    # Set this to one higher than the number of DCs.
 
 # Last Error Message

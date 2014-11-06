@@ -4,7 +4,6 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
-
 =begin
 
 Begin-Doc
@@ -26,6 +25,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(TSort);
+
+BEGIN {
+    &LogAPIUsage();
+}
 
 #
 # This module provides an interface to a topological sorting
@@ -75,6 +78,8 @@ sub TSort {
     my $extrema = $parms{"extrema"} || undef;
     my $debug   = $parms{"debug"}   || 0;
     my ( %alist, @res, $item, @nodes, $rule, $low, $high, $key, $found );
+
+    &LogAPIUsage();
 
     $debug && print "Extrema = $extrema\n";
 

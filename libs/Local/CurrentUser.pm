@@ -26,6 +26,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw( Local_CurrentUser );
 
+BEGIN {
+    &LogAPIUsage();
+}
+
 my $cached_curuid;
 my $cached_curuser;
 
