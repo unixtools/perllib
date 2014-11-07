@@ -10,6 +10,22 @@ Name: Local::GoogleAuth
 Type: module
 Description: object that provides easy access to obtain a google web token
 Comments: must stash a google-json-key
+
+Setup procedure:
+
+1. Establish account on the google domain that has sufficient admin privileges to perform the relevant operations
+2. Go to https://console.developers.google.com/project
+3. Create a Project if one isn't already created
+4. Click on "APIs & Auth -> Credentials"
+5. Click "Create new Client ID -> Service Account -> Create Client ID -> Okay got it"
+6. It will download a .p12 key file, delete this file you won't use it
+7. Click "Generate new JSON key -> Okay got it"
+8. Import that file into authsrv:  cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-json-key
+9. Delete the json file
+10. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
+
+End-Doc
+
 =cut
 
 package Local::GoogleAuth;
