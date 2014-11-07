@@ -21,8 +21,9 @@ Setup procedure:
 6. It will download a .p12 key file, delete this file you won't use it
 7. Click "Generate new JSON key -> Okay got it"
 8. Import that file into authsrv:  cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-json-key
-9. Delete the json file
-10. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
+9. Delete the json file 
+10. Click delete next to the public key corresponding to the p12 file that you removed.
+11. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
 
 End-Doc
 
