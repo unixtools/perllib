@@ -50,10 +50,9 @@ sub Local_CurrentUser {
     # Cache results to avoid repeated getpwuid calls for same uid in same app invocation
     if ( !defined($user) ) {
         $cached_curuid = $<;
-	if ( $^O !~ /Win/ )
-	{
-        	eval { $user = ( getpwuid($cached_curuid) )[0]; };
-	}
+        if ( $^O !~ /Win/ ) {
+            eval { $user = ( getpwuid($cached_curuid) )[0]; };
+        }
         if ($user) {
             $cached_curuser = lc $user;
         }
