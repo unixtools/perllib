@@ -705,6 +705,10 @@ sub HTMLGetRequest {
 
     %main::rqpairs = ();
     foreach my $key ( $CGI->param ) {
+        # silence warning, could also use multi_parms, but need to check on version requirements first so 
+        # nothing is broken in older installs
+        local($CGI::LIST_CONTEXT_WARN);
+        $CGI::LIST_CONTEXT_WARN = 0;
         $main::rqpairs{$key} = join( " ", $CGI->param($key) );
     }
     *main::in = *main::rqpairs;
