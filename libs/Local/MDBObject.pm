@@ -52,12 +52,13 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-	$dsn = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=$database";
-	if ( $Config{archname} =~ /x64/ )
-	{
-		$dsn = "DBI:ADO:Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$database";
-	}
+	$dsn = "DBI:ADO:Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$database";
         my $dbh = DBI->connect($dsn);
+	if ( ! $dbh )
+	{
+		$dsn = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=$database";
+        	$dbh = DBI->connect($dsn);
+	}
         return undef unless $dbh;
 
         $self->dbhandle($dbh);
