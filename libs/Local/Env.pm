@@ -36,10 +36,10 @@ our $detected_env;
 # End-Doc
 sub Local_Env {
     if ( !$detected_env ) {
-        if ( $ENV{HTTP_HOST} =~ /-test\./ ) {
+        if ( $ENV{HTTP_HOST} && $ENV{HTTP_HOST} =~ /-test\./ ) {
             $detected_env = "test";
         }
-        elsif ( $ENV{HTTP_HOST} =~ /-dev\./ ) {
+        elsif ( $ENV{HTTP_HOST} && $ENV{HTTP_HOST} =~ /-dev\./ ) {
             $detected_env = "dev";
         }
         else    # try to determine based on hostname of local machine
