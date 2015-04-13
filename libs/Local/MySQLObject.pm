@@ -65,18 +65,18 @@ sub SQL_OpenDatabase {
     $host = $info{"host"} || "localhost";
     $port = $info{"port"};
 
-    if ( $user eq "" ) {
+    if ( !defined($user) || $user eq "" ) {
         $user = &Local_CurrentUser();
     }
 
     if ( $info{nopasswd} ) {
         $pass = undef;
     }
-    elsif ( $pass eq "" ) {
+    elsif ( !defined($pass) || $pass eq "" ) {
         $pass = &AuthSrv_Fetch( user => $user, instance => "mysql" );
     }
 
-    if ( $self->SQL_CurrentDatabase ne $database ) {
+    if ( !defined($self->SQL_CurrentDatabase) || $self->SQL_CurrentDatabase ne $database ) {
         if ( defined $self->dbhandle ) {
             $self->dbhandle->disconnect;
         }
