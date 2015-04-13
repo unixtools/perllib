@@ -75,7 +75,7 @@ sub new {
     $tmp->{email} = $opts{email};
     if ( !$tmp->{email} ) {
         my $domain = hostname;
-        $domain =~ s/^.*\.([^\.]+\.[^\.]+)$/\1/o;
+        $domain =~ s/^.*\.([^\.]+\.[^\.]+)$/$1/o;
         $tmp->{email} = $tmp->{user} . '@' . $domain;
     }
 
