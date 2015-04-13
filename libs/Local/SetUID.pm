@@ -38,6 +38,8 @@ sub SetUID {
     my $target_uid;
     my $target_gid;
 
+    no warnings 'numeric';
+
     if ( int($target_user) eq $target_user ) {
         $target_uid = int($target_user);
         $target_gid = int($target_user);
