@@ -9,21 +9,33 @@ Begin-Doc
 Name: Local::GoogleAuth
 Type: module
 Description: object that provides easy access to obtain a google web token
-Comments: must stash a google-json-key
+Comments: 
 
-Setup procedure:
+Setup procedure - common steps:
 
 1. Establish account on the google domain that has sufficient admin privileges to perform the relevant operations
 2. Go to https://console.developers.google.com/project
 3. Create a Project if one isn't already created
 4. Click on "APIs & Auth -> Credentials"
-5. Click "Create new Client ID -> Service Account -> Create Client ID -> Okay got it"
-6. It will download a .p12 key file, delete this file you won't use it
-7. Click "Generate new JSON key -> Okay got it"
-8. Import that file into authsrv:  cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-json-key
-9. Delete the json file 
-10. Click delete next to the public key corresponding to the p12 file that you removed.
-11. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
+
+Additional steps for using an "Installed Application" client ID - usable with normal APIs and expected to
+interactively grant permission using 'authorize' api. 
+
+1. Click "Create new Client ID -> Installed Application -> Other -> Create Client ID"
+2. It will download a .json key file
+3. Import that file into authsrv: cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-native-client-id
+4. Delete any downloaded credentials files since they contain secure content
+5. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
+6. Use the authorize method in this module to create refresh token and authorize any desired API scopes.
+
+Additional steps for using a "Service Account" client ID - usable with explicit grants of scopes in google admin
+control panel, intended for user impersonation for data access:
+
+1. Click "Create new Client ID -> Service Account -> JSON Key -> Create Client ID"
+2. It will download a .json key file
+3. Import that file into authsrv:  cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-json-key
+4. Delete any downloaded credentials files since they contain secure content
+5. Go to google apps control panel, explicitly authorize any API scopes that are required.
 
 End-Doc
 
@@ -36,6 +48,7 @@ use Local::UsageLogger;
 use Local::CurrentUser;
 use Local::AuthSrv;
 use HTML::Entities;
+use URI::Escape;
 use LWP;
 use JSON::WebToken;
 use JSON;
@@ -193,6 +206,175 @@ sub token {
     }
 
     return $data->{access_token};
+}
+
+# Begin-Doc
+# Name: access_token_from_refresh_token
+# Type: method
+# Access: public
+# Description: Retrieves access token from a refresh token
+# Syntax: ($token,$expires) = $obj->access_token_from_refresh_token( [instance => "google-native-client-id"], [refreshinstance => "google-refresh-token"] );
+#
+# End-Doc
+sub access_token_from_refresh_token {
+    my $self             = shift;
+    my %opts             = @_;
+    my $user             = $self->{user};
+    my $instance         = $opts{instance} || "google-native-client-id";
+    my $refresh_instance = $opts{refreshinstance} || "google-refresh-token";
+
+    $self->error(undef);
+
+    my $json_key = &AuthSrv_Fetch( user => $user, instance => $instance );
+    my $key_data;
+    eval { $key_data = decode_json($json_key); };
+    if ( !$key_data ) {
+        $self->error("Failed decoding google api native client id key");
+        return undef;
+    }
+
+    my $refresh_token = &AuthSrv_Fetch( user => $user, instance => $refresh_instance );
+
+    my $id     = $key_data->{installed}->{client_id};
+    my $secret = $key_data->{installed}->{client_secret};
+
+    my @content_pieces;
+    push( @content_pieces, "client_id=" . URI::Escape::uri_escape($id) );
+    push( @content_pieces, "client_secret=" . URI::Escape::uri_escape($secret) );
+    push( @content_pieces, "refresh_token=" . URI::Escape::uri_escape($refresh_token) );
+    push( @content_pieces, "grant_type=refresh_token" );
+
+    my $req_content = join( "&", @content_pieces );
+
+    my $ua = LWP::UserAgent->new();
+    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v3/token" );
+    $req->content_type("application/x-www-form-urlencoded");
+    $req->content($req_content);
+
+    my $response = $ua->request($req);
+
+    unless ( $response->is_success() ) {
+        $self->error( "Failure requesting auth token: " . $response->code . "\n" . $response->content );
+        return undef;
+    }
+
+    my $data = {};
+    eval { $data = decode_json( $response->content ); };
+    if ( !$data->{access_token} ) {
+        $self->error("Unable to obtain access token");
+        return undef;
+    }
+
+    return ( $data->{access_token}, time + $data->{expires_in} );
+}
+
+# Begin-Doc
+# Name: authorize
+# Type: method
+# Access: public
+# Description: Retrieves refresh token and requests authorization for a given scope
+# Syntax: $token = $obj->authorize( scope => $scope, scopes => [$scope1,$scope2,...], [incremental => 0], [instance => "google-native-client-id"], [refreshinstance => "google-refresh-token"] );
+# Comments: If expires is not specified, defaults to 2 minutes. Either scope or scopes should be specified. Defaults to incrementally
+# adding scopes to previously granted scopes for same client id.
+#
+# End-Doc
+sub authorize {
+    my $self                   = shift;
+    my %opts                   = @_;
+    my $user                   = $self->{user};
+    my $scope                  = $opts{scope};
+    my $scopes                 = $opts{scopes};
+    my $instance               = $opts{instance} || "google-native-client-id";
+    my $refresh_token_instance = $opts{refreshinstance} || "google-refresh-token";
+    my $incremental            = 1;
+
+    if ( defined( $opts{incremental} ) ) {
+        $incremental = $opts{incremental};
+    }
+
+    if ($scopes) {
+        if ( ref($scopes) eq "ARRAY" ) {
+            $scope = join( " ", @$scopes );
+        }
+        else {
+            $scope = $scopes;
+        }
+    }
+
+    $self->error(undef);
+
+    my $json_key = &AuthSrv_Fetch( user => $user, instance => $instance );
+    my $key_data;
+    eval { $key_data = decode_json($json_key); };
+    if ( !$key_data ) {
+        $self->error("Failed decoding google api json key");
+        return undef;
+    }
+
+    my $id     = $key_data->{installed}->{client_id};
+    my $secret = $key_data->{installed}->{client_secret};
+
+    my $scopestring = URI::Escape::uri_escape($scope);
+
+    my $url
+        = "https://accounts.google.com/o/oauth2/auth?scope=${scopestring}&"
+        . "redirect_uri=urn:ietf:wg:oauth:2.0:oob&"
+        . "response_type=code&"
+        . "client_id=${id}";
+
+    if ($incremental) {
+        $url .= "&include_granted_scopes=true";
+    }
+
+    print "\n\n";
+    print "Open this URL in browser, authenticate with desired account and grant the requested access:\n";
+
+    print "\n";
+
+    print "$url\n";
+
+    print "\n";
+
+    print "Enter the code provided in the browser: ";
+    my $code = <STDIN>;
+    chomp($code);
+
+    my @content_pieces;
+    push( @content_pieces, "code=" . URI::Escape::uri_escape($code) );
+    push( @content_pieces, "client_id=" . URI::Escape::uri_escape($id) );
+    push( @content_pieces, "client_secret=" . URI::Escape::uri_escape($secret) );
+    push( @content_pieces, "redirect_uri=oob" );
+    push( @content_pieces, "grant_type=authorization_code" );
+
+    my $req_content = join( "&", @content_pieces );
+
+    my $ua = LWP::UserAgent->new();
+    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v3/token" );
+    $req->content_type("application/x-www-form-urlencoded");
+    $req->content($req_content);
+
+    my $response = $ua->request($req);
+
+    unless ( $response->is_success() ) {
+        print "Failure requesting auth and refresh token: " . $response->code . "\n" . $response->content . "\n\n";
+        return undef;
+    }
+
+    my $data = {};
+    eval { $data = decode_json( $response->content ); };
+    if ( !$data->{refresh_token} ) {
+        print "Unable to obtain refresh token\n";
+        return undef;
+    }
+
+    my $myuser = &Local_CurrentUser();
+    open( my $out, "|-" ) || exec( "/usr/bin/authsrv-raw-encrypt", $myuser, $self->{user}, $refresh_token_instance );
+    print $out $data->{refresh_token};
+    close($out);
+
+    print "Refresh token stored in owner $myuser, userid ", $self->{user}, ", instance $refresh_token_instance\n";
+
+    return;
 }
 
 1;
