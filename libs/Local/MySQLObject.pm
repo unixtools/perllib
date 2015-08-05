@@ -76,7 +76,7 @@ sub SQL_OpenDatabase {
         $pass = &AuthSrv_Fetch( user => $user, instance => "mysql" );
     }
 
-    if ( !defined($self->SQL_CurrentDatabase) || $self->SQL_CurrentDatabase ne $database ) {
+    if ( !defined( $self->SQL_CurrentDatabase ) || $self->SQL_CurrentDatabase ne $database ) {
         if ( defined $self->dbhandle ) {
             $self->dbhandle->disconnect;
         }
@@ -88,6 +88,13 @@ sub SQL_OpenDatabase {
 
         if ( defined($port) ) {
             $dsn .= ";port=$port";
+        }
+
+        if ( -S "/var/lib/mysql/mysql.sock" ) {
+            $dsn .= ";mysql_socket=/var/lib/mysql/mysql.sock";
+        }
+        elsif ( -S "/var/run/mysqld/mysqld.sock" ) {
+            $dsn .= ";mysql_socket=/var/run/mysqld/mysqld.sock";
         }
 
         my $dbh = DBI->connect( $dsn, $user, $pass );
