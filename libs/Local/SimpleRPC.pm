@@ -55,16 +55,20 @@ sub AUTOLOAD {
 
     $debug && print "AUTOLOAD called with $self / $type / $name\n";
 
+    my @errors  = ();
     my @results = ();
     my $retries = $self->{retries};
     do {
         $debug
             && print "Passing to CallRPC($name, \@_) with $retries retries remaining.\n";
         eval { @results = $client->CallRPC( $name, @_ ); };
+        if ( $@ =~ /^Error returned from API: (.*)/o ) {
+            push( @errors, $1 );
+        }
         $retries--;
     } while ( $@ && $retries >= 0 );    # retry up to $retries times, set to 0 for only a single request
     if ($@) {
-        croak $@;
+        croak "Errors returned from API retries:\n" . join( "\n", @errors );
     }
 
     if ( !wantarray && scalar(@results) == 1 ) {
