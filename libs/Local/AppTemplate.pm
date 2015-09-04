@@ -347,9 +347,8 @@ sub _filter {
     my $self = shift;
     my $text = shift;
 
-    my $app_env = $config->{app_env};
-
     my $config = $self->{config};
+    my $app_env = $config->{app_env};
 
     my $title = $config->{title};
     my $apptitle = $config->{apptitle} || $title;
