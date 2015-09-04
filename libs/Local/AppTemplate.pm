@@ -121,7 +121,13 @@ sub configure {
 
     # parameters loaded from initialization
     if ( !$config->{title} ) {
-        $config->{title} = "Web Application";
+        $config->{title} = $ENV{APPTEMPLATE_TITLE} || "Web Application";
+        if ( $ENV{APPTEMPLATE_CONTACT_URL} ) {
+            $config->{contact_url} = $ENV{APPTEMPLATE_CONTACT_URL};
+        }
+        if ( $ENV{APPTEMPLATE_CONTACT_LABEL} ) {
+            $config->{contact_label} = $ENV{APPTEMPLATE_CONTACT_LABEL};
+        }
     }
     foreach my $field (
         qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype)
@@ -341,7 +347,7 @@ sub _filter {
     my $self = shift;
     my $text = shift;
 
-    my $app_env = "prod";
+    my $app_env = $config->{app_env};
 
     my $config = $self->{config};
 
@@ -357,7 +363,7 @@ sub _filter {
     my $app_head_pre;
     my $app_head_post;
 
-    if ( $app_env ne "prod" ) {
+    if ( $app_env && $app_env ne "prod" && $app_env ne "production" ) {
         my $app_env_label = "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
         $title .= " - $app_env";
         $apptitle = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
