@@ -122,13 +122,20 @@ sub configure {
     # parameters loaded from initialization
     if ( !$config->{title} ) {
         $config->{title} = $ENV{APPTEMPLATE_TITLE} || "Web Application";
+    }
+
+    if ( !$config->{contact_url} ) {
         if ( $ENV{APPTEMPLATE_CONTACT_URL} ) {
             $config->{contact_url} = $ENV{APPTEMPLATE_CONTACT_URL};
         }
+    }
+
+    if ( !$config->{contact_label} ) {
         if ( $ENV{APPTEMPLATE_CONTACT_LABEL} ) {
             $config->{contact_label} = $ENV{APPTEMPLATE_CONTACT_LABEL};
         }
     }
+
     foreach my $field (
         qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype)
         )
@@ -347,7 +354,7 @@ sub _filter {
     my $self = shift;
     my $text = shift;
 
-    my $config = $self->{config};
+    my $config  = $self->{config};
     my $app_env = $config->{app_env};
 
     my $title = $config->{title};
