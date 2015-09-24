@@ -17,12 +17,13 @@ Setup procedure - common steps:
 2. Go to https://console.developers.google.com/project
 3. Create a Project if one isn't already created
 4. Click on "APIs & Auth -> Credentials"
+5. Update at least application name on Consent Screen tab.
 
 Additional steps for using an "Installed Application" client ID - usable with normal APIs and expected to
 interactively grant permission using 'authorize' api. 
 
-1. Click "Create new Client ID -> Installed Application -> Other -> Create Client ID"
-2. It will download a .json key file
+1. Click "Credentials -> Add -> OAuth 2.0 Client ID"
+2. Give the client a friendly name, and then click on the name, and 'Download JSON' to download a .json key file.
 3. Import that file into authsrv: cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-native-client-id
 4. Delete any downloaded credentials files since they contain secure content
 5. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
@@ -36,6 +37,18 @@ control panel, intended for user impersonation for data access:
 3. Import that file into authsrv:  cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-json-key
 4. Delete any downloaded credentials files since they contain secure content
 5. Go to google apps control panel, explicitly authorize any API scopes that are required.
+
+Example Authorize Script:
+
+my $ga = new UMR::GoogleAuth(
+    user  => "user\@domain.com",
+    email => "user\@domain.com",
+);
+
+$ga->authorize(
+    scopes      => "https://www.googleapis.com/auth/admin.directory.user.readonly",
+    incremental => 1
+);
 
 End-Doc
 
