@@ -86,7 +86,7 @@ sub AuthSrv_SetPathPrefix {
 # Description: fetch a stashed password
 # Syntax: $pw = &AuthSrv_Fetch(instance => $instance, [user => $userid] );
 # Comments: Returns stashed password. 'user' defaults to the
-#       current userid on unix.
+#       current userid on unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_Fetch {
     my (%opts) = @_;
@@ -95,11 +95,12 @@ sub AuthSrv_Fetch {
     if ( !defined($user) ) {
         $user = &Local_CurrentUser();
     }
+    my $owner = $opts{owner} || &Local_CurrentUser();
     my $passwd;
 
     &LogAPIUsage();
 
-    if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
+    if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
         no warnings;
 
         open( AUTHSRV_SV_STDERR, ">&STDERR" );
@@ -107,10 +108,10 @@ sub AuthSrv_Fetch {
 
         if ( $^O !~ /Win/ ) {
             open( AUTHSRV_FETCH_IN, "-|" )
-                || exec( $AUTHSRV_DECRYPT, $user, $instance );
+                || exec( $AUTHSRV_DECRYPT, $owner, $user, $instance );
         }
         else {
-            open( AUTHSRV_FETCH_IN, "$AUTHSRV_DECRYPT $user $instance|" );
+            open( AUTHSRV_FETCH_IN, "$AUTHSRV_DECRYPT $owner $user $instance|" );
         }
         while ( my $line = <AUTHSRV_FETCH_IN> ) {
             chomp($line);
@@ -120,10 +121,10 @@ sub AuthSrv_Fetch {
 
         open( STDERR, ">&AUTHSRV_SV_STDERR" );
 
-        $AUTHSRV_CACHE->{$user}->{$instance} = $passwd;
+        $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
 
-    return $AUTHSRV_CACHE->{$user}->{$instance};
+    return $AUTHSRV_CACHE->{$owner}->{$user}->{$instance};
 }
 
 # Begin-Doc
@@ -132,7 +133,7 @@ sub AuthSrv_Fetch {
 # Description: fetch a stashed password raw - not just a single line
 # Syntax: $pw = &AuthSrv_FetchRaw(instance => $instance, [user => $userid] );
 # Comments: Returns stashed content. 'user' defaults to the
-#       current userid on unix.
+#       current userid on unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_FetchRaw {
     my (%opts) = @_;
@@ -141,9 +142,10 @@ sub AuthSrv_FetchRaw {
     if ( !defined($user) ) {
         $user = &Local_CurrentUser();
     }
+    my $owner = $opts{owner} || &Local_CurrentUser();
     my $passwd;
 
-    if ( !defined( $AUTHSRV_CACHE->{$user}->{$instance} ) ) {
+    if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
         no warnings;
 
         open( AUTHSRV_SV_STDERR, ">&STDERR" );
@@ -151,20 +153,20 @@ sub AuthSrv_FetchRaw {
 
         if ( $^O !~ /Win/ ) {
             open( AUTHSRV_FETCH_IN, "-|" )
-                || exec( $AUTHSRV_RAW_DECRYPT, $user, $instance );
+                || exec( $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
         }
         else {
-            open( AUTHSRV_FETCH_IN, "$AUTHSRV_RAW_DECRYPT $user $instance|" );
+            open( AUTHSRV_FETCH_IN, "$AUTHSRV_RAW_DECRYPT $owner $user $instance|" );
         }
         $passwd = join( "", <AUTHSRV_FETCH_IN> );
         close(AUTHSRV_FETCH_IN);
 
         open( STDERR, ">&AUTHSRV_SV_STDERR" );
 
-        $AUTHSRV_CACHE->{$user}->{$instance} = $passwd;
+        $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
 
-    return $AUTHSRV_CACHE->{$user}->{$instance};
+    return $AUTHSRV_CACHE->{$owner}->{$user}->{$instance};
 }
 
 1;
