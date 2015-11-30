@@ -618,56 +618,6 @@ sub CreateSecurityGroup {
 }
 
 # Begin-Doc
-# Name: UpdateSecurityGroupDetails
-# Type: method
-# Description: Updates info for a security group netgroup
-# Syntax: $crtusr = $ex->UpdateSecurityGroupDetails(
-#			group => $group, displayname => "name")
-# Returns: undef if success, else error
-# End-Doc
-
-sub UpdateSecurityGroupDetails {
-    my $self   = shift;
-    my (%info) = @_;
-    my $ldap   = $self->{ldap};
-    my $group  = $info{group};
-    my $uid    = $info{uid};
-    my $dname  = $info{displayname} || $group;
-
-    my $pdname = $dname;
-    $pdname =~ s/\&//go;
-    $pdname =~ s/\_//go;
-
-    my @uid;
-    if ($uid) {
-        push( @uid, "msSFU30GidNumber" => $uid );
-    }
-
-    my $dom = $self->{domain};
-
-    my $res = $self->SetAttributes(
-        userid     => $group,
-        attributes => [
-            displayName          => $dname,
-            displayNamePrintable => $pdname,
-            mail                 => "$group\@${dom}",
-            mailNickname         => $group,
-            @uid,
-            proxyAddresses => [ "SMTP:$group\@${dom}", "smtp:$group\@missouri.edu", ],
-            legacyExchangeDN => "/O=University of Missouri/OU=Rolla" . "/cn=Recipients/OU=Netgroups/cn=$group",
-        ]
-    );
-
-    if ($res) {
-        $self->debug && print "Update failed: " . $res . "\n";
-        $ErrorMsg = "update failed: " . $res;
-        return $ErrorMsg;
-    }
-
-    return undef;
-}
-
-# Begin-Doc
 # Name: DeleteUser
 # Type: method
 # Description: Deletes a userid from AD
