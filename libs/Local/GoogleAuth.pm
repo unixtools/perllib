@@ -147,7 +147,7 @@ sub error {
 # Type: method
 # Access: public
 # Description: Retrieves token for a given scope
-# Syntax: $token = $obj->token( scope => $scope, scopes => [$scope1,$scope2,...], [expires => $tstamp] );
+# Syntax: $token = $obj->token( ["sub" => $email], scope => $scope, scopes => [$scope1,$scope2,...], [expires => $tstamp] );
 # Comments: If expires is not specified, defaults to 2 minutes. Either scope or scopes should be specified
 #
 # End-Doc
@@ -185,13 +185,20 @@ sub token {
     my $private_key = $key_data->{private_key};
     my $iss         = $key_data->{client_email};
 
+    my @prnsub;
+    if ( $opts{sub} ) {
+        push( @prnsub, "sub" => $opts{sub} );
+    }
+    else {
+        push( @prnsub, "prn" => $self->{email} );
+    }
     my $jwt = JSON::WebToken->encode(
         {   iss   => $iss,
             scope => $scope,
             aud   => 'https://accounts.google.com/o/oauth2/token',
-            prn   => $self->{email},
             exp   => $expires,
-            iat   => time
+            iat   => time,
+            @prnsub
         },
         $private_key,
         'RS256',
