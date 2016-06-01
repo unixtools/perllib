@@ -295,6 +295,30 @@ sub release_item {
 
 =begin
 Begin-Doc
+Name: extend_grab
+Type: method
+Description: extends grab of an item in work queue
+Syntax: $arrayref = $obj->extend_grab($itemref)
+End-Doc
+=cut
+
+sub extend_grab {
+    my $self = shift;
+    my $item = shift;
+    my $tbl  = $self->{table};
+    my $db   = $self->db();
+
+    my $dqry = "update $tbl set grabtime=now() where
+                queue=? and itemid=? and grabhost=? and grabpid=?";
+    $db->SQL_ExecQuery( $dqry, $item->{queue}, $item->{itemid}, $item->{grabhost}, $item->{grabpid} )
+        || $db->SQL_Error($dqry) && return undef;
+    my $rc = $db->SQL_RowCount();
+
+    return $rc;
+}
+
+=begin
+Begin-Doc
 Name: add
 Type: method
 Description: adds or updates an item in the queue
