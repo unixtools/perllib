@@ -86,6 +86,8 @@ sub new {
 Begin-Doc
 Name: debug
 Access: private
+Syntax: $x = $obj->debug()
+Syntax: $obj->debug($newval);
 Type: method
 End-Doc
 =cut
@@ -98,6 +100,28 @@ sub debug {
     }
     else {
         return $self->{debug};
+    }
+}
+
+=begin
+Begin-Doc
+Name: db
+Access: private
+Type: method
+Comments: Returns db handle
+Syntax: $x = $obj->db()
+Syntax: $obj->db($newval);
+End-Doc
+=cut
+
+sub db {
+    my $self = shift;
+
+    if (@_) {
+        $self->{db} = shift;
+    }
+    else {
+        return $self->{db};
     }
 }
 
