@@ -417,6 +417,22 @@ sub param {
 }
 
 # Begin-Doc
+# Name: multi_param
+# Type: method
+# Description: pass-thru to CGI module multi_param method to retrieve parameters from cgi request
+# Syntax: @vals = $obj->multi_param("name");
+# Syntax: $val = $obj->multi_param("name");
+# End-Doc
+sub multi_param {
+    my $self = shift;
+    my $name = shift;
+    my $cgi  = $self->{cgi};
+
+    # This will only work on newer CGI.pm's - specifically won't work on FC20
+    return $cgi->multi_param($name);
+}
+
+# Begin-Doc
 # Name: Try
 # Type: method
 # Description: attempts to execute a code block, terminates with json failure if eval fails
