@@ -407,6 +407,12 @@ sub param {
     my $name = shift;
     my $cgi  = $self->{cgi};
 
+    # Should review callers/usage, but this will silence warning for now since
+    # the vulernability is due to poor code. Probably should split this into
+    # two methods and do an eval check to try to use multi_param instead with
+    # newer CGI.pm
+    $CGI::LIST_CONTEXT_WARN = 0;
+
     return $cgi->param($name);
 }
 
