@@ -26,10 +26,13 @@ create table work_queue
     grabhost varchar(100),
     grabpid integer,
     attempts integer default 0
-);
+) engine=MyISAM;
 create unique index wq_id on work_queue(itemid,queue);
 create index wq_qt on work_queue(queuetime,queue);
 create index wq_ghgpq on work_queue(grabhost,grabpid,queue);
+
+Does not have to be MyISAM, but performance seems to be better
+with large queues and fewer odd InnoDB deadlock issues.
 
 End-Doc
 
