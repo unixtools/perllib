@@ -807,7 +807,7 @@ Begin-Doc
 Name: SQL_ColumnInfo
 Type: method
 Description: returns information on columns returned by a query
-Syntax: $hash = $obj->SQL_ColumnInfo()
+Syntax: %info = $obj->SQL_ColumnInfo()
 Comments: Returns a hash with keys numcols, colnames, coltypes, precision, scale. All except numcols are
 arrays. Column types, precision, and scale are going to be database driver specific. See DBI documentation
 for more specifics. Typically use only the colnames element, or use all of the fields for comparison purposes.
