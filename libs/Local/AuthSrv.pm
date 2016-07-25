@@ -42,6 +42,8 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Local::CurrentUser;
 use Local::UsageLogger;
+use IPC::Open3;
+use Symbol 'gensym';
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
@@ -101,25 +103,19 @@ sub AuthSrv_Fetch {
     &LogAPIUsage();
 
     if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
-        no warnings;
-
-        open( AUTHSRV_SV_STDERR, ">&STDERR" );
-        close(STDERR);
-
-        if ( $^O !~ /Win/ ) {
-            open( AUTHSRV_FETCH_IN, "-|" )
-                || exec( $AUTHSRV_DECRYPT, $owner, $user, $instance );
-        }
-        else {
-            open( AUTHSRV_FETCH_IN, "$AUTHSRV_DECRYPT $owner $user $instance|" );
-        }
-        while ( my $line = <AUTHSRV_FETCH_IN> ) {
+        my ( $wtr, $rdr, $err );
+        $wtr = gensym;
+        $rdr = gensym;
+        $err = gensym;
+        my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_DECRYPT, $owner, $user, $instance );
+        while ( defined( my $line = <$rdr> ) ) {
             chomp($line);
             $passwd .= $line;
         }
-        close(AUTHSRV_FETCH_IN);
-
-        open( STDERR, ">&AUTHSRV_SV_STDERR" );
+        waitpid( $childpid, 0 );
+        close($rdr);
+        close($wtr);
+        close($err);
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
@@ -146,22 +142,18 @@ sub AuthSrv_FetchRaw {
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
-        no warnings;
-
-        open( AUTHSRV_SV_STDERR, ">&STDERR" );
-        close(STDERR);
-
-        if ( $^O !~ /Win/ ) {
-            open( AUTHSRV_FETCH_IN, "-|" )
-                || exec( $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
+        my ( $wtr, $rdr, $err );
+        $wtr = gensym;
+        $rdr = gensym;
+        $err = gensym;
+        my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
+        while ( defined( my $line = <$rdr> ) ) {
+            $passwd .= $line;
         }
-        else {
-            open( AUTHSRV_FETCH_IN, "$AUTHSRV_RAW_DECRYPT $owner $user $instance|" );
-        }
-        $passwd = join( "", <AUTHSRV_FETCH_IN> );
-        close(AUTHSRV_FETCH_IN);
-
-        open( STDERR, ">&AUTHSRV_SV_STDERR" );
+        waitpid( $childpid, 0 );
+        close($rdr);
+        close($wtr);
+        close($err);
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
