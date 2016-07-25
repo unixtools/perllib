@@ -571,53 +571,6 @@ sub CreateUser {
 }
 
 # Begin-Doc
-# Name: CreateSecurityGroup
-# Type: method
-# Description: Creates a security group netgroup
-# Syntax: $crtusr = $ex->CreateSecurityGroup(group => $group)
-# Returns: undef if success, else error
-# End-Doc
-
-sub CreateSecurityGroup {
-    my $self = shift;
-    my (%info) = @_;
-    my ($group);
-    my $ldap = $self->{ldap};
-    $group = $info{group};
-    my $dname = $info{displayname} || "S&T $group";
-
-    my $pdname = $dname;
-    $pdname =~ s/\&//go;
-    $pdname =~ s/\_//go;
-
-    my $ou = "OU=Netgroups,OU=Services - Campus," . $self->{basedn};
-    my $dn = "CN=$group,$ou";
-
-    $self->debug && print "dn = $dn\n";
-
-    $self->debug && print "inside create\n";
-    $crtusr = $self->{ldap}->add(
-        dn   => $dn,
-        attr => [
-            sAMAccountName       => $group,
-            name                 => $group,
-            displayName          => $dname,
-            displayNamePrintable => $pdname,
-            objectclass          => [ 'top', 'group' ],
-            groupType            => -2147483640
-        ]
-    );
-
-    if ( $crtusr->code ) {
-        $self->debug && print "Create failed: " . $crtusr->error . "\n";
-        $ErrorMsg = "create failed: " . $crtusr->error;
-        return $ErrorMsg;
-    }
-
-    return undef;
-}
-
-# Begin-Doc
 # Name: DeleteUser
 # Type: method
 # Description: Deletes a userid from AD
