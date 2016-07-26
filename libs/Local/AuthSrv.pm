@@ -56,8 +56,6 @@ BEGIN {
     &LogAPIUsage();
 }
 
-$| = 1;
-
 my $AUTHSRV_CACHE = {};
 
 my $AUTHSRV_DECRYPT;
