@@ -106,7 +106,7 @@ sub AuthSrv_Fetch {
         if ( $ENV{MOD_PERL} ) {
             open( my $in, "-|", $AUTHSRV_DECRYPT, $owner, $user, $instance );
             while ( defined( my $line = <$in> ) ) {
-                chomp($line);
+                $line =~ s/\s+$//sgmo;
                 $passwd .= $line;
             }
             close($in);
@@ -118,7 +118,7 @@ sub AuthSrv_Fetch {
             $err = gensym;
             my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_DECRYPT, $owner, $user, $instance );
             while ( defined( my $line = <$rdr> ) ) {
-                chomp($line);
+                $line =~ s/\s+$//sgmo;
                 $passwd .= $line;
             }
             waitpid( $childpid, 0 );
