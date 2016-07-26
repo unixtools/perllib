@@ -480,6 +480,25 @@ sub Finish {
 }
 
 # Begin-Doc
+# Name: FinishReturn
+# Type: method
+# Description: outputs a standard formatted response with ok status and returns
+# Syntax: $obj->FinishReturn(@results);
+# End-Doc
+sub FinishReturn {
+    my $self = shift;
+
+    if ( $self->{pretty} ) {
+        my $json = new JSON;
+        print $json->pretty->encode( [ 0, "", @_ ] );
+    }
+    else {
+        print to_json( [ 0, "", @_ ] );
+    }
+    return (0);
+}
+
+# Begin-Doc
 # Name: Fail
 # Type: method
 # Description: outputs a standard formatted response with failure status and exits
@@ -497,6 +516,26 @@ sub Fail {
         print to_json( [ 1, $msg ] );
     }
     exit(0);
+}
+
+# Begin-Doc
+# Name: FailReturn
+# Type: method
+# Description: outputs a standard formatted response with failure status and returns non-zero
+# Syntax: $obj->FailReturn($msg);
+# End-Doc
+sub FailReturn {
+    my $self = shift;
+    my $msg = shift || "Unknown Error";
+
+    if ( $self->{pretty} ) {
+        my $json = new JSON;
+        print $json->pretty->encode( [ 1, $msg ] );
+    }
+    else {
+        print to_json( [ 1, $msg ] );
+    }
+    return (1);
 }
 
 # Begin-Doc
@@ -518,6 +557,31 @@ sub RequirePriv {
         }
         else {
             $self->Fail("Access Denied: RPC requires privilege ($code).");
+        }
+    }
+}
+
+# Begin-Doc
+# Name: RequirePrivReturn
+# Type: method
+# Description: outputs a standard formatted response with failure status and returns nonzero if failed
+# Syntax: $obj->RequirePrivReturn($privcode);
+# End-Doc
+sub RequirePrivReturn {
+    my $self = shift;
+    my $code = shift;
+
+    if ( eval { &PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) } ) {
+        return 0;
+    }
+    else {
+        if ($@) {
+            $self->FailReturn("Access Denied: An error occurred while attempting to verify RPC privilege ($code): $@");
+            return 1;
+        }
+        else {
+            $self->FailReturn("Access Denied: RPC requires privilege ($code).");
+            return 1;
         }
     }
 }
@@ -546,6 +610,31 @@ sub RequireAnyPriv {
 }
 
 # Begin-Doc
+# Name: RequireAnyPrivReturn
+# Type: method
+# Description: wrapper routine around privsys privilege check, require at least one of the listed privileges, returns non-zero if failed
+# Syntax: $obj->RequireAnyPrivReturn($code, [$code2, ...]);
+# Comments: at least one code must be specified
+# End-Doc
+sub RequireAnyPrivReturn {
+    my $self  = shift;
+    my @codes = @_;
+
+    foreach my $code (@codes) {
+        if ( eval { &PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) } ) {
+            return 0;
+        }
+        elsif ($@) {
+            $self->FailReturn("Access Denied: An error occurred while attempting to verify RPC privilege ($code): $@");
+            return 1;
+        }
+    }
+
+    $self->FailReturn( "Access Denied: RPC required at least one of these priv codes: " . join( ", ", @codes ) );
+    return 1;
+}
+
+# Begin-Doc
 # Name: RequireAllPrivs
 # Type: method
 # Description: wrapper routine around privsys privilege check, require all of the listed privileges
@@ -570,6 +659,36 @@ sub RequireAllPrivs {
     }
 
     return;
+}
+
+# Begin-Doc
+# Name: RequireAllPrivsReturn
+# Type: method
+# Description: wrapper routine around privsys privilege check, require all of the listed privileges, returns non-zero on failure
+# Syntax: $obj->RequireAllPrivsReturn($code, [$code2, ...]);
+# Comments: at least one code must be specified
+# End-Doc
+sub RequireAllPrivsReturn {
+    my $self  = shift;
+    my @codes = @_;
+
+    foreach my $code (@codes) {
+        if ( eval { !&PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) } ) {
+            $self->FailReturn( "Access Denied: RPC required all of these priv codes: " . join( ", ", @codes ) );
+            return 1;
+        }
+        elsif ($@) {
+            $self->FailReturn("Access Denied: An error occurred while attempting to verify RPC privilege ($code): $@");
+            return 1;
+        }
+    }
+
+    if ( !@codes ) {
+        $self->FailReturn("Access Denied: No code specified for RequireAllPrivs");
+        return 1;
+    }
+
+    return 0;
 }
 
 1;
