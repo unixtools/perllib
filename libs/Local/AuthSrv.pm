@@ -103,19 +103,29 @@ sub AuthSrv_Fetch {
     &LogAPIUsage();
 
     if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
-        my ( $wtr, $rdr, $err );
-        $wtr = gensym;
-        $rdr = gensym;
-        $err = gensym;
-        my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_DECRYPT, $owner, $user, $instance );
-        while ( defined( my $line = <$rdr> ) ) {
-            chomp($line);
-            $passwd .= $line;
+        if ( $ENV{MOD_PERL} ) {
+            open( my $in, "-|", $AUTHSRV_DECRYPT, $owner, $user, $instance );
+            while ( defined( my $line = <$in> ) ) {
+                chomp($line);
+                $passwd .= $line;
+            }
+            close($in);
         }
-        waitpid( $childpid, 0 );
-        close($rdr);
-        close($wtr);
-        close($err);
+        else {
+            my ( $wtr, $rdr, $err );
+            $wtr = gensym;
+            $rdr = gensym;
+            $err = gensym;
+            my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_DECRYPT, $owner, $user, $instance );
+            while ( defined( my $line = <$rdr> ) ) {
+                chomp($line);
+                $passwd .= $line;
+            }
+            waitpid( $childpid, 0 );
+            close($rdr);
+            close($wtr);
+            close($err);
+        }
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
@@ -142,18 +152,27 @@ sub AuthSrv_FetchRaw {
     my $passwd;
 
     if ( !defined( $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} ) ) {
-        my ( $wtr, $rdr, $err );
-        $wtr = gensym;
-        $rdr = gensym;
-        $err = gensym;
-        my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
-        while ( defined( my $line = <$rdr> ) ) {
-            $passwd .= $line;
+        if ( $ENV{MOD_PERL} ) {
+            open( my $in, "-|", $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
+            while ( defined( my $line = <$in> ) ) {
+                $passwd .= $line;
+            }
+            close($in);
         }
-        waitpid( $childpid, 0 );
-        close($rdr);
-        close($wtr);
-        close($err);
+        else {
+            my ( $wtr, $rdr, $err );
+            $wtr = gensym;
+            $rdr = gensym;
+            $err = gensym;
+            my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
+            while ( defined( my $line = <$rdr> ) ) {
+                $passwd .= $line;
+            }
+            waitpid( $childpid, 0 );
+            close($rdr);
+            close($wtr);
+            close($err);
+        }
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
     }
