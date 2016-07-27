@@ -26,6 +26,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
+    HTMLSetCGI
     HTMLGetCGI
 
     HTMLScriptURL
@@ -79,12 +80,26 @@ BEGIN {
 }
 
 my $CGI;
+my $CGI_PRE;
 
 # Begin-Doc
 # Name: HTMLUtil_Sent_CType
 # Description: package var to keep track of whether content type was sent
 # End-Doc
 my $HTMLUtil_Sent_CType = 0;
+
+# Begin-Doc
+# Name: HTMLSetCGI
+# Type: function
+# Syntax: &HTMLSetCGI($cgi);
+# Description: Sets reference to the CGI module object that HTMLUtil should use
+# Comments: Must be called BEFORE &HTMLGetRequest.
+# End-Doc
+sub HTMLSetCGI {
+    my $cgi = shift;
+    $CGI_PRE = $cgi;
+    return $CGI_PRE;
+}
 
 # Begin-Doc
 # Name: HTMLGetCGI
@@ -701,13 +716,19 @@ sub HTMLGetFile {
 sub HTMLGetRequest {
     my ( $request, $key, $val, $tmp, %tmp, $entry );
 
-    $CGI = new CGI();
+    if ($CGI_PRE) {
+        $CGI = $CGI_PRE;
+    }
+    else {
+        $CGI = new CGI();
+    }
 
     %main::rqpairs = ();
     foreach my $key ( $CGI->param ) {
-        # silence warning, could also use multi_parms, but need to check on version requirements first so 
+
+        # silence warning, could also use multi_parms, but need to check on version requirements first so
         # nothing is broken in older installs
-        local($CGI::LIST_CONTEXT_WARN);
+        local ($CGI::LIST_CONTEXT_WARN);
         $CGI::LIST_CONTEXT_WARN = 0;
         $main::rqpairs{$key} = join( " ", $CGI->param($key) );
     }

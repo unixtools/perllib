@@ -348,6 +348,7 @@ BEGIN {
 # Comments: options are:
 #    debug: enable/disable debuging (1/0)
 #    pretty: enables/disable easy-to-read json output (1/0)
+#    cgi: allow passing in cgi object such as when using with FastCGI loop
 # End-Doc
 sub new {
     my $self  = shift;
@@ -361,6 +362,7 @@ sub new {
     $tmp->{debug}  = $opts{debug};
     $tmp->{pretty} = $opts{pretty};
     $tmp->{error}  = undef;
+    $tmp->{cgi}    = $opts{cgi};
 
     return bless $tmp, $class;
 }
@@ -374,7 +376,11 @@ sub new {
 sub Init {
     my $self = shift;
 
+    if ( $self->{cgi} ) {
+        &HTMLSetCGI( $self->{cgi} );
+    }
     &HTMLGetRequest();
+
     if ( $self->{pretty} ) {
         &HTMLContentType("text/plain");
     }
