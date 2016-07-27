@@ -153,7 +153,7 @@ sub new {
     }
 
     if ( $tmp->{authenticate} && !$tmp->{user} ) {
-        $tmp->{user} = &UMR_CurrentUser();
+        $tmp->{user} = &Local_CurrentUser();
     }
 
     if (   $tmp->{authenticate}
