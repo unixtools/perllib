@@ -651,6 +651,10 @@ sub RequireAllPrivs {
     my $self  = shift;
     my @codes = @_;
 
+    if ( !@codes ) {
+        $self->Fail("Access Denied: No code specified for RequireAllPrivs");
+    }
+
     foreach my $code (@codes) {
         if ( eval { !&PrivSys_CheckPriv( $ENV{REMOTE_USER}, $code ) } ) {
             $self->Fail( "Access Denied: RPC required all of these priv codes: " . join( ", ", @codes ) );
@@ -658,10 +662,6 @@ sub RequireAllPrivs {
         elsif ($@) {
             $self->Fail("Access Denied: An error occurred while attempting to verify RPC privilege ($code): $@");
         }
-    }
-
-    if ( !@codes ) {
-        $self->Fail("Access Denied: No code specified for RequireAllPrivs");
     }
 
     return;
