@@ -137,7 +137,7 @@ sub configure {
     }
 
     foreach my $field (
-        qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype)
+        qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype app_env)
         )
     {
         if ( exists( $opts{$field} ) ) {
