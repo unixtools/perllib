@@ -740,50 +740,6 @@ sub GetUserList {
 }
 
 # Begin-Doc
-# Name: GetUnityUserList
-# Type: method
-# Description: Returns list of all unity enabled userids
-# Syntax: @users = $ad->GetUnityUserList()
-# Returns: Returns list of all unity enabled ADS userids
-# End-Doc
-
-sub GetUnityUserList {
-    my $self = shift;
-    my $ldap = $self->{ldap};
-    my $page = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
-        || return undef;
-    my @users = ();
-    my $res;
-
-    while (1) {
-        $res = $self->{ldap}->search(
-            base    => $self->{basedn},
-            scope   => 'sub',
-            filter  => "(&(sAMAccountName=*)(ciscoEcsbuDtmfId=*))",
-            attrs   => ['sAMAccountName'],
-            control => [$page],
-        );
-        if ( $res->code ) {
-            $self->debug && print "Search failed: " . $res->error . "\n";
-            $ErrorMsg = "create failed: " . $res->error;
-            return undef;
-        }
-
-        foreach $entry ( $res->entries ) {
-            my $sa = lc $entry->get_value('sAMAccountName');
-            push( @users, $sa );
-        }
-
-        my ($resp) = $res->control(LDAP_CONTROL_PAGED) or last;
-
-        $cookie = $resp->cookie or last;
-        $page->cookie($cookie);
-    }
-
-    return @users;
-}
-
-# Begin-Doc
 # Name: GetAttributes
 # Type: method
 # Description: Returns all attributes associated with a userid
