@@ -111,6 +111,24 @@ sub AuthSrv_Fetch {
         }
         else {
             my ( $wtr, $rdr, $err );
+
+            my $opened_stdin;
+            my $opened_stdout;
+            my $opened_stderr;
+
+            if ( !defined( fileno(STDIN) ) ) {
+                open( STDOUT, "</dev/null" );
+                $opened_stdin++;
+            }
+            if ( !defined( fileno(STDOUT) ) ) {
+                open( STDOUT, ">/dev/null" );
+                $opened_stdout++;
+            }
+            if ( !defined( fileno(STDERR) ) ) {
+                open( STDOUT, ">/dev/null" );
+                $opened_stderr++;
+            }
+
             $wtr = gensym;
             $rdr = gensym;
             $err = gensym;
@@ -123,6 +141,10 @@ sub AuthSrv_Fetch {
             close($rdr);
             close($wtr);
             close($err);
+
+            if ($opened_stdin)  { close(STDIN); }
+            if ($opened_stdout) { close(STDOUT); }
+            if ($opened_stderr) { close(STDERR); }
         }
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
@@ -159,9 +181,28 @@ sub AuthSrv_FetchRaw {
         }
         else {
             my ( $wtr, $rdr, $err );
+
+            my $opened_stdin;
+            my $opened_stdout;
+            my $opened_stderr;
+
+            if ( !defined( fileno(STDIN) ) ) {
+                open( STDOUT, "</dev/null" );
+                $opened_stdin++;
+            }
+            if ( !defined( fileno(STDOUT) ) ) {
+                open( STDOUT, ">/dev/null" );
+                $opened_stdout++;
+            }
+            if ( !defined( fileno(STDERR) ) ) {
+                open( STDOUT, ">/dev/null" );
+                $opened_stderr++;
+            }
+
             $wtr = gensym;
             $rdr = gensym;
             $err = gensym;
+
             my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_RAW_DECRYPT, $owner, $user, $instance );
             while ( defined( my $line = <$rdr> ) ) {
                 $passwd .= $line;
@@ -170,6 +211,10 @@ sub AuthSrv_FetchRaw {
             close($rdr);
             close($wtr);
             close($err);
+
+            if ($opened_stdin)  { close(STDIN); }
+            if ($opened_stdout) { close(STDOUT); }
+            if ($opened_stderr) { close(STDERR); }
         }
 
         $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
