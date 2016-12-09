@@ -117,7 +117,7 @@ sub AuthSrv_Fetch {
             my $opened_stderr;
 
             if ( !defined( fileno(STDIN) ) ) {
-                open( STDOUT, "</dev/null" );
+                open( STDIN, "</dev/null" );
                 $opened_stdin++;
             }
             if ( !defined( fileno(STDOUT) ) ) {
@@ -125,7 +125,7 @@ sub AuthSrv_Fetch {
                 $opened_stdout++;
             }
             if ( !defined( fileno(STDERR) ) ) {
-                open( STDOUT, ">/dev/null" );
+                open( STDERR, ">/dev/null" );
                 $opened_stderr++;
             }
 
@@ -187,7 +187,7 @@ sub AuthSrv_FetchRaw {
             my $opened_stderr;
 
             if ( !defined( fileno(STDIN) ) ) {
-                open( STDOUT, "</dev/null" );
+                open( STDIN, "</dev/null" );
                 $opened_stdin++;
             }
             if ( !defined( fileno(STDOUT) ) ) {
@@ -195,7 +195,7 @@ sub AuthSrv_FetchRaw {
                 $opened_stdout++;
             }
             if ( !defined( fileno(STDERR) ) ) {
-                open( STDOUT, ">/dev/null" );
+                open( STDERR, ">/dev/null" );
                 $opened_stderr++;
             }
 
