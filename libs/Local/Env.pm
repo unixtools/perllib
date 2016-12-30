@@ -4,7 +4,7 @@
 Begin-Doc
 Name: Local::Env
 Type: module
-Description: UMR Environment Detection Routine
+Description: Environment Detection Routine
 Comments: 
 
 End-Doc
