@@ -40,6 +40,9 @@ BEGIN {
     if ( $ENV{ORACLE_HOME} eq "" ) {
         $ENV{ORACLE_HOME} = "/usr/oracle";
     }
+    if ( $ENV{NLS_LANG} eq "" ) {
+        $ENV{NLS_LANG} = "American_America.WE8ISO8859P1";
+    }
 
 }
 
