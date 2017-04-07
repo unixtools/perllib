@@ -1740,11 +1740,6 @@ sub LookupDC {
         $domain = shift;
     }
 
-    # Hardwire for efficiency
-    if ( $domain eq "mst.edu" ) {
-        return ("mst-dc.mst.edu");
-    }
-
     eval "use Net::DNS qw(rrsort);";
 
     my $tgt = "_ldap._tcp.dc._msdcs.${domain}";
