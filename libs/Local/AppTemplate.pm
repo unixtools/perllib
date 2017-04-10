@@ -536,6 +536,24 @@ sub RequirePriv {
 }
 
 # Begin-Doc
+# Name: RequireRegex
+# Type: method
+# Description: wrapper routine around privsys privilege check
+# Syntax: $obj->RequireRegex($regex);
+# End-Doc
+sub RequirePrivRegex {
+    my $self = shift;
+    my $regex = shift;
+
+    if ( &PrivSys_CheckPrivRegex( $ENV{REMOTE_USER}, $regex ) ) {
+        return;
+    }
+    else {
+        $self->PrivErrorExit($regex);
+    }
+}
+
+# Begin-Doc
 # Name: RequireAnyPriv
 # Type: method
 # Description: wrapper routine around privsys privilege check, require at least one of the listed privileges

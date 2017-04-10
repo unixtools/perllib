@@ -27,8 +27,12 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
 @EXPORT = qw(
+    PrivSys_CheckPriv
+    PrivSys_CheckPrivRegex
     PrivSys_RequirePriv
+    PrivSys_RequirePrivRegex
     PrivSys_QuietRequirePriv
+    PrivSys_QuietRequirePrivRegex
     PrivSys_FetchPrivs
 );
 
@@ -36,12 +40,32 @@ BEGIN {
     &LogAPIUsage();
 }
 
+sub PrivSys_CheckPriv {
+    &LogAPIUsage();
+    die;
+}
+
+sub PrivSys_CheckPrivRegex {
+    &LogAPIUsage();
+    die;
+}
+
 sub PrivSys_RequirePriv {
     &LogAPIUsage();
     die;
 }
 
+sub PrivSys_RequirePrivRegex {
+    &LogAPIUsage();
+    die;
+}
+
 sub PrivSys_QuietRequirePriv {
+    &LogAPIUsage();
+    die;
+}
+
+sub PrivSys_QuietRequirePrivRegex {
     &LogAPIUsage();
     die;
 }
