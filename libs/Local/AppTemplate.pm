@@ -536,10 +536,10 @@ sub RequirePriv {
 }
 
 # Begin-Doc
-# Name: RequireRegex
+# Name: RequirePrivRegex
 # Type: method
 # Description: wrapper routine around privsys privilege check
-# Syntax: $obj->RequireRegex($regex);
+# Syntax: $obj->RequirePrivRegex($regex);
 # End-Doc
 sub RequirePrivRegex {
     my $self = shift;
