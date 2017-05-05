@@ -429,6 +429,44 @@ sub SQL_OpenQuery {
 
 =begin
 Begin-Doc
+Name: SQL_OpenQueryExtra
+Type: method
+Description: opens a cursor to a new query
+Syntax: $cid = $obj->SQL_OpenQueryExtra($qry, $properties, [@values])
+Comments: This is the same as SQL_OpenQuery, but allows passing hash of statement handle options such as ora_pers_lob
+End-Doc
+=cut
+
+sub SQL_OpenQueryExtra {
+    my ( $self, $qry, $props, @params ) = @_;
+    my ( $cid, $res, $qcount );
+
+    $cid                 = $self->dbhandle->prepare($qry, $props);
+    $self->{last_query}  = $qry;
+    $self->{last_params} = [@params];
+
+    if ( defined($cid) ) {
+        $self->{cid_to_query}->{$cid} = $qry;
+        eval('my $foo = $cid->{NAME};');    # per Tim Bunce
+        $res = $cid->execute(@params);
+
+        if ($res) {
+            return $cid;
+        }
+        else {
+            $self->checkerr;
+            undef( $self->{cid_to_query}->{$cid} );
+            return 0;
+        }
+    }
+    else {
+        $self->checkerr;
+        return 0;
+    }
+}
+
+=begin
+Begin-Doc
 Name: SQL_CloseQuery
 Type: method
 Description: closes open query cursor
