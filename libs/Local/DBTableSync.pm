@@ -21,6 +21,8 @@ $sync = new Local::DBTableSync(
 my %res = $sync->SyncTables(
     source_db => $srcdb,
     dest_db => $destdb,
+    # excl_cols => $col_list,
+    # mask_cols => $col_list_with_opt_colon_value,
     source_table => "table_name_on_test",
     dest_table => "table_name_on_dev",
     max_inserts => 10000,
@@ -217,6 +219,8 @@ sub _dprintrowall {
 #    dest_db => dest db object
 #    source_table => source table/view name
 #    dest_table => dest table name
+#    excl_cols => column names to exclude from sync
+#    mask_cols => column names and optional values to mask during sync
 #    unique_keys => optional array ref, containing array refs, each of which is a list of column names
 #       that make up a unique index on the table. If the table has unique indexes, it is strongly
 #       recommended that this be included
@@ -301,6 +305,18 @@ sub SyncTables {
 
     if ( exists( $opts{no_dups} ) ) {
         $no_dups = $opts{no_dups};
+    }
+
+    # Columns to skip
+    my %excl_cols = ();
+    foreach my $col ( split( /[\s,;]+/, $opts{excl_cols} ) ) {
+        $excl_cols{ lc $col } = 1;
+    }
+
+    my %mask_cols = ();
+    foreach my $col ( split( /[\s,;]+/, $opts{mask_cols} ) ) {
+        my ( $cname, $val ) = split( /:/, $col );
+        $mask_cols{ lc $cname } = $val;
     }
 
     #
@@ -444,15 +460,27 @@ sub SyncTables {
         my @scoltypes = @{ $source_colinfo{coltypes} };
         my @dcoltypes = @{ $dest_colinfo{coltypes} };
         my @scolnames = @{ $source_colinfo{colnames} };
-        for ( my $i = 0; $i <= $#scoltypes; $i++ ) {
-            my $coltype  = $scoltypes[$i];
-            my $dcoltype = $dcoltypes[$i];
-            my $colname  = $scolnames[$i];
+        my @dcolnames = @{ $dest_colinfo{colnames} };
+
+        my $dindex = 0;
+        for ( my $sindex = 0; $sindex <= $#scoltypes; $sindex++ ) {
+            my $coltype  = $scoltypes[$sindex];
+            my $dcoltype = $dcoltypes[$dindex];
+            my $colname  = $scolnames[$sindex];
+            my $dcolname = $dcolnames[$dindex];
 
             my $tname  = $sql_type_to_name{$coltype};
             my $dtname = $sql_type_to_name{$dcoltype};
 
-            $self->_dprint("Checking type: $i / $colname / $coltype / $tname => $dcoltype / $dtname\n");
+            # Check for excluded columns
+            if ( exists( $excl_cols{ lc $colname } ) ) {
+                $self->_dprint("Checking type: $sindex / $colname / $coltype / $tname => Excluded\n");
+                $skipcols{ lc $colname } = 1;
+                next;
+            }
+
+            $self->_dprint(
+                "Checking type: $sindex / $colname / $coltype / $tname => $dcolname / $dcoltype / $dtname\n");
 
             # type numbers are magic/from ODBC
             if (   $tname =~ /CHAR/
@@ -500,6 +528,8 @@ sub SyncTables {
                 $self->{error} = "don't know how to compare column $colname (type $coltype [$tname])";
                 return ( error => $self->{error}, status => "failed" );
             }
+
+            $dindex++;
         }
     }
 
@@ -603,53 +633,64 @@ sub SyncTables {
         my $source_dump = $self->dump_colinfo( \%source_colinfo );
         my $dest_dump   = $self->dump_colinfo( \%dest_colinfo );
 
+        # Short circuit check
         if ( $source_dump ne $dest_dump ) {
-            my $msg = "Sync-Failure: mismatched schemas\n";
+            my $msg = "";
             if ($col_compare) {
                 $msg .= $col_compare . "\n";
             }
 
-            for ( my $i = 0; $i < $source_colinfo{numcols}; $i++ ) {
-                my $sname  = $source_colinfo{colnames}->[$i];
-                my $stype  = $source_colinfo{coltypes}->[$i];
-                my $sprec  = $source_colinfo{precision}->[$i];
-                my $sscale = $source_colinfo{scale}->[$i];
+            my $dindex = 0;
+            for ( my $sindex = 0; $sindex < $source_colinfo{numcols}; $sindex++ ) {
+                my $sname  = $source_colinfo{colnames}->[$sindex];
+                my $stype  = $source_colinfo{coltypes}->[$sindex];
+                my $sprec  = $source_colinfo{precision}->[$sindex];
+                my $sscale = $source_colinfo{scale}->[$sindex];
 
-                my $dname  = $dest_colinfo{colnames}->[$i];
-                my $dtype  = $dest_colinfo{coltypes}->[$i];
-                my $dprec  = $dest_colinfo{precision}->[$i];
-                my $dscale = $dest_colinfo{scale}->[$i];
+                my $dname  = $dest_colinfo{colnames}->[$dindex];
+                my $dtype  = $dest_colinfo{coltypes}->[$dindex];
+                my $dprec  = $dest_colinfo{precision}->[$dindex];
+                my $dscale = $dest_colinfo{scale}->[$dindex];
+
+                if ( $skipcols{ lc $sname } ) {
+                    next;
+                }
 
                 my $j = 0;
                 if ( $sname ne $dname ) {
-                    $msg .= "Col[$i]: Name mismatch ($sname / $dname)\n";
+                    $msg .= "Col[$sindex]: Name mismatch ($sname / $dname)\n";
                     $j++;
                 }
                 if ( $stype ne $dtype ) {
-                    $msg .= "Col[$i]: Type mismatch ($stype / $dtype)\n";
+                    $msg .= "Col[$sindex]: Type mismatch ($stype / $dtype)\n";
                     $j++;
                 }
                 if ( $sprec ne $dprec ) {
-                    $msg .= "Col[$i]: Precision mismatch ($sprec / $dprec)\n";
+                    $msg .= "Col[$sindex]: Precision mismatch ($sprec / $dprec)\n";
                     $j++;
                 }
                 if ( $sscale ne $dscale ) {
-                    $msg .= "Col[$i]: Scale mismatch ($sscale / $dscale)\n";
+                    $msg .= "Col[$sindex]: Scale mismatch ($sscale / $dscale)\n";
                     $j++;
                 }
                 if ($j) {
                     $msg .= "\n";
                 }
+                $dindex++;
             }
 
-            $self->_dprint($msg);
+            if ($msg) {
+                $msg = "Sync-Failure: mismatched schemas\n" . "'" . $msg . "'";
 
-            $self->_debug
-                && print "\n\nSource(\n" . $source_dump . "\n)\n\nDest(\n" . $dest_dump . "\n)\n";
+                $self->_dprint($msg);
 
-            # need to flesh out error return
-            $self->{error} = $msg;
-            return ( error => $self->{error}, status => "failed" );
+                $self->_debug
+                    && print "\n\nSource(\n" . $source_dump . "\n)\n\nDest(\n" . $dest_dump . "\n)\n";
+
+                # need to flesh out error return
+                $self->{error} = $msg;
+                return ( error => $self->{error}, status => "failed" );
+            }
         }
     }
 
@@ -1064,12 +1105,12 @@ MAIN: while ( $more_source || $more_dest ) {
     #
     if ($check_empty_source) {
         if ( ( $matching_rows + $inserts ) < 1 || ( $seen_source_rows < 1 ) ) {
-            my $err = "Check for empty source table failed. (Matching=$matching_rows Inserts=$inserts SeenSource=$seen_source_rows)";
-            if ( $self->{error} )
-            {
+            my $err
+                = "Check for empty source table failed. (Matching=$matching_rows Inserts=$inserts SeenSource=$seen_source_rows)";
+            if ( $self->{error} ) {
                 $err .= " Previous/nested error (" . $self->{error} . ")";
             }
-            $self->_dprint("\n" . $err);
+            $self->_dprint( "\n" . $err );
             $dest_db->SQL_RollBack();
             return (
                 error  => $err,
