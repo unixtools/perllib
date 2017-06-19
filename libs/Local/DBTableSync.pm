@@ -438,6 +438,7 @@ sub SyncTables {
     #
     my @coltypes = ();
     my %skipcols = ();
+    my @maskcols = ();
     my %skiplong = ();
     {
 
@@ -483,12 +484,16 @@ sub SyncTables {
                 "Checking type: $sindex / $colname / $coltype / $tname => $dcolname / $dcoltype / $dtname\n");
 
             # type numbers are magic/from ODBC
-            if (   $tname =~ /CHAR/
+            if ( exists( $mask_cols{ lc $colname } ) ) {
+                push( @coltypes, "string" );
+            }
+            elsif ($tname =~ /CHAR/
                 || $tname =~ /TIME/
                 || $tname =~ /DATE/
                 || $tname =~ /BIN/ )
             {
                 push( @coltypes, "string" );
+                push( @maskcols, $sindex );
             }
             elsif ( $tname =~ /INTERVAL/ ) {
                 push( @coltypes, "string" );
@@ -542,9 +547,18 @@ sub SyncTables {
     my @source_sort_cols;
     my @dest_sort_cols;
 
+    my %masked_cols = ();
     foreach my $col ( @{ $source_colinfo{colnames} } ) {
         unless ( $skipcols{ lc $col } ) {
-            push( @source_cols, $col );
+            if ( exists $mask_cols{ lc $col } ) {
+                my $tcol = $source_db->SQL_QuoteString( $mask_cols{ lc $col } ) . " " . lc($col);
+                push( @source_cols, $tcol );
+                $masked_cols{$tcol} = 1;
+                $masked_cols{ lc $col } = 1;
+            }
+            else {
+                push( @source_cols, $col );
+            }
         }
         unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
             push( @source_sort_cols, $col );
@@ -569,12 +583,12 @@ sub SyncTables {
     my $col_compare = "";
 
     foreach my $col (@source_cols) {
-        if ( !$have_dest_cols{$col} ) {
+        if ( !$have_dest_cols{$col} && !exists $masked_cols{$col} ) {
             $col_compare .= "Column $col in source but not in destination.\n";
         }
     }
     foreach my $col (@dest_cols) {
-        if ( !$have_source_cols{$col} ) {
+        if ( !$have_source_cols{$col} && !exists $masked_cols{ lc $col } ) {
             $col_compare .= "Column $col in destination but not in source.\n";
         }
     }
