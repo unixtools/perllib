@@ -438,7 +438,6 @@ sub SyncTables {
     #
     my @coltypes = ();
     my %skipcols = ();
-    my @maskcols = ();
     my %skiplong = ();
     {
 
@@ -493,7 +492,6 @@ sub SyncTables {
                 || $tname =~ /BIN/ )
             {
                 push( @coltypes, "string" );
-                push( @maskcols, $sindex );
             }
             elsif ( $tname =~ /INTERVAL/ ) {
                 push( @coltypes, "string" );
