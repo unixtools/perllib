@@ -1137,13 +1137,24 @@ MAIN: while ( $more_source || $more_dest ) {
     $self->_dprint("\nOpening Final Count Query: $final_cnt_qry");
     my $final_cnt_cid = $dest_db->SQL_OpenQuery($final_cnt_qry);
     if ( !$final_cnt_cid ) {
-        $self->{error} = "opening dest count select failed: " . $dest_db->SQL_ErrorString();
-
-        # Don't treat as failure, cause sync might have worked fine
+        my $err = "opening dest count select failed: " . $dest_db->SQL_ErrorString();
+        $dest_db->SQL_RollBack();
+        return (
+            error  => $err,
+            status => "failed"
+        );
     }
     else {
         ($final_row_count) = $dest_db->SQL_FetchRow($final_cnt_cid);
         $dest_db->SQL_CloseQuery($final_cnt_cid);
+
+        if ( $final_row_count != $seen_source_rows ) {
+            $dest_db->SQL_RollBack();
+            return (
+                error  => "final dest row count did not match, check primary key definition",
+                status => "failed"
+            );
+        }
     }
     $self->_dprint("final row count = $final_row_count");
 
