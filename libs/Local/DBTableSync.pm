@@ -509,12 +509,13 @@ sub SyncTables {
             elsif ( $tname =~ /LONG/ || $coltype == 40 ) {
 
                 # not sure why 40 isn't in the types table though
+                # 40 = CLOB
                 # Yuck. I can handle longs
                 if ( $dtname =~ /LONG/ || $dcoltype == 40 ) {
                     push( @coltypes, "string" );
                     $skiplong{ lc $colname } = 1;
                 }
-                else    # clob, or dest is different type or something else weird
+                else    # dest is different type or something else weird
                 {
                     push( @coltypes, "unknown" );
                     $skipcols{ lc $colname } = 1;
@@ -729,7 +730,14 @@ sub SyncTables {
 
         foreach my $col (@dest_cols) {
             if ( $skiplong{ lc $col } ) {
-                push( @where, "(? is null or ? is not null)" );
+                if ( ref($dest_db) =~ /Oracle/ ) {
+                    push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
+                }
+                else {
+                    # This is bad - it can result in deleting a row we just inserted due to ignoring the field
+                    # should treat this as a failure/error condition if we don't have a suitable long field comparison method
+                    push( @where, "(? is null or ? is not null)" );
+                }
             }
             else {
                 push( @where, "($col=? or (? is null and $col is null))" );
