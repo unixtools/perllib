@@ -1086,6 +1086,8 @@ MAIN: while ( $more_source || $more_dest ) {
                     else {
                         $pending++;
                     }
+                    my $cnt = $dest_db->SQL_RowCount($uref->{cid});
+                    $self->_dprintrow( "deleted (unique) ($cnt)", $src_row );
                 }
 
                 $self->_dprintrow( "inserting", $src_row );
