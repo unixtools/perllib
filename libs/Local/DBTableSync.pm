@@ -253,7 +253,7 @@ sub SyncTables {
     my ( $source_where, $dest_where );
     my ( $source_alias, $dest_alias );
     my ( $qry,          $cid );
-    my ($no_dups);
+    my ( $no_dups,      $ignore_row_count );
     $self->{error} = undef;
 
     &LogAPIUsage();
@@ -305,6 +305,10 @@ sub SyncTables {
 
     if ( exists( $opts{no_dups} ) ) {
         $no_dups = $opts{no_dups};
+    }
+
+    if ( exists( $opts{ignore_row_count} ) ) {
+        $ignore_row_count = $opts{ignore_row_count};
     }
 
     # Columns to skip
@@ -1148,10 +1152,11 @@ MAIN: while ( $more_source || $more_dest ) {
         ($final_row_count) = $dest_db->SQL_FetchRow($final_cnt_cid);
         $dest_db->SQL_CloseQuery($final_cnt_cid);
 
-        if ( $final_row_count != $seen_source_rows ) {
+        if ( !$ignore_row_count && $final_row_count != $seen_source_rows ) {
             $dest_db->SQL_RollBack();
             return (
-                error  => "final dest row count did not match, check primary key definition",
+                error =>
+                    "final dest row count ($final_row_count) did not match source ($seen_source_rows), check primary key definition",
                 status => "failed"
             );
         }
