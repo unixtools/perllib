@@ -51,6 +51,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use JSON;
 use Local::UsageLogger;
 use Time::HiRes qw(time);
+use Text::CSV;
 
 BEGIN {
     &LogAPIUsage();
@@ -101,24 +102,29 @@ sub new {
         $tmp->{force} = $opts{force};
     }
 
-    my $max_deletes = undef;
+    $tmp->{max_deletes} = undef;
     if ( exists( $opts{max_deletes} ) ) {
         $tmp->{max_deletes} = $opts{max_deletes};
     }
 
-    my $max_inserts = undef;
+    $tmp->{max_inserts} = undef;
     if ( exists( $opts{max_inserts} ) ) {
         $tmp->{max_inserts} = $opts{max_inserts};
     }
 
-    my $no_dups = undef;
+    $tmp->{no_dups} = undef;
     if ( exists( $opts{no_dups} ) ) {
         $tmp->{no_dups} = $opts{no_dups};
     }
 
-    my $check_empty_source = undef;
+    $tmp->{check_empty_source} = undef;
     if ( exists( $opts{check_empty_source} ) ) {
         $tmp->{check_empty_source} = $opts{check_empty_source};
+    }
+
+    $tmp->{dumpfile} = undef;
+    if ( exists( $opts{dumpfile} ) ) {
+        $tmp->{dumpfile} = $opts{dumpfile};
     }
 
     return bless $tmp, $class;
@@ -309,6 +315,11 @@ sub SyncTables {
 
     if ( exists( $opts{ignore_row_count} ) ) {
         $ignore_row_count = $opts{ignore_row_count};
+    }
+
+    my $dumpfile;
+    if ( exists( $opts{dumpfile} ) ) {
+        $dumpfile = $opts{dumpfile};
     }
 
     # Columns to skip
@@ -734,8 +745,8 @@ sub SyncTables {
                     push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
                 }
                 else {
-                    # This is bad - it can result in deleting a row we just inserted due to ignoring the field
-                    # should treat this as a failure/error condition if we don't have a suitable long field comparison method
+               # This is bad - it can result in deleting a row we just inserted due to ignoring the field
+               # should treat this as a failure/error condition if we don't have a suitable long field comparison method
                     push( @where, "(? is null or ? is not null)" );
                 }
             }
@@ -800,7 +811,7 @@ sub SyncTables {
     }
 
     #
-    # Run the pre_select_check callback
+    # Rus the pre_select_check callback
     #
     if ( $opts{pre_select_check} ) {
         my $res = $opts{pre_select_check}->(%opts);
@@ -889,6 +900,20 @@ sub SyncTables {
             $dest_db->SQL_RollBack();
         }
         return ( error => $self->{error}, status => "failed" );
+    }
+
+    if ($dumpfile) {
+        my $csv = Text::CSV->new( { binary => 1 } );
+
+        open( my $out, ">${dumpfile}.dest-pre.csv" );
+        my $tmp_dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
+        while ( my @tmp = $dest_db->SQL_FetchRow($tmp_dest_cid) ) {
+            my $status = $csv->combine(@tmp);
+            print $out $csv->string(), "\n";
+        }
+        $dest_db->SQL_CloseQuery($tmp_dest_cid);
+        close($out);
+
     }
 
 MAIN: while ( $more_source || $more_dest ) {
@@ -1046,6 +1071,9 @@ MAIN: while ( $more_source || $more_dest ) {
             }
             else {
                 $self->_dprint("($deletes) source row sorts after dest row, deleting dest row.");
+
+                $self->_dprintrow( "CurSrc", $src_row );
+                $self->_dprintrow( "CurDst", $dest_row );
             }
 
             if ( !$dry_run ) {
@@ -1094,7 +1122,7 @@ MAIN: while ( $more_source || $more_dest ) {
                     else {
                         $pending++;
                     }
-                    my $cnt = $dest_db->SQL_RowCount($uref->{cid});
+                    my $cnt = $dest_db->SQL_RowCount( $uref->{cid} );
                     $self->_dprintrow( "deleted (unique) ($cnt)", $src_row );
                 }
 
@@ -1143,6 +1171,29 @@ MAIN: while ( $more_source || $more_dest ) {
                 status => "failed"
             );
         }
+    }
+
+    if ($dumpfile) {
+        my $csv = Text::CSV->new( { binary => 1 } );
+
+        open( my $out, ">${dumpfile}.src.csv" );
+        my $src_cid = $source_db->SQL_OpenQuery($source_sel_qry);
+        while ( my @tmp = $source_db->SQL_FetchRow($src_cid) ) {
+            my $status = $csv->combine(@tmp);
+            print $out $csv->string(), "\n";
+        }
+        $source_db->SQL_CloseQuery($src_cid);
+        close($out);
+
+        open( my $out, ">${dumpfile}.dest.csv" );
+        my $dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
+        while ( my @tmp = $dest_db->SQL_FetchRow($dest_cid) ) {
+            my $status = $csv->combine(@tmp);
+            print $out $csv->string(), "\n";
+        }
+        $dest_db->SQL_CloseQuery($dest_cid);
+        close($out);
+
     }
 
     $self->_dprint("getting final row count");
