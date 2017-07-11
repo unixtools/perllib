@@ -1326,7 +1326,20 @@ sub _compare {
             $tmp = $srow->[$i] <=> $drow->[$i];
         }
         else {
-            $tmp = $srow->[$i] cmp $drow->[$i];
+            # SQL sorts nulls last
+            # For oracle could use NULLS LAST clause in order by, but not MySQL
+
+            my $a = $srow->[$i];
+            my $b = $drow->[$i];
+            if ( $a eq $b ) {
+                $tmp = 0;
+            } elsif ( $a =~ /^\s*$/ && $b !~ /^\s*$/ ) {
+                $tmp = 1;
+            } elsif ( $a !~ /^\s*$/ && $b =~ /^\s*$/ ) {
+                $tmp = -1;
+            } else {
+                $tmp = $a cmp $b;
+            }
         }
 
         if ( $tmp == 0 ) {
