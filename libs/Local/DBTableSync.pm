@@ -811,7 +811,7 @@ sub SyncTables {
     }
 
     #
-    # Rus the pre_select_check callback
+    # Runs the pre_select_check callback
     #
     if ( $opts{pre_select_check} ) {
         my $res = $opts{pre_select_check}->(%opts);
