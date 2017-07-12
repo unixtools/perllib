@@ -906,7 +906,7 @@ sub SyncTables {
         my $csv = Text::CSV->new( { binary => 1 } );
 
         $self->_dprint("\nDumping content of original destination table.");
-        open( my $out, ">${dumpfile}.dest-pre.csv" );
+        open( my $out, ">${dumpfile}.dest-pre.csv" ) || die;
         my $tmp_dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
         while ( my @tmp = $dest_db->SQL_FetchRow($tmp_dest_cid) ) {
             my $status = $csv->combine(@tmp);
@@ -1178,7 +1178,7 @@ MAIN: while ( $more_source || $more_dest ) {
         $self->_dprint("\nDumping content of source table.");
         my $csv = Text::CSV->new( { binary => 1 } );
 
-        open( my $out, ">${dumpfile}.src.csv" );
+        open( my $out, ">${dumpfile}.src.csv" ) || die;
         my $src_cid = $source_db->SQL_OpenQuery($source_sel_qry);
         while ( my @tmp = $source_db->SQL_FetchRow($src_cid) ) {
             my $status = $csv->combine(@tmp);
@@ -1188,7 +1188,7 @@ MAIN: while ( $more_source || $more_dest ) {
         close($out);
 
         $self->_dprint("\nDumping content of final destination table.");
-        open( my $out, ">${dumpfile}.dest.csv" );
+        open( my $out, ">${dumpfile}.dest.csv" ) || die;
         my $dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
         while ( my @tmp = $dest_db->SQL_FetchRow($dest_cid) ) {
             my $status = $csv->combine(@tmp);
