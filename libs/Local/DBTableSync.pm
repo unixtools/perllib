@@ -905,6 +905,7 @@ sub SyncTables {
     if ($dumpfile) {
         my $csv = Text::CSV->new( { binary => 1 } );
 
+        $self->_dprint("\nDumping content of original destination table.");
         open( my $out, ">${dumpfile}.dest-pre.csv" );
         my $tmp_dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
         while ( my @tmp = $dest_db->SQL_FetchRow($tmp_dest_cid) ) {
@@ -1174,6 +1175,7 @@ MAIN: while ( $more_source || $more_dest ) {
     }
 
     if ($dumpfile) {
+        $self->_dprint("\nDumping content of source table.");
         my $csv = Text::CSV->new( { binary => 1 } );
 
         open( my $out, ">${dumpfile}.src.csv" );
@@ -1185,6 +1187,7 @@ MAIN: while ( $more_source || $more_dest ) {
         $source_db->SQL_CloseQuery($src_cid);
         close($out);
 
+        $self->_dprint("\nDumping content of final destination table.");
         open( my $out, ">${dumpfile}.dest.csv" );
         my $dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
         while ( my @tmp = $dest_db->SQL_FetchRow($dest_cid) ) {
@@ -1228,6 +1231,7 @@ MAIN: while ( $more_source || $more_dest ) {
     # Run the post_sync_check callback
     #
     if ( $opts{post_sync_check} ) {
+        $self->_dprint("\nRunning post sync check function.");
         my $res = $opts{post_sync_check}->(%opts);
         if ($res) {
             $dest_db->SQL_RollBack();
@@ -1327,15 +1331,16 @@ sub _compare {
         }
         else {
             # SQL sorts nulls last
-            # For oracle could use NULLS LAST clause in order by, but not MySQL
+            # For oracle could use NULLS FIRST clause in order by to match cmp behavior, but not MySQL
+            # May need to have this be aware of distinction between empty string and null
 
-            my $a = $srow->[$i];
-            my $b = $drow->[$i];
+            my $a = $srow->[$i] . "";
+            my $b = $drow->[$i] . "";
             if ( $a eq $b ) {
                 $tmp = 0;
-            } elsif ( $a =~ /^\s*$/ && $b !~ /^\s*$/ ) {
+            } elsif ( $a eq "" && $b ne "" ) {
                 $tmp = 1;
-            } elsif ( $a !~ /^\s*$/ && $b =~ /^\s*$/ ) {
+            } elsif ( $a ne "" && $b eq "" ) {
                 $tmp = -1;
             } else {
                 $tmp = $a cmp $b;
