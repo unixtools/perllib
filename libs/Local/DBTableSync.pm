@@ -1331,15 +1331,16 @@ sub _compare {
         }
         else {
             # SQL sorts nulls last
-            # For oracle could use NULLS LAST clause in order by, but not MySQL
+            # For oracle could use NULLS FIRST clause in order by to match cmp behavior, but not MySQL
+            # May need to have this be aware of distinction between empty string and null
 
-            my $a = $srow->[$i];
-            my $b = $drow->[$i];
+            my $a = $srow->[$i] . "";
+            my $b = $drow->[$i] . "";
             if ( $a eq $b ) {
                 $tmp = 0;
-            } elsif ( $a =~ /^\s*$/ && $b !~ /^\s*$/ ) {
+            } elsif ( $a eq "" && $b ne "" ) {
                 $tmp = 1;
-            } elsif ( $a !~ /^\s*$/ && $b =~ /^\s*$/ ) {
+            } elsif ( $a ne "" && $b eq "" ) {
                 $tmp = -1;
             } else {
                 $tmp = $a cmp $b;
