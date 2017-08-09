@@ -686,19 +686,19 @@ sub SyncTables {
 
                 my $j = 0;
                 if ( $sname ne $dname ) {
-                    $msg .= "Col[$sindex]: Name mismatch ($sname / $dname)\n";
+                    $msg .= "Col[$sindex] ($sname): Name mismatch ($sname / $dname)\n";
                     $j++;
                 }
                 if ( $stype ne $dtype ) {
-                    $msg .= "Col[$sindex]: Type mismatch ($stype / $dtype)\n";
+                    $msg .= "Col[$sindex] ($sname): Type mismatch ($stype / $dtype)\n";
                     $j++;
                 }
                 if ( $sprec ne $dprec ) {
-                    $msg .= "Col[$sindex]: Precision mismatch ($sprec / $dprec)\n";
+                    $msg .= "Col[$sindex] ($sname): Precision mismatch ($sprec / $dprec)\n";
                     $j++;
                 }
                 if ( $sscale ne $dscale ) {
-                    $msg .= "Col[$sindex]: Scale mismatch ($sscale / $dscale)\n";
+                    $msg .= "Col[$sindex] ($sname): Scale mismatch ($sscale / $dscale)\n";
                     $j++;
                 }
                 if ($j) {
