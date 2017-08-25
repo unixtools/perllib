@@ -1202,6 +1202,9 @@ MAIN: while ( $more_source || $more_dest ) {
     $self->_dprint("getting final row count");
     my $final_row_count;
     my $final_cnt_qry = "select count(*) from $dest_table $dest_alias";
+    if ($dest_where) {
+        $final_cnt_qry .= " where $dest_where";
+    }
     $self->_dprint("\nOpening Final Count Query: $final_cnt_qry");
     my $final_cnt_cid = $dest_db->SQL_OpenQuery($final_cnt_qry);
     if ( !$final_cnt_cid ) {
