@@ -1130,7 +1130,7 @@ MAIN: while ( $more_source || $more_dest ) {
                 $self->_dprintrow( "inserting", $src_row );
                 my $res = $dest_db->SQL_ExecQuery( $ins_cid, @{$src_row} );
                 if ( !$res ) {
-                    $self->_dprint("hit unique constraint violation");
+                    $self->_dprint( "insert into dest failed (" . $dest_db->SQL_ErrorString() . ")" );
                     $self->{error} = "insert into dest failed: " . $dest_db->SQL_ErrorString();
                     $status = "failed";
                     last MAIN;
@@ -1199,38 +1199,43 @@ MAIN: while ( $more_source || $more_dest ) {
 
     }
 
-    $self->_dprint("getting final row count");
     my $final_row_count;
-    my $final_cnt_qry = "select count(*) from $dest_table $dest_alias";
-    $self->_dprint("\nOpening Final Count Query: $final_cnt_qry");
-    my $final_cnt_cid = $dest_db->SQL_OpenQuery($final_cnt_qry);
-    if ( !$final_cnt_cid ) {
-        my $err = "opening dest count select failed: " . $dest_db->SQL_ErrorString();
-        $dest_db->SQL_RollBack();
-        return (
-            error  => $err,
-            status => "failed"
-        );
-    }
-    else {
-        ($final_row_count) = $dest_db->SQL_FetchRow($final_cnt_cid);
-        $dest_db->SQL_CloseQuery($final_cnt_cid);
-
-        if ( !$ignore_row_count && $final_row_count != $seen_source_rows ) {
+    if ( !$self->{error} ) {
+        $self->_dprint("getting final row count");
+        my $final_cnt_qry = "select count(*) from $dest_table $dest_alias";
+        if ($dest_where) {
+            $final_cnt_qry .= " where $dest_where";
+        }
+        $self->_dprint("\nOpening Final Count Query: $final_cnt_qry");
+        my $final_cnt_cid = $dest_db->SQL_OpenQuery($final_cnt_qry);
+        if ( !$final_cnt_cid ) {
+            my $err = "opening dest count select failed: " . $dest_db->SQL_ErrorString();
             $dest_db->SQL_RollBack();
             return (
-                error =>
-                    "final dest row count ($final_row_count) did not match source ($seen_source_rows), check primary key definition",
+                error  => $err,
                 status => "failed"
             );
         }
+        else {
+            ($final_row_count) = $dest_db->SQL_FetchRow($final_cnt_cid);
+            $dest_db->SQL_CloseQuery($final_cnt_cid);
+
+            if ( !$ignore_row_count && $final_row_count != $seen_source_rows ) {
+                $dest_db->SQL_RollBack();
+                return (
+                    error =>
+                        "final dest row count ($final_row_count) did not match source ($seen_source_rows), check primary key definition",
+                    status => "failed"
+                );
+            }
+        }
+        $self->_dprint("final row count = $final_row_count");
     }
-    $self->_dprint("final row count = $final_row_count");
 
     #
     # Run the post_sync_check callback
     #
-    if ( $opts{post_sync_check} ) {
+    if ( $opts{post_sync_check} && !$self->{error} ) {
         $self->_dprint("\nRunning post sync check function.");
         my $res = $opts{post_sync_check}->(%opts);
         if ($res) {
@@ -1266,7 +1271,7 @@ MAIN: while ( $more_source || $more_dest ) {
     #
     # Run the post_check callback
     #
-    if ( $opts{post_commit_check} ) {
+    if ( $opts{post_commit_check} && !$self->{error} ) {
         my $res = $opts{post_commit_check}->(%opts);
         if ($res) {
             return (
@@ -1338,11 +1343,14 @@ sub _compare {
             my $b = $drow->[$i] . "";
             if ( $a eq $b ) {
                 $tmp = 0;
-            } elsif ( $a eq "" && $b ne "" ) {
+            }
+            elsif ( $a eq "" && $b ne "" ) {
                 $tmp = 1;
-            } elsif ( $a ne "" && $b eq "" ) {
+            }
+            elsif ( $a ne "" && $b eq "" ) {
                 $tmp = -1;
-            } else {
+            }
+            else {
                 $tmp = $a cmp $b;
             }
         }
