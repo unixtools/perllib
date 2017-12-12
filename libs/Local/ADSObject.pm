@@ -1493,8 +1493,6 @@ sub HexGUIDToText {
     my $res;
 
     if ( $sidhex =~ m/^(.{8})(.{4})(.{4})(.{4})(.{12})$/go ) {
-        my @elem;
-
         my ( $a, $b, $c, $d, $e ) = ( $1, $2, $3, $4, $5 );
 
         # Endian swap - hardwired
