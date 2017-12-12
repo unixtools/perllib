@@ -1450,7 +1450,7 @@ sub ParseUserAccountControl {
 # Begin-Doc
 # Name: HexSIDToText
 # Description: Parses a sid in hex form into text form
-# Syntax: $sid = $ex->SIDToText($value);
+# Syntax: $sid = $ex->HexSIDToText($value);
 # End-Doc
 sub HexSIDToText {
     my $self   = shift;
@@ -1475,6 +1475,37 @@ sub HexSIDToText {
         }
 
         $res = join( "-", @elem );
+    }
+
+    return $res;
+}
+
+# Begin-Doc
+# Name: HexGUIDToText
+# Description: Parses a guid in hex form into text form
+# Syntax: $sid = $ex->HexGUIDToText($value);
+# End-Doc
+sub HexGUIDToText {
+    my $self   = shift;
+    my $sidhex = uc shift;
+    $sidhex =~ tr/A-F0-9//cd;
+
+    my $res;
+
+    if ( $sidhex =~ m/^(.{8})(.{4})(.{4})(.{4})(.{12})$/go ) {
+        my @elem;
+
+        my ( $a, $b, $c, $d, $e ) = ( $1, $2, $3, $4, $5 );
+
+        # Endian swap - hardwired
+        $a =~ s/(..)(..)(..)(..)/\4\3\2\1/;
+        $b =~ s/(..)(..)/\2\1/;
+        $c =~ s/(..)(..)/\2\1/;
+
+        # D left as-is
+        # E left as-is
+
+        $res = join( "-", $a, $b, $c, $d, $e );
     }
 
     return $res;
