@@ -231,6 +231,7 @@ sub _dprintrowall {
 #       that make up a unique index on the table. If the table has unique indexes, it is strongly
 #       recommended that this be included
 #    source_where => optional string, appended as where clause on select of rows from source table
+#    source_args => optional query arguments (array reference) for source table query
 #    dest_where => optional string, appended as where clause on select of rows from destination table
 #    source_alias => alias for primary source table, can be useful in where clause
 #    dest_alias => alias for primary dest table, can be useful in where clause
@@ -258,8 +259,9 @@ sub SyncTables {
     my ( $source_db, $dest_db, $source_table, $dest_table );
     my ( $source_where, $dest_where );
     my ( $source_alias, $dest_alias );
-    my ( $qry,          $cid );
-    my ( $no_dups,      $ignore_row_count );
+    my ($source_args);
+    my ( $qry,     $cid );
+    my ( $no_dups, $ignore_row_count );
     $self->{error} = undef;
 
     &LogAPIUsage();
@@ -351,6 +353,8 @@ sub SyncTables {
     $source_alias = $opts{source_alias};
     $dest_alias   = $opts{dest_alias};
 
+    $source_args = $opts{source_args};
+
     $self->_dprint("starting setup of sync of $source_table to $dest_table");
 
     #
@@ -419,7 +423,12 @@ sub SyncTables {
     if ($source_where) {
         $qry .= " and $source_where";
     }
-    $cid = $source_db->SQL_OpenQuery($qry);
+    if ($source_args) {
+        $cid = $source_db->SQL_OpenQuery( $qry, @$source_args );
+    }
+    else {
+        $cid = $source_db->SQL_OpenQuery($qry);
+    }
     if ( !$cid ) {
         $self->{error} = "describe schema from source failed: " . $source_db->SQL_ErrorString();
         return ( error => $self->{error}, status => "failed" );
@@ -871,7 +880,13 @@ sub SyncTables {
     }
     $source_sel_qry .= " order by $source_sort_cols";
     $self->_dprint("\nOpening Source Select Query: $source_sel_qry");
-    my $source_cid = $source_db->SQL_OpenQuery($source_sel_qry);
+    my $source_cid;
+    if ($source_args) {
+        $source_cid = $source_db->SQL_OpenQuery( $source_sel_qry, @$source_args );
+    }
+    else {
+        $source_cid = $source_db->SQL_OpenQuery($source_sel_qry);
+    }
     if ( !$source_cid ) {
         $self->{error} = "opening source select failed: " . $source_db->SQL_ErrorString();
         if ( !$dry_run ) {
