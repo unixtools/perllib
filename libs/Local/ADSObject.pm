@@ -4,6 +4,8 @@
 # Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
 #
 
+use strict;
+
 package Local::ADSObject;
 require Exporter;
 use Net::LDAPS;
@@ -18,6 +20,8 @@ use Local::CurrentUser;
 use Local::UsageLogger;
 use Math::BigInt;    # should do with eval instead perhaps
 use Sys::Hostname;
+
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 # Begin-Doc
 # Name: Local::ADSObject
@@ -36,7 +40,7 @@ BEGIN {
 my $retries = 4;    # Set this to one higher than the number of DCs.
 
 # Last Error Message
-$ErrorMsg = "no error";
+our $ErrorMsg = "no error";
 
 #
 # Flag bits for UserAccountControl field
@@ -454,7 +458,7 @@ sub SetPassword {
         syslog( "info", "ADSObject SetPassword ($userid) by " . $ENV{REMOTE_USER} . " from host " . $rh );
     }
 
-    $dn = $self->_GetDN($userid);
+    my $dn = $self->_GetDN($userid);
     if ( !$dn ) {
         $self->debug && print "userid not found\n";
         $ErrorMsg = "Userid '$userid' not found. Password not set.\n";
@@ -468,8 +472,8 @@ sub SetPassword {
     #---
     # simple string=>unicode conversion
     #---
-    $pw  = $self->_MakeUnicode($password);
-    $res = $self->{ldap}->modify(
+    my $pw  = $self->_MakeUnicode($password);
+    my $res = $self->{ldap}->modify(
         dn      => $dn,
         changes => [ replace => [ "unicodePwd" => $pw, ] ]
     );
@@ -478,7 +482,7 @@ sub SetPassword {
         return $ErrorMsg;
     }
 
-    $res = $self->_ModifyUACBits(
+    my $res = $self->_ModifyUACBits(
         userid => $userid,
         reset  => $UAC_PW_NOT_REQUIRED,
     );
@@ -517,22 +521,21 @@ sub _gen_random_pw {
 # End-Doc
 
 sub CreateUser {
-    my $self = shift;
-    my (%info) = @_;
-    my ( $dn, $samName, $dispName, $userPN, $princ );
-    my $ldap = $self->{ldap};
-    $dn       = $info{DistinguishedName};
-    $samName  = $info{SamAccountName};
-    $dispName = $info{DisplayName};
-    $userPN   = $info{UserPrincipalName};
-    $spn      = $info{ServicePrincipalName};
+    my $self     = shift;
+    my (%info)   = @_;
+    my $ldap     = $self->{ldap};
+    my $dn       = $info{DistinguishedName};
+    my $samName  = $info{SamAccountName};
+    my $dispName = $info{DisplayName};
+    my $userPN   = $info{UserPrincipalName};
+    my $spn      = $info{ServicePrincipalName};
     $self->debug && print "dispName = $dispName\n";
     $self->debug && print "userPN = $userPN\n";
     $self->debug && print "samName = $samName\n";
     $self->debug && print "dn = $dn\n";
 
     $self->debug && print "inside create\n";
-    $crtusr = $self->{ldap}->add(
+    my $crtusr = $self->{ldap}->add(
         dn   => "$dn",
         attr => [
             SamAccountName     => "$samName",
@@ -557,10 +560,10 @@ sub CreateUser {
     # Now enable the user
     #
     # and make it never expire
-    $res = $self->EnableAccount($samName);
+    my $res = $self->EnableAccount($samName);
     if ($res) { return $res; }
 
-    $res = $self->_ModifyUACBits(
+    my $res = $self->_ModifyUACBits(
         userid => $samName,
         set    => $UAC_NEVER_EXPIRES,
         reset  => $UAC_PW_NOT_REQUIRED,
@@ -604,7 +607,7 @@ sub CreateSecurityGroup {
     $self->debug && print "dn = $dn\n";
 
     $self->debug && print "inside create\n";
-    $crtusr = $self->{ldap}->add(
+    my $crtusr = $self->{ldap}->add(
         dn   => $dn,
         attr => [
             sAMAccountName       => $group,
@@ -637,8 +640,8 @@ sub DeleteUser {
     my (%info) = @_;
     my ($upn);
     my $userid = $info{userid} || return "Need the userid\n";
-    my $dn = $self->_GetDN($userid);
-    $delusr = $self->{ldap}->delete($dn);
+    my $dn     = $self->_GetDN($userid);
+    my $delusr = $self->{ldap}->delete($dn);
     if ( $delusr->code ) {
         return "delete failed: " . $delusr->error . "\n";
     }
@@ -657,7 +660,7 @@ sub DeleteDN {
     my %info = @_;
     my ($upn);
     my $dn = $info{dn} || return "Need the dn\n";
-    $delusr = $self->{ldap}->delete($dn);
+    my $delusr = $self->{ldap}->delete($dn);
     if ( $delusr->code ) {
         return "delete failed: " . $delusr->error . "\n";
     }
@@ -672,22 +675,21 @@ sub DeleteDN {
 # Access: internal
 # End-Doc
 sub _MakeUnicode {
-    my $self = shift;
-    my ( $string, $plainstring, $chr );
-    $string = shift;
+    my $self   = shift;
+    my $string = shift;
 
     #	print "string $string\n";
-    $plainstring = "\"$string\"";
+    my $plainstring = "\"$string\"";
 
     #---
     # simple string=>unicode conversion
     #
     my @tmp = ();
-    foreach $chr ( split( '', $plainstring ) ) {
+    foreach my $chr ( split( '', $plainstring ) ) {
         push( @tmp, $chr );
         push( @tmp, chr(0) );
     }
-    $unistring = join( "", @tmp );
+    my $unistring = join( "", @tmp );
 
     #
     #---
@@ -725,14 +727,14 @@ sub GetUserList {
             return undef;
         }
 
-        foreach $entry ( $res->entries ) {
+        foreach my $entry ( $res->entries ) {
             my $sa = lc $entry->get_value('sAMAccountName');
             push( @users, $sa );
         }
 
         my ($resp) = $res->control(LDAP_CONTROL_PAGED) or last;
 
-        $cookie = $resp->cookie or last;
+        my $cookie = $resp->cookie or last;
         $page->cookie($cookie);
     }
 
@@ -1207,9 +1209,8 @@ sub GetAttributesMatchCB {
 sub SetAttributes {
     my $self = shift;
     my (%info) = @_;
-    my ( $userid, $changes, $upn, $dn );
 
-    $userid = $info{userid} || return "need a userid\n";
+    my $userid  = $info{userid}  || return "need a userid\n";
     my $replace = $info{replace} || $info{attributes};
     my $add     = $info{add};
     my $delete  = $info{delete};
@@ -1218,7 +1219,7 @@ sub SetAttributes {
         return "need list of attributes to change\n";
     }
 
-    $dn = $self->_GetDN($userid);
+    my $dn = $self->_GetDN($userid);
     $self->debug && print "dn is $dn\n";
     $self->debug && print "userid is $userid\n";
 
@@ -1233,7 +1234,7 @@ sub SetAttributes {
         push( @parms, delete => $delete );
     }
 
-    $res = $self->{ldap}->modify(
+    my $res = $self->{ldap}->modify(
         dn      => $dn,
         changes => \@parms
     );
@@ -1313,8 +1314,8 @@ sub DumpLDIF {
             return undef;
         }
 
-        foreach $entry ( $res->entries ) {
-            my $dn = $entry->get_value(distinguishedName);
+        foreach my $entry ( $res->entries ) {
+            my $dn = $entry->get_value("distinguishedName");
             $ldif->write_entry($entry);
             $count++;
             if ( $count % 50 == 0 ) {
@@ -1324,7 +1325,7 @@ sub DumpLDIF {
 
         my ($resp) = $res->control(LDAP_CONTROL_PAGED) or last;
 
-        $cookie = $resp->cookie or last;
+        my $cookie = $resp->cookie or last;
         $page->cookie($cookie);
     }
 
@@ -1342,7 +1343,6 @@ sub DumpLDIF {
 sub CheckPassword {
     my $self = shift;
     my ( $userid, $password, $domain ) = @_;
-    my $tmpad;
 
     if ( !$userid || !$password ) {
         return 1;
@@ -1352,7 +1352,7 @@ sub CheckPassword {
         $domain = $self->{domain};
     }
 
-    $tmpad = new Local::ADSObject(
+    my $tmpad = new Local::ADSObject(
         user     => $userid,
         password => $password,
         domain   => $domain,
@@ -1415,7 +1415,7 @@ sub GetUserAccountControl {
     my $self = shift;
     my $userid = shift || return "must specify userid";
 
-    my $info = $self->GetAttributes( $userid, attributes => [userAccountControl] );
+    my $info = $self->GetAttributes( $userid, attributes => [qw(userAccountControl)] );
     if ( defined($info) ) {
         my ($uac) = @{ $info->{userAccountControl} };
         return int($uac);
@@ -1572,8 +1572,10 @@ sub ParseProtocolSettings {
     #	}
 
     my ( $type, @subfields ) = split( /\xC2\xA7/, $ps );
+    my @others;
+
     if ( $type eq "POP3" ) {
-        my ( $enable, $defaults, $mime, $charset, $richtext, @others ) = @subfields;
+        my ( $enable, $defaults, $mime, $charset, $richtext, @tmpothers ) = @subfields;
 
         if   ( $enable == 1 ) { push( @res, "POP3-Enabled" ); }
         else                  { push( @res, "POP3-Disabled" ); }
@@ -1594,18 +1596,22 @@ sub ParseProtocolSettings {
 
         if   ( $richtext == 0 ) { push( @res, "POP3-RichText Disabled" ); }
         else                    { push( @res, "POP3-RichText Enabled" ); }
+
+        push( @others, @tmpothers );
     }
     elsif ( $type eq "HTTP" ) {
-        my ( $enable, $defaults, @others ) = @subfields;
+        my ( $enable, $defaults, @tmpothers ) = @subfields;
 
         if   ( $enable == 1 ) { push( @res, "HTTP-Enabled" ); }
         else                  { push( @res, "HTTP-Disabled" ); }
 
         if   ( $defaults == 1 ) { push( @res, "HTTP-Use Server Defaults" ); }
         else                    { push( @res, "HTTP-No Server Defaults" ); }
+
+        push( @others, @tmpothers );
     }
     elsif ( $type eq "IMAP4" ) {
-        my ( $enable, $defaults, $mime, $charset, @others ) = @subfields;
+        my ( $enable, $defaults, $mime, $charset, @tmpothers ) = @subfields;
 
         if   ( $enable == 1 ) { push( @res, "IMAP4-Enabled" ); }
         else                  { push( @res, "IMAP4-Disabled" ); }
@@ -1622,7 +1628,8 @@ sub ParseProtocolSettings {
         elsif ( $mime == 3 ) { push( @res, "IMAP4-UUEncode Enabled" ); }
         elsif ( $mime == 4 ) { push( @res, "IMAP4-MIME w/ HTML Only" ); }
 
-        push( @res, "IMAP4-Default Charset($charset)" );
+        push( @res,    "IMAP4-Default Charset($charset)" );
+        push( @others, @tmpothers );
     }
 
     if ( $#others >= 0 ) {
@@ -1720,15 +1727,15 @@ sub MoveUser {
         filter => "(objectclass=*)",
     );
     if ( $tmpres->code ) {
-        $self->debug && print "Search failed: " . $res->error . "\n";
-        $ErrorMsg = "search failed: " . $res->error;
+        $self->debug && print "Search failed: " . $tmpres->error . "\n";
+        $ErrorMsg = "search failed: " . $tmpres->error;
         return $ErrorMsg;
     }
 
     my @entries = $tmpres->all_entries;
     my $entry   = shift(@entries);
 
-    $cn = $entry->get_value('cn');
+    my $cn = $entry->get_value('cn');
     if ( !$cn ) {
         $ErrorMsg = "failed to get cn for $dn.\n";
         $debug && print "Failed to get cn for $dn.\n";
@@ -1743,7 +1750,7 @@ sub MoveUser {
     # The new cn needs to have commas encoded to function properly.
     $cn =~ s/,/\\,/gio;
 
-    $move = $ldap->modrdn(
+    my $move = $ldap->modrdn(
         $dn,
         newrdn       => 'cn=' . $cn,
         newsuperior  => $target,
