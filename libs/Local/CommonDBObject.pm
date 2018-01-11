@@ -441,7 +441,7 @@ sub SQL_OpenQueryExtra {
     my ( $self, $qry, $props, @params ) = @_;
     my ( $cid, $res, $qcount );
 
-    $cid                 = $self->dbhandle->prepare($qry, $props);
+    $cid = $self->dbhandle->prepare( $qry, $props );
     $self->{last_query}  = $qry;
     $self->{last_params} = [@params];
 
@@ -868,6 +868,27 @@ sub SQL_ColumnInfo {
     $info{scale}     = [ @{ $cid->{SCALE} } ];
 
     return %info;
+}
+
+=begin
+Begin-Doc
+Name: SQL_LowerColumns
+Type: method
+Description: returns list of lowercased column names for the query
+Syntax: @colnames = $obj->SQL_LowerColumns()
+Comments: Returns an array with lowercased column names returned by the query
+End-Doc
+=cut
+
+sub SQL_LowerColumns {
+    my $self = shift;
+    my $cid  = shift;
+
+    unless ( ref $cid ) {
+        $cid = $self->sthandle;
+    }
+
+    return map { lc($_) } @{ $cid->{NAME} };
 }
 
 =begin
