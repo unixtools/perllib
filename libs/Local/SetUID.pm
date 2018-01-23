@@ -37,20 +37,25 @@ sub SetUID {
     my $target_user = shift;
     my $target_uid;
     my $target_gid;
+    my $target_home;
 
     no warnings 'numeric';
 
     if ( int($target_user) eq $target_user ) {
         $target_uid = int($target_user);
         $target_gid = int($target_user);
+        my @tmp = getpwuid($target_uid);
+        $target_home = $tmp[7];
+        $target_user = $tmp[0];
     }
     else {
         my @tmp = getpwnam($target_user);
         if ( $tmp[0] ne $target_user ) {
             die "Unable to look up target userid ($target_user).\n";
         }
-        $target_uid = $tmp[2];
-        $target_gid = $tmp[3];
+        $target_uid  = $tmp[2];
+        $target_gid  = $tmp[3];
+        $target_home = $tmp[7];
     }
 
     if ( $target_uid == 0 ) {
@@ -77,6 +82,14 @@ sub SetUID {
         print "Unable to successfully set GID.\n";
         print "Found ($(/$)) wanted ($target_gid/$target_gid). Exiting!\n";
         die;
+    }
+
+    if ($target_home) {
+        $ENV{HOME} = $target_home;
+    }
+    $ENV{USER} = $target_user;
+    if ( $ENV{LOGNAME} ) {
+        $ENV{LOGNAME} = $target_user;
     }
 
     return;
