@@ -13,7 +13,58 @@
 
 =cut
 
+Example config:
 
+my $appmenu = new Local::AppMenu(
+    prefix => "myapp",
+    menus  => [
+        {   name       => "File",
+            link       => "optionalurl",
+            visible_cb => sub { return 1 },
+            id         => "file",
+            items      => [
+                {   name       => "Open",
+                    link       => "https://www.mst.edu",
+                    visible_cb => sub { return 1 },
+                },
+                {   name       => "Hidden",
+                    link       => "https://www.yahoo.com",
+                    visible_cb => sub { return 0 },
+                },
+                {   name       => "Close",
+                    link       => "https://www.google.com",
+                    visible_cb => sub { return 1 },
+                }
+            ]
+        },
+        {   name       => "Edit",
+            visible_cb => sub { return 1 },
+            id         => "edit",
+            items      => [
+                {   name       => "Undo",
+                    link       => "https://www.mst.edu",
+                    visible_cb => sub { return 1 },
+                },
+                {   name       => "Cut",
+                    link       => "https://www.yahoo.com",
+                    visible_cb => sub { return 0 },
+                },
+                {   name       => "Copy",
+                    link       => "https://www.google.com",
+                    visible_cb => sub { return 1 },
+                }
+            ]
+        }
+    ]
+);
+
+print $appmenu->style();
+
+print $appmenu->html();
+
+Config notes:
+link and visible_cb are optional - if visible_cb is present will be called at time of display to determine
+if item or menu should be shown
 
 =cut
 
@@ -151,6 +202,11 @@ sub html {
     foreach my $mref (@$menus) {
         $idx++;
 
+        my $vis = $mref->{visible_cb};
+        if ( ref($vis) eq "CODE" ) {
+            next if ( !&$vis() );
+        }
+
         $html .= "<div class=\"$prefix-am $prefix-am-$idx\">\n";
         $html .= " <button class=\"$prefix-am-btn $prefix-am-btn-$idx\" ";
         if ( $mref->{link} ) {
@@ -160,6 +216,12 @@ sub html {
         $html .= " <div class=\"$prefix-am-items $prefix-am-items-$idx\">\n";
 
         foreach my $iref ( @{ $mref->{items} } ) {
+
+            my $vis = $iref->{visible_cb};
+            if ( ref($vis) eq "CODE" ) {
+                next if ( !&$vis() );
+            }
+
             $html .= "  <a href=\"";
             if ( $iref->{link} ) {
                 $html .= $iref->{link};
