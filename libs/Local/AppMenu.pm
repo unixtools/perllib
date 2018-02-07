@@ -129,12 +129,15 @@ sub css {
     $css .= <<EOBASE;
 .$prefix-am-btn {
     background: none;
-    border: none;
+    border: solid 0.1px #dddddd;
     color: black;
-    font-size: 1.00rem;
+    font-size: .8rem;
     font-weight: bold;
     min-width: 8rem;
-    padding: 0.5rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.3rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
     text-align: left;
 }
 .$prefix-am {
@@ -152,6 +155,8 @@ sub css {
 .$prefix-am-items a {
     background: white;
     border-bottom: 1px solid #adadad;
+    border-left: 0.1px solid #eeeeee;
+    border-right: 0.1px solid #eeeeee;
     color: #858583;
     display: block;
     font-family: sans-serif;
