@@ -183,20 +183,22 @@ sub style {
 }
 
 # Begin-Doc
-# Name: html
+# Name: menuhtml
 # Type: method
-# Syntax: $html = $obj->html([active => "key"]);
+# Syntax: $html = $obj->menuhtml([active => "id_or_name"]);
 # Description: Returns html for menu, optionally pass in a "active" value to
-#  indicate which submenu is active to determine which set of subitems to display
+#  indicate which submenu is active for highlighting
 # End-Doc
-sub html {
+sub menuhtml {
     my $self = shift;
+    my %opts = @_;
 
     &LogAPIUsage();
 
     my $html   = "";
     my $prefix = $self->{prefix};
     my $menus  = $self->{menus};
+    my $active = $opts{active};
 
     my $idx = 0;
     foreach my $mref (@$menus) {
@@ -215,6 +217,7 @@ sub html {
         $html .= ">" . $mref->{name} . "</button>\n";
         $html .= " <div class=\"$prefix-am-items $prefix-am-items-$idx\">\n";
 
+        my @items;
         foreach my $iref ( @{ $mref->{items} } ) {
 
             my $vis = $iref->{visible_cb};
@@ -222,19 +225,79 @@ sub html {
                 next if ( !&$vis() );
             }
 
-            $html .= "  <a href=\"";
+            my $item = "<a href=\"";
             if ( $iref->{link} ) {
-                $html .= $iref->{link};
+                $item .= $iref->{link};
             }
             else {
-                $html .= "#";
+                $item .= "#";
             }
-            $html .= "\">" . $iref->{name} . "</a>\n";
+            $item .= "\">" . $iref->{name} . "</a>";
+            $html .= "  " . $item . "\n";
+
+            push( @items, $item );
         }
         $html .= " </div>\n";
         $html .= "</div>\n";
     }
+
     return $html;
+}
+
+# Begin-Doc
+# Name: linkhtml
+# Type: method
+# Syntax: $html = $obj->linkhtml(active => "id_or_name");
+# Description: Returns html for menu, pass in a "active" value to
+#  indicate which submenu is active to determine which set of subitems to return
+# End-Doc
+sub linkhtml {
+    my $self = shift;
+    my %opts = @_;
+
+    &LogAPIUsage();
+
+    my $html   = "";
+    my $prefix = $self->{prefix};
+    my $menus  = $self->{menus};
+    my $active = $opts{active};
+
+    my $idx = 0;
+    my $posthtml;
+    foreach my $mref (@$menus) {
+        $idx++;
+
+        my $vis = $mref->{visible_cb};
+        if ( ref($vis) eq "CODE" ) {
+            next if ( !&$vis() );
+        }
+
+        my @items;
+        foreach my $iref ( @{ $mref->{items} } ) {
+
+            my $vis = $iref->{visible_cb};
+            if ( ref($vis) eq "CODE" ) {
+                next if ( !&$vis() );
+            }
+
+            my $item = "<a href=\"";
+            if ( $iref->{link} ) {
+                $item .= $iref->{link};
+            }
+            else {
+                $item .= "#";
+            }
+            $item .= "\">" . $iref->{name} . "</a>";
+            $html .= "  " . $item . "\n";
+
+            push( @items, $item );
+        }
+
+        if ( $active && ( $active eq $mref->{id} || $active eq $mref->{name} ) ) {
+            $posthtml = join( " &middot; ", @items );
+        }
+    }
+    return $posthtml;
 }
 
 1;
