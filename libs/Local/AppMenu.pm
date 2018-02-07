@@ -60,7 +60,9 @@ my $appmenu = new Local::AppMenu(
 
 print $appmenu->style();
 
-print $appmenu->html();
+print $appmenu->menuhtml();
+
+print $appmenu->linkhtml();
 
 Config notes:
 link and visible_cb are optional - if visible_cb is present will be called at time of display to determine
