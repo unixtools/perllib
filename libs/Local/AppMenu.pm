@@ -224,7 +224,6 @@ sub menuhtml {
         $html .= ">" . $mref->{name} . "</button>\n";
         $html .= " <div class=\"$prefix-am-items $prefix-am-items-$idx\">\n";
 
-        my @items;
         foreach my $iref ( @{ $mref->{items} } ) {
 
             my $vis = $iref->{visible_cb};
@@ -241,8 +240,6 @@ sub menuhtml {
             }
             $item .= "\">" . $iref->{name} . "</a>";
             $html .= "  " . $item . "\n";
-
-            push( @items, $item );
         }
         $html .= " </div>\n";
         $html .= "</div>\n";
@@ -269,11 +266,8 @@ sub linkhtml {
     my $menus  = $self->{menus};
     my $active = $opts{active};
 
-    my $idx = 0;
     my $posthtml;
     foreach my $mref (@$menus) {
-        $idx++;
-
         my $vis = $mref->{visible_cb};
         if ( ref($vis) eq "CODE" ) {
             next if ( !&$vis() );
