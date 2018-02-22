@@ -584,6 +584,7 @@ sub SyncTables {
             }
         }
         unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
+            push( @source_sort_cols, "${col} IS NULL" ) if ref($source_db) =~ /MySQL/;
             push( @source_sort_cols, $col );
         }
     }
@@ -592,6 +593,7 @@ sub SyncTables {
             push( @dest_cols, $col );
         }
         unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
+            push( @dest_sort_cols, "${col} IS NULL" ) if ref($dest_db) =~ /MySQL/;
             push( @dest_sort_cols, $col );
         }
     }
@@ -1483,7 +1485,7 @@ sub dump_colinfo {
     $res .= "Column Count(" . $colinfo->{numcols} . ")\n";
 
     for ( my $i = 0; $i < $colinfo->{numcols}; $i++ ) {
-        my $name  = $colinfo->{colnames}->[$i];
+        my $name  = uc $colinfo->{colnames}->[$i];
         my $type  = $colinfo->{coltypes}->[$i];
         my $prec  = $colinfo->{precision}->[$i];
         my $scale = $colinfo->{scale}->[$i];
