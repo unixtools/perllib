@@ -1485,7 +1485,7 @@ sub dump_colinfo {
     $res .= "Column Count(" . $colinfo->{numcols} . ")\n";
 
     for ( my $i = 0; $i < $colinfo->{numcols}; $i++ ) {
-        my $name  = $colinfo->{colnames}->[$i];
+        my $name  = uc $colinfo->{colnames}->[$i];
         my $type  = $colinfo->{coltypes}->[$i];
         my $prec  = $colinfo->{precision}->[$i];
         my $scale = $colinfo->{scale}->[$i];
