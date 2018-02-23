@@ -1424,31 +1424,45 @@ sub GetUniqueKeys {
     my $cid;
 
     if ( !$cache->{$db}->{$owner}->{$table} ) {
-        $qry
-            = "select a.index_name,a.column_name from dba_ind_columns a, dba_indexes b "
-            . "where a.index_owner=b.owner and a.index_name=b.index_name and b.uniqueness='UNIQUE' and "
-            . "lower(a.table_owner)=? and lower(a.table_name)=? order by index_name,column_position";
-        $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table )
-            || $db->SQL_Error($qry) && die;
         my %ukeys;
-        while ( my ( $iname, $col ) = $db->SQL_FetchRow($cid) ) {
-            $self->{debug} && print "Unique Index ($iname) on Col ($col)\n";
-            push( @{ $ukeys{ "IDX-" . $iname } }, $col );
+        if ( ref($db) =~ /MySQL/ ) {
+            $qry
+                = "select constraint_name, column_name from information_schema.key_column_usage "
+                . "where lower(table_schema) = ? and lower(table_name) = ? "
+                . "order by constraint_name, ordinal_position";
+            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table ) || $db->SQL_Error($qry) && die;
+            while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
+                $self->{debug} && print "Constraint ($cname) on Col ($col)\n";
+                push( @{ $ukeys{$cname} }, $col );
+            }
+            $db->SQL_CloseQuery($cid);
         }
-        $db->SQL_CloseQuery($cid);
+        else {
+            $qry
+                = "select a.index_name,a.column_name from dba_ind_columns a, dba_indexes b "
+                . "where a.index_owner=b.owner and a.index_name=b.index_name and b.uniqueness='UNIQUE' and "
+                . "lower(a.table_owner)=? and lower(a.table_name)=? order by index_name,column_position";
+            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table )
+                || $db->SQL_Error($qry) && die;
+            while ( my ( $iname, $col ) = $db->SQL_FetchRow($cid) ) {
+                $self->{debug} && print "Unique Index ($iname) on Col ($col)\n";
+                push( @{ $ukeys{ "IDX-" . $iname } }, $col );
+            }
+            $db->SQL_CloseQuery($cid);
 
-        $qry
-            = "select a.constraint_name,a.column_name from dba_cons_columns a, dba_constraints b "
-            . "where a.owner=b.owner and a.constraint_name=b.constraint_name and b.constraint_type='P' and "
-            . "lower(b.owner)=? and lower(b.table_name)=? order by a.constraint_name,a.position";
-        $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table )
-            || $db->SQL_Error($qry) && die;
-        while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
-            $self->{debug}
-                && print "Unique Constraint ($cname) on Col ($col)\n";
-            push( @{ $ukeys{ "CONS-" . $cname } }, $col );
+            $qry
+                = "select a.constraint_name,a.column_name from dba_cons_columns a, dba_constraints b "
+                . "where a.owner=b.owner and a.constraint_name=b.constraint_name and b.constraint_type='P' and "
+                . "lower(b.owner)=? and lower(b.table_name)=? order by a.constraint_name,a.position";
+            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table )
+                || $db->SQL_Error($qry) && die;
+            while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
+                $self->{debug}
+                    && print "Unique Constraint ($cname) on Col ($col)\n";
+                push( @{ $ukeys{ "CONS-" . $cname } }, $col );
+            }
+            $db->SQL_CloseQuery($cid);
         }
-        $db->SQL_CloseQuery($cid);
 
         my @unique = ();
         my %seen   = ();
