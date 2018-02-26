@@ -257,6 +257,7 @@ sub SyncTables {
     my %opts = @_;
 
     my ( $source_db, $dest_db, $source_table, $dest_table );
+    my ( $source_ref,   $dest_ref );
     my ( $source_where, $dest_where );
     my ( $source_alias, $dest_alias );
     my ($source_args);
@@ -350,6 +351,20 @@ sub SyncTables {
     $dest_table = $opts{dest_table}
         || return ( error => "missing dest_table", status => "failed" );
 
+    $source_ref = ref($source_db);
+    $dest_ref   = ref($dest_db);
+
+    if ( $source_ref !~ /(?:Oracle|MySQL)/ ) {
+        $self->{error} = "unsupported source_db Object: ${source_ref}";
+        return ( error => $self->{error}, status => "failed" );
+    }
+
+    if ( $dest_ref !~ /(?:Oracle|MySQL)/ ) {
+        $self->{error} = "unsupported dest_db Object: ${dest_ref}";
+        return ( error => $self->{error}, status => "failed" );
+    }
+
+
     $source_alias = $opts{source_alias};
     $dest_alias   = $opts{dest_alias};
 
@@ -373,7 +388,7 @@ sub SyncTables {
     #
     # If Oracle, set appropriate default date formats
     #
-    if ( ref($source_db) =~ /Oracle/ ) {
+    if ( $source_ref =~ /Oracle/ ) {
         my $date_qry = "alter session set NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'";
         unless ( $source_db->SQL_ExecQuery($date_qry) ) {
             $self->{error} = "set of source nls date format failed: " . $source_db->SQL_ErrorString();
@@ -393,7 +408,7 @@ sub SyncTables {
         # Don't strip trailing spaces and allow embedded \0.  Force 'blank-padded comparison semantics
         $source_db->dbhandle->{ora_ph_type} = 96;
     }
-    if ( ref($dest_db) =~ /Oracle/ ) {
+    if ( $dest_ref =~ /Oracle/ ) {
         my $date_qry = "alter session set NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'";
 
         unless ( $dest_db->SQL_ExecQuery($date_qry) ) {
@@ -584,8 +599,13 @@ sub SyncTables {
             }
         }
         unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
-            push( @source_sort_cols, "${col} IS NULL" ) if ref($source_db) =~ /MySQL/;
-            push( @source_sort_cols, $col );
+            if ( $source_ref =~ /Oracle/ ) {
+                push( @source_sort_cols, $col );
+            }
+            elsif ( $source_ref =~ /MySQL/ ) {
+                push( @source_sort_cols, "${col} IS NULL" );
+                push( @source_sort_cols, $col );
+            }
         }
     }
     foreach my $col ( @{ $dest_colinfo{colnames} } ) {
@@ -593,8 +613,13 @@ sub SyncTables {
             push( @dest_cols, $col );
         }
         unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
-            push( @dest_sort_cols, "${col} IS NULL" ) if ref($dest_db) =~ /MySQL/;
-            push( @dest_sort_cols, $col );
+            if ( $dest_ref =~ /Oracle/ ) {
+                push( @dest_sort_cols, $col );
+            }
+            elsif ( $dest_ref =~ /MySQL/ ) {
+                push( @dest_sort_cols, "${col} IS NULL" );
+                push( @dest_sort_cols, $col );
+            }
         }
     }
 
@@ -774,10 +799,10 @@ sub SyncTables {
         # If no unique column sets, then we have to limit to a single delete
         # otherwise, we know there are no duplicates
         if ( scalar(@unique_info) == 0 && !$no_dups ) {
-            if ( ref($dest_db) =~ /Oracle/ ) {
+            if ( $dest_ref =~ /Oracle/ ) {
                 $dest_del_qry .= " and rownum=1 ";
             }
-            elsif ( ref($dest_db) =~ /MySQL/ ) {
+            elsif ( $dest_ref =~ /MySQL/ ) {
                 $dest_del_qry .= " limit 1";
             }
             else {
@@ -1425,19 +1450,8 @@ sub GetUniqueKeys {
 
     if ( !$cache->{$db}->{$owner}->{$table} ) {
         my %ukeys;
-        if ( ref($db) =~ /MySQL/ ) {
-            $qry
-                = "select constraint_name, column_name from information_schema.key_column_usage "
-                . "where lower(table_schema) = ? and lower(table_name) = ? "
-                . "order by constraint_name, ordinal_position";
-            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table ) || $db->SQL_Error($qry) && die;
-            while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
-                $self->{debug} && print "Constraint ($cname) on Col ($col)\n";
-                push( @{ $ukeys{$cname} }, $col );
-            }
-            $db->SQL_CloseQuery($cid);
-        }
-        else {
+        my $db_ref = ref($db);
+        if ( $db_ref =~ /Oracle/ ) {
             $qry
                 = "select a.index_name,a.column_name from dba_ind_columns a, dba_indexes b "
                 . "where a.index_owner=b.owner and a.index_name=b.index_name and b.uniqueness='UNIQUE' and "
@@ -1462,6 +1476,21 @@ sub GetUniqueKeys {
                 push( @{ $ukeys{ "CONS-" . $cname } }, $col );
             }
             $db->SQL_CloseQuery($cid);
+        }
+        elsif ( $db_ref =~ /MySQL/ ) {
+            $qry
+                = "select constraint_name, column_name from information_schema.key_column_usage "
+                . "where lower(table_schema) = ? and lower(table_name) = ? "
+                . "order by constraint_name, ordinal_position";
+            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table ) || $db->SQL_Error($qry) && die;
+            while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
+                $self->{debug} && print "Constraint ($cname) on Col ($col)\n";
+                push( @{ $ukeys{$cname} }, $col );
+            }
+            $db->SQL_CloseQuery($cid);
+        }
+        else {
+            die "Unsupported DBObject ${db_ref}\n";
         }
 
         my @unique = ();
