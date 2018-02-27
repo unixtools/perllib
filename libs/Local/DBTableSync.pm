@@ -364,7 +364,6 @@ sub SyncTables {
         return ( error => $self->{error}, status => "failed" );
     }
 
-
     $source_alias = $opts{source_alias};
     $dest_alias   = $opts{dest_alias};
 
@@ -582,6 +581,9 @@ sub SyncTables {
     my @source_cols;
     my @dest_cols;
 
+    my @source_safe_cols;
+    my @dest_safe_cols;
+
     my @source_sort_cols;
     my @dest_sort_cols;
 
@@ -603,8 +605,8 @@ sub SyncTables {
                 push( @source_sort_cols, $col );
             }
             elsif ( $source_ref =~ /MySQL/ ) {
-                push( @source_sort_cols, "${col} IS NULL" );
-                push( @source_sort_cols, $col );
+                push( @source_sort_cols, "`${col}` IS NULL" );
+                push( @source_sort_cols, "`${col}`" );
             }
         }
     }
@@ -617,14 +619,39 @@ sub SyncTables {
                 push( @dest_sort_cols, $col );
             }
             elsif ( $dest_ref =~ /MySQL/ ) {
-                push( @dest_sort_cols, "${col} IS NULL" );
-                push( @dest_sort_cols, $col );
+                push( @dest_sort_cols, "`${col}` IS NULL" );
+                push( @dest_sort_cols, "`${col}`" );
             }
         }
     }
 
-    my $source_cols      = join( ", ", @source_cols );
-    my $dest_cols        = join( ", ", @dest_cols );
+    #
+    # Build safe (back-ticked) column list in the case we are working with MySQL
+    #
+    if ( $source_ref =~ /Oracle/ ) {
+        @source_safe_cols = @source_cols;
+    }
+    elsif ( $source_ref =~ /MySQL/ ) {
+        @source_safe_cols = map {"`$_`"} @source_cols;
+    }
+    else {
+        $self->{error} = "Un-supported source database: ${source_ref}";
+        return ( error => $self->{error}, status => "failed" );
+    }
+
+    if ( $dest_ref =~ /Oracle/ ) {
+        @dest_safe_cols = @dest_cols;
+    }
+    elsif ( $dest_ref =~ /MySQL/ ) {
+        @dest_safe_cols = map {"`$_`"} @dest_cols;
+    }
+    else {
+        $self->{error} = "Un-supported destination database: ${dest_ref}";
+        return ( error => $self->{error}, status => "failed" );
+    }
+
+    my $source_cols      = join( ", ", @source_safe_cols );
+    my $dest_cols        = join( ", ", @dest_safe_cols );
     my $source_sort_cols = join( ", ", @source_sort_cols );
     my $dest_sort_cols   = join( ", ", @dest_sort_cols );
     my %have_source_cols = map { $_ => 1 } @source_cols;
@@ -777,7 +804,7 @@ sub SyncTables {
 
         foreach my $col (@dest_cols) {
             if ( $skiplong{ lc $col } ) {
-                if ( ref($dest_db) =~ /Oracle/ ) {
+                if ( $dest_ref =~ /Oracle/ ) {
                     push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
                 }
                 else {
@@ -787,7 +814,12 @@ sub SyncTables {
                 }
             }
             else {
-                push( @where, "($col=? or (? is null and $col is null))" );
+                if ( $dest_ref =~ /Oracle/ ) {
+                    push( @where, "($col=? or (? is null and $col is null))" );
+                }
+                elsif ( $dest_ref =~ /MySQL/ ) {
+                    push( @where, "(`$col`=? or (? is null and `$col` is null))" );
+                }
             }
         }
         if ($dest_where) {
@@ -826,7 +858,12 @@ sub SyncTables {
                         push( @where, "(? is null or ? is not null)" );
                     }
                     else {
-                        push( @where, "($col=? or (? is null and $col is null))" );
+                        if ( $dest_ref =~ /Oracle/ ) {
+                            push( @where, "($col=? or (? is null and $col is null))" );
+                        }
+                        elsif ( $dest_ref =~ /MySQL/ ) {
+                            push( @where, "(`$col`=? or (? is null and `$col` is null))" );
+                        }
                     }
                 }
                 else {
