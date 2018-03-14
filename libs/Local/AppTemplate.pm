@@ -67,7 +67,7 @@ BEGIN {
 #  contact_url - contact url target
 #  contact_label - contact url label
 #  app_url - defaults to &HTMLScriptURL(), can override if you have a main app page to link to
-#  app_menu - responsive menu
+#  app_menu - responsive navigation menu, should be unordered list with an ID or class of "udm"
 #  quiet - do not show details of error messages or stack traces/etc., defaults to showing for now
 #  refresh_time - meta refresh the page after this many seconds
 #  refresh_url - instead of refreshing to same page, refresh to this URL
@@ -117,7 +117,7 @@ sub reset {
 sub configure {
     my $self = shift;
     my %opts = @_;
-    
+
     my $config = $self->{config};
 
     # parameters loaded from initialization
