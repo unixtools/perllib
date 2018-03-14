@@ -67,6 +67,7 @@ BEGIN {
 #  contact_url - contact url target
 #  contact_label - contact url label
 #  app_url - defaults to &HTMLScriptURL(), can override if you have a main app page to link to
+#  app_menu - responsive navigation menu, should be unordered list with an ID or class of "udm"
 #  quiet - do not show details of error messages or stack traces/etc., defaults to showing for now
 #  refresh_time - meta refresh the page after this many seconds
 #  refresh_url - instead of refreshing to same page, refresh to this URL
@@ -137,7 +138,7 @@ sub configure {
     }
 
     foreach my $field (
-        qw(title apptitle headerimage stylesheet style contact_url app_url head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype app_env)
+        qw(title apptitle headerimage stylesheet style contact_url app_url app_menu head_extra contact_label refresh_time refresh_url disable_auto_header disable_auto_ctype app_env)
         )
     {
         if ( exists( $opts{$field} ) ) {
@@ -363,6 +364,7 @@ sub _filter {
     my $app_url   = $config->{app_url}       || "?";
     my $con_url   = $config->{contact_url}   || "/";
     my $con_label = $config->{contact_label} || "WebMaster";
+    my $app_menu  = $config->{app_menu};
 
     my $app_header_image = $config->{headerimage};
 
@@ -405,6 +407,7 @@ sub _filter {
 
     $text =~ s/__PAGE_TITLE__/$title/g;
     $text =~ s/__APP_URL__/$app_url/g;
+    $text =~ s/__APP_MENU__/$app_menu/g;
     $text =~ s/__APP_TITLE__/$apptitle/g;
     $text =~ s/__APP_HEADER_IMAGE__/$app_header_image/g;
     $text =~ s/__APP_HEAD_PRE__/$app_head_pre/g;
