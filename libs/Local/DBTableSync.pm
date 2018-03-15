@@ -803,15 +803,11 @@ sub SyncTables {
         my @where;
 
         foreach my $col (@dest_cols) {
-            if ( $skiplong{ lc $col } ) {
-                if ( $dest_ref =~ /Oracle/ ) {
-                    push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
-                }
-                else {
-               # This is bad - it can result in deleting a row we just inserted due to ignoring the field
-               # should treat this as a failure/error condition if we don't have a suitable long field comparison method
-                    push( @where, "(? is null or ? is not null)" );
-                }
+
+            # MySQL LONG comparison does not require any special handling
+            # only consider skiplong if $dest_db is Local::OracleObject
+            if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/) {
+                push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
             }
             else {
                 if ( $dest_ref =~ /Oracle/ ) {
@@ -854,8 +850,11 @@ sub SyncTables {
 
             foreach my $col (@dest_cols) {
                 if ( $uref->{fields}->{ uc $col } ) {
-                    if ( $skiplong{ lc $col } ) {
-                        push( @where, "(? is null or ? is not null)" );
+
+                    # MySQL LONG comparison does not require any special handling
+                    # only consider skiplong if $dest_db is Local::OracleObject
+                    if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/ ) {
+                        push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
                     }
                     else {
                         if ( $dest_ref =~ /Oracle/ ) {
