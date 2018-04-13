@@ -507,8 +507,8 @@ sub SyncTables {
             my $colname  = $scolnames[$sindex];
             my $dcolname = $dcolnames[$dindex];
 
-            my $tname  = $sql_type_to_name{$coltype};
-            my $dtname = $sql_type_to_name{$dcoltype};
+            my $tname  = uc $sql_type_to_name{$coltype};
+            my $dtname = uc $sql_type_to_name{$dcoltype};
 
             # Check for excluded columns
             if ( exists( $excl_cols{ lc $colname } ) ) {
@@ -806,7 +806,7 @@ sub SyncTables {
 
             # MySQL LONG comparison does not require any special handling
             # only consider skiplong if $dest_db is Local::OracleObject
-            if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/) {
+            if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/ ) {
                 push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
             }
             else {
