@@ -23,6 +23,7 @@ End-Doc
 package Local::JSON;
 use Exporter;
 use JSON;
+use MIME::Base64;
 use strict;
 
 use vars qw (@ISA @EXPORT);
@@ -73,7 +74,7 @@ sub _translate_raw_in {
 
     foreach my $val (@in) {
         if ( ref($val) eq "Local::JSON::Raw" ) {
-            push( @out, $wrapper . $val->{value} . $wrapper );
+            push( @out, $wrapper . encode_base64($val->{value},'') . $wrapper );
         }
         elsif ( ref($val) eq "SCALAR" || !ref($val) ) {
             push( @out, $val );
@@ -109,7 +110,7 @@ sub _translate_raw_out {
     my $wrapper = $Local::JSON::wrapper;
 
     my $txt = $content;
-    $txt =~ s/"${wrapper}(.*?)${wrapper}"/\1/sgm;
+    $txt =~ s/"${wrapper}(.*?)${wrapper}"/decode_base64($1)/sgme;
     return $txt;
 }
 
