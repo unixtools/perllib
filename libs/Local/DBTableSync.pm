@@ -694,7 +694,7 @@ sub SyncTables {
     # Build column number lists for unique key row deletion
     #
     my @unique_info = ();
-    if ( $opts{unique_keys} ) {
+    if ( $opts{unique_keys} && scalar( @{ $opts{unique_keys} } ) ) {
         my %valid_cols = map { uc $_ => 1 } @dest_cols;
 
         foreach my $cref ( @{ $opts{unique_keys} } ) {
