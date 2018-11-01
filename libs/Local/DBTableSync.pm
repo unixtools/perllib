@@ -256,10 +256,7 @@ sub SyncTables {
     my $self = shift;
     my %opts = @_;
 
-    my ( $source_ref,   $dest_ref );
-    my ($source_args);
-    my ( $qry,     $cid );
-    my ( $no_dups, $ignore_row_count );
+    my $ignore_row_count;
     $self->{error} = undef;
 
     &LogAPIUsage();
@@ -300,10 +297,6 @@ sub SyncTables {
     my $check_empty_source = $self->{check_empty_source};
     if ( exists( $opts{check_empty_source} ) ) {
         $check_empty_source = $opts{check_empty_source};
-    }
-
-    if ( exists( $opts{no_dups} ) ) {
-        $no_dups = $opts{no_dups};
     }
 
     if ( exists( $opts{ignore_row_count} ) ) {
@@ -535,27 +528,21 @@ sub SyncTables {
     #
     # Main processing loop
     #
-    my $more_source = 1;
-    my $more_dest   = 1;
-
-    my $src_row  = undef;
-    my $dest_row = undef;
-
-    my $seen_source_rows = 0;
-    my $seen_dest_rows   = 0;
-    my $matching_rows    = 0;
-    my $inserts          = 0;
-    my $deletes          = 0;
-    my $commits          = 0;
-
+    my $more_source       = 1;
+    my $more_dest         = 1;
+    my $src_row           = undef;
+    my $dest_row          = undef;
+    my $seen_source_rows  = 0;
+    my $seen_dest_rows    = 0;
+    my $matching_rows     = 0;
+    my $inserts           = 0;
+    my $deletes           = 0;
     my $elap_fetch_source = 0;
     my $elap_fetch_dest   = 0;
-
-    my $hit_max_inserts = 0;
-    my $hit_max_deletes = 0;
-    my $hit_unique      = 0;
-
-    my $status = "ok";
+    my $hit_max_inserts   = 0;
+    my $hit_max_deletes   = 0;
+    my $hit_unique        = 0;
+    my $status            = "ok";
 
     if ($dumpfile) {
         $self->_dprint("\nDumping content of original destination table.");
