@@ -37,7 +37,7 @@ my %res = $sync->SyncTables(
     ],
 );
 
-Note that module has only been actively tested with OracleObject at this time.
+Note that module has only been actively tested with OracleObject and MySQLObject at this time.
  
 End-Doc
 
@@ -50,8 +50,8 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use JSON;
 use Local::UsageLogger;
+use Local::DBTableSync::Client;
 use Time::HiRes qw(time);
-use Text::CSV;
 
 BEGIN {
     &LogAPIUsage();
@@ -256,10 +256,7 @@ sub SyncTables {
     my $self = shift;
     my %opts = @_;
 
-    my ( $source_db, $dest_db, $source_table, $dest_table );
     my ( $source_ref,   $dest_ref );
-    my ( $source_where, $dest_where );
-    my ( $source_alias, $dest_alias );
     my ($source_args);
     my ( $qry,     $cid );
     my ( $no_dups, $ignore_row_count );
@@ -305,13 +302,6 @@ sub SyncTables {
         $check_empty_source = $opts{check_empty_source};
     }
 
-    if ( exists( $opts{source_where} ) ) {
-        $source_where = $opts{source_where};
-    }
-    if ( exists( $opts{dest_where} ) ) {
-        $dest_where = $opts{dest_where};
-    }
-
     if ( exists( $opts{no_dups} ) ) {
         $no_dups = $opts{no_dups};
     }
@@ -325,49 +315,13 @@ sub SyncTables {
         $dumpfile = $opts{dumpfile};
     }
 
-    # Columns to skip
-    my %excl_cols = ();
-    foreach my $col ( split( /[\s,;]+/, $opts{excl_cols} ) ) {
-        $excl_cols{ lc $col } = 1;
+    foreach my $required (qw/source_db source_table dest_db dest_table/) {
+        if ( !$opts{$required} ) {
+            return ( error => "missing ${required}", status => "failed" );
+        }
     }
 
-    my %mask_cols = ();
-    foreach my $col ( split( /[\s,;]+/, $opts{mask_cols} ) ) {
-        my ( $cname, $val ) = split( /:/, $col );
-        $mask_cols{ lc $cname } = $val;
-    }
-
-    #
-    # Thought about setting defaults, but didn't like idea of potentially overwriting
-    # something due to "defaults"
-    #
-    $source_db = $opts{source_db}
-        || return ( error => "missing source_db", status => "failed" );
-    $dest_db = $opts{dest_db}
-        || return ( error => "missing dest_db", status => "failed" );
-
-    $source_table = $opts{source_table}
-        || return ( error => "missing source_table", status => "failed" );
-    $dest_table = $opts{dest_table}
-        || return ( error => "missing dest_table", status => "failed" );
-
-    $source_ref = ref($source_db);
-    $dest_ref   = ref($dest_db);
-
-    if ( $source_ref !~ /(?:Oracle|MySQL)/ ) {
-        $self->{error} = "unsupported source_db Object: ${source_ref}";
-        return ( error => $self->{error}, status => "failed" );
-    }
-
-    if ( $dest_ref !~ /(?:Oracle|MySQL)/ ) {
-        $self->{error} = "unsupported dest_db Object: ${dest_ref}";
-        return ( error => $self->{error}, status => "failed" );
-    }
-
-    $source_alias = $opts{source_alias};
-    $dest_alias   = $opts{dest_alias};
-
-    $source_args = $opts{source_args};
+    my ( $source_table, $dest_table ) = @opts{qw/source_table dest_table/};
 
     $self->_dprint("starting setup of sync of $source_table to $dest_table");
 
@@ -385,351 +339,131 @@ sub SyncTables {
     }
 
     #
-    # If Oracle, set appropriate default date formats
+    # Allocate source/destination client handlers
     #
-    if ( $source_ref =~ /Oracle/ ) {
-        my $date_qry = "alter session set NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'";
-        unless ( $source_db->SQL_ExecQuery($date_qry) ) {
-            $self->{error} = "set of source nls date format failed: " . $source_db->SQL_ErrorString();
-            return ( error => $self->{error}, status => "failed" );
-        }
+    my %sopts = map { my $key = $_; $key =~ s/source_//r => $opts{$_} } keys %opts;
+    my %dopts = map { my $key = $_; $key =~ s/dest_//r   => $opts{$_} } keys %opts;
 
-        my $ts_qry = "alter session set NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS.FF'";
-        unless ( $source_db->SQL_ExecQuery($ts_qry) ) {
-            $self->{error} = "set of source nls date format failed: " . $source_db->SQL_ErrorString();
-            return ( error => $self->{error}, status => "failed" );
-        }
+    my $sclient;
+    my $dclient;
 
-        $source_db->dbhandle->{ChopBlanks} = 0;
-
-        # From DBD::Oracle docs and source
-        # 96: ORA_CHAR
-        # Don't strip trailing spaces and allow embedded \0.  Force 'blank-padded comparison semantics
-        $source_db->dbhandle->{ora_ph_type} = 96;
-    }
-    if ( $dest_ref =~ /Oracle/ ) {
-        my $date_qry = "alter session set NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'";
-
-        unless ( $dest_db->SQL_ExecQuery($date_qry) ) {
-            $self->{error} = "set of destination nls date format failed: " . $dest_db->SQL_ErrorString();
-            return ( error => $self->{error}, status => "failed" );
-        }
-
-        my $ts_qry = "alter session set NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS.FF'";
-
-        unless ( $dest_db->SQL_ExecQuery($ts_qry) ) {
-            $self->{error} = "set of destination nls timestamp format failed: " . $dest_db->SQL_ErrorString();
-            return ( error => $self->{error}, status => "failed" );
-        }
-
-        $dest_db->dbhandle->{ChopBlanks} = 0;
-
-        # See above
-        $dest_db->dbhandle->{ora_ph_type} = 96;
-    }
-
-    #
-    # Retrieve schema information for source
-    #
-    $self->_dprint("starting schema analysis for sync of $source_table to $dest_table");
-
-    $qry = "select * from $source_table $source_alias where 1=0";
-    if ($source_where) {
-        $qry .= " and $source_where";
-    }
-    if ($source_args) {
-        $cid = $source_db->SQL_OpenQuery( $qry, @$source_args );
-    }
-    else {
-        $cid = $source_db->SQL_OpenQuery($qry);
-    }
-    if ( !$cid ) {
-        $self->{error} = "describe schema from source failed: " . $source_db->SQL_ErrorString();
-        return ( error => $self->{error}, status => "failed" );
-    }
-    my %source_colinfo = $source_db->SQL_ColumnInfo($cid);
-    $source_db->SQL_CloseQuery($cid);
-
-    my $source_orig_dump = $self->dump_colinfo( \%source_colinfo );
-    $self->_dprint("Unfiltered Source Schema Info:\n\n$source_orig_dump\n");
-
-    #
-    # Retrieve schema information for dest
-    #
-    $qry = "select * from $dest_table $dest_alias where 1=0";
-    if ($dest_where) {
-        $qry .= " and $dest_where";
-    }
-    $cid = $dest_db->SQL_OpenQuery($qry);
-    if ( !$cid ) {
-        $self->{error} = "describe schema from dest failed: " . $dest_db->SQL_ErrorString();
-        return ( error => $self->{error}, status => "failed" );
-    }
-    my %dest_colinfo = $dest_db->SQL_ColumnInfo($cid);
-    $dest_db->SQL_CloseQuery($cid);
-
-    my $dest_orig_dump = $self->dump_colinfo( \%dest_colinfo );
-    $self->_dprint("Unfiltered Dest Schema Info:\n\n$dest_orig_dump\n");
-
-    #
-    # Build listing of column comparison types (string or numeric)
-    #
-    my @coltypes = ();
-    my %skipcols = ();
-    my %skiplong = ();
     {
 
-        # This is using some internals of our DB wrappers, but can't be helped if
-        # we want to get column type information in any reasonable fashion
-        my $dbh = $source_db->dbhandle;
-        my $tia = $dbh->type_info_all;
+        # source client first
+        my $submodule;
+        if ( ref( $sopts{db} ) =~ m/::([a-zA-Z_]+)$/ ) {
+            $submodule = $1;
+        }
+        my $module = "Local::DBTableSync::Client::${submodule}";
+        if ( $module->can("new") ) {
+            $sclient = $module->new( %sopts, type => "source" );
+        }
+        else {
+            return (
+                error  => "unable to allocate source client: $module",
+                status => "failed"
+            );
+        }
+    }
+    {
 
-        my %sql_type_to_name = ();
-        foreach my $entry ( @{$tia} ) {
-
-            if ( ref($entry) eq "ARRAY" ) {
-                my ( $name, $itype ) = @{$entry};
-
-                next if ( $sql_type_to_name{$itype} );
-                $sql_type_to_name{$itype} = $name;
-            }
+        # destination client next
+        my $submodule;
+        if ( ref( $dopts{db} ) eq "HASH" && ref( $dopts{db}{read} ) =~ m/::([a-zA-Z0-9_]+)$/ ) {
+            $submodule = $1;
+        }
+        elsif ( ref( $dopts{db} ) =~ m/::([a-zA-Z0-9_]+)$/ ) {
+            $submodule = $1;
         }
 
-        my @scoltypes = @{ $source_colinfo{coltypes} };
-        my @dcoltypes = @{ $dest_colinfo{coltypes} };
-        my @scolnames = @{ $source_colinfo{colnames} };
-        my @dcolnames = @{ $dest_colinfo{colnames} };
-
-        my $dindex = 0;
-        for ( my $sindex = 0; $sindex <= $#scoltypes; $sindex++ ) {
-            my $coltype  = $scoltypes[$sindex];
-            my $dcoltype = $dcoltypes[$dindex];
-            my $colname  = $scolnames[$sindex];
-            my $dcolname = $dcolnames[$dindex];
-
-            my $tname  = uc $sql_type_to_name{$coltype};
-            my $dtname = uc $sql_type_to_name{$dcoltype};
-
-            # Check for excluded columns
-            if ( exists( $excl_cols{ lc $colname } ) ) {
-                $self->_dprint("Checking type: $sindex / $colname / $coltype / $tname => Excluded\n");
-                $skipcols{ lc $colname } = 1;
-                next;
-            }
-
-            $self->_dprint(
-                "Checking type: $sindex / $colname / $coltype / $tname => $dcolname / $dcoltype / $dtname\n");
-
-            # type numbers are magic/from ODBC
-            if ( exists( $mask_cols{ lc $colname } ) ) {
-                push( @coltypes, "string" );
-            }
-            elsif ($tname =~ /CHAR/
-                || $tname =~ /TIME/
-                || $tname =~ /DATE/
-                || $tname =~ /BIN/ )
-            {
-                push( @coltypes, "string" );
-            }
-            elsif ( $tname =~ /INTERVAL/ ) {
-                push( @coltypes, "string" );
-            }
-            elsif ( $tname =~ /RAW/ ) {
-
-                # can't handle LONG RAW right now
-                push( @coltypes, "unknown" );
-                $skipcols{ lc $colname } = 1;
-            }
-            elsif ( $tname =~ /LONG/ || $coltype == 40 ) {
-
-                # not sure why 40 isn't in the types table though
-                # 40 = CLOB
-                # Yuck. I can handle longs
-                if ( $dtname =~ /LONG/ || $dcoltype == 40 ) {
-                    push( @coltypes, "string" );
-                    $skiplong{ lc $colname } = 1;
-                }
-                else    # dest is different type or something else weird
-                {
-                    push( @coltypes, "unknown" );
-                    $skipcols{ lc $colname } = 1;
-                }
-            }
-            elsif ( $tname =~ /BFILE/ ) {
-                push( @coltypes, "unknown" );
-                $skipcols{ lc $colname } = 1;
-            }
-            elsif ($tname =~ /DEC/
-                || $tname =~ /INT/
-                || $tname =~ /NUM/
-                || $tname =~ /DOUBLE/ )
-            {
-                push( @coltypes, "numeric" );
-            }
-            else {
-                $self->{error} = "don't know how to compare column $colname (type $coltype [$tname])";
-                return ( error => $self->{error}, status => "failed" );
-            }
-
-            $dindex++;
+        my $module = "Local::DBTableSync::Client::${submodule}";
+        if ( $module->can("new") ) {
+            $dclient = $module->new( %dopts, type => "dest" );
+        }
+        else {
+            return (
+                error  => "unable to allocate destination client: $module",
+                status => "failed"
+            );
         }
     }
 
     #
-    # Build column lists
+    # Signal client handlers to initialize
+    # and handle any errors that come up
     #
-    my @source_cols;
-    my @dest_cols;
-
-    my @source_safe_cols;
-    my @dest_safe_cols;
-
-    my @source_sort_cols;
-    my @dest_sort_cols;
-
-    my %masked_cols = ();
-    foreach my $col ( @{ $source_colinfo{colnames} } ) {
-        unless ( $skipcols{ lc $col } ) {
-            if ( exists $mask_cols{ lc $col } ) {
-                my $tcol = $source_db->SQL_QuoteString( $mask_cols{ lc $col } ) . " " . lc($col);
-                push( @source_cols, $tcol );
-                $masked_cols{$tcol} = 1;
-                $masked_cols{ lc $col } = 1;
-            }
-            else {
-                push( @source_cols, $col );
-            }
-        }
-        unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
-            if ( $source_ref =~ /Oracle/ ) {
-                push( @source_sort_cols, $col );
-            }
-            elsif ( $source_ref =~ /MySQL/ ) {
-                push( @source_sort_cols, "`${col}` IS NULL" );
-                push( @source_sort_cols, "`${col}`" );
-            }
-        }
-    }
-    foreach my $col ( @{ $dest_colinfo{colnames} } ) {
-        unless ( $skipcols{ lc $col } ) {
-            push( @dest_cols, $col );
-        }
-        unless ( $skipcols{ lc $col } || $skiplong{ lc $col } ) {
-            if ( $dest_ref =~ /Oracle/ ) {
-                push( @dest_sort_cols, $col );
-            }
-            elsif ( $dest_ref =~ /MySQL/ ) {
-                push( @dest_sort_cols, "`${col}` IS NULL" );
-                push( @dest_sort_cols, "`${col}`" );
-            }
-        }
+    unless ( $sclient->init() ) {
+        return (
+            error  => "unable to initialize source client: " . $sclient->error(),
+            status => "failed"
+        );
     }
 
-    #
-    # Build safe (back-ticked) column list in the case we are working with MySQL
-    #
-    if ( $source_ref =~ /Oracle/ ) {
-        @source_safe_cols = @source_cols;
-    }
-    elsif ( $source_ref =~ /MySQL/ ) {
-        @source_safe_cols = map {"`$_`"} @source_cols;
-    }
-    else {
-        $self->{error} = "Un-supported source database: ${source_ref}";
-        return ( error => $self->{error}, status => "failed" );
+    unless ( $dclient->init() ) {
+        return (
+            error  => "unable to initialize destination client: " . $dclient->error(),
+            status => "failed"
+        );
     }
 
-    if ( $dest_ref =~ /Oracle/ ) {
-        @dest_safe_cols = @dest_cols;
-    }
-    elsif ( $dest_ref =~ /MySQL/ ) {
-        @dest_safe_cols = map {"`$_`"} @dest_cols;
-    }
-    else {
-        $self->{error} = "Un-supported destination database: ${dest_ref}";
-        return ( error => $self->{error}, status => "failed" );
-    }
-
-    my $source_cols      = join( ", ", @source_safe_cols );
-    my $dest_cols        = join( ", ", @dest_safe_cols );
-    my $source_sort_cols = join( ", ", @source_sort_cols );
-    my $dest_sort_cols   = join( ", ", @dest_sort_cols );
+    my @source_cols      = @{ $sclient->colnames() };
+    my @dest_cols        = @{ $dclient->colnames() };
+    my $source_cols      = join( ", ", @source_cols );
+    my $dest_cols        = join( ", ", @dest_cols );
     my %have_source_cols = map { $_ => 1 } @source_cols;
     my %have_dest_cols   = map { $_ => 1 } @dest_cols;
-
-    my $col_compare = "";
+    my $col_compare      = "";
 
     foreach my $col (@source_cols) {
-        if ( !$have_dest_cols{$col} && !exists $masked_cols{$col} ) {
-            $col_compare .= "Column $col in source but not in destination.\n";
+        if ( !$have_dest_cols{$col} ) {
+            $col_compare .= "Column ${col} in source but not in destination.\n";
         }
     }
+
     foreach my $col (@dest_cols) {
-        if ( !$have_source_cols{$col} && !exists $masked_cols{ lc $col } ) {
-            $col_compare .= "Column $col in destination but not in source.\n";
+        if ( !$have_source_cols{$col} ) {
+            $col_compare .= "Column ${col} in destination but not in source.\n";
         }
     }
 
     if ( $#source_cols != $#dest_cols ) {
-        my $s_col = $#source_cols + 1;
-        my $d_col = $#dest_cols + 1;
+        my $s_cnt = $#source_cols + 1;
+        my $d_cnt = $#dest_cols + 1;
 
         my $msg = "Sync-Failure: mismatched column counts\n";
-        $msg .= "Source has $s_col columns, destination has $d_col columns.\n\n";
+        $msg .= "Source has ${s_cnt} columns, destination has ${d_cnt} columns.\n\n";
 
         if ($col_compare) {
-            $msg .= $col_compare . "\n";
-            $msg .= "\n";
+            $msg .= $col_compare . "\n\n";
         }
-        $msg .= "  Source Cols: $source_cols\n";
-        $msg .= "  Dest Cols: $dest_cols\n";
+
+        $msg .= "  Source Cols: ${source_cols}\n";
+        $msg .= "  Dest Cols: ${dest_cols}\n";
 
         $self->_dprint($msg);
         $self->{error} = $msg;
-
         return ( error => $self->{error}, status => "failed" );
-    }
-
-    #
-    # Build column number lists for unique key row deletion
-    #
-    my @unique_info = ();
-    if ( $opts{unique_keys} && scalar( @{ $opts{unique_keys} } ) ) {
-        my %valid_cols = map { uc $_ => 1 } @dest_cols;
-
-        foreach my $cref ( @{ $opts{unique_keys} } ) {
-            next if ( ref($cref) ne "ARRAY" );
-            my %col_names = ();
-
-            foreach my $cname ( map { uc $_ } @{$cref} ) {
-                if ( $valid_cols{$cname} ) {
-                    $col_names{$cname} = 1;
-                }
-                else {
-                    $self->{error} = "invalid column name for key ($cname)";
-                    return ( error => $self->{error}, status => "failed" );
-                }
-            }
-
-            push( @unique_info, { fields => {%col_names} } );
-        }
     }
 
     #
     # Compare the schemas to make certain that they are identical, but only
     # if the compare_schema option is enabled.
     #
-
     if ($compare_schemas) {
-        my $source_dump = $self->dump_colinfo( \%source_colinfo );
-        my $dest_dump   = $self->dump_colinfo( \%dest_colinfo );
+        my $source_dump = $sclient->dump_colinfo();
+        my $dest_dump   = $dclient->dump_colinfo();
 
         # Short circuit check
         if ( $source_dump ne $dest_dump ) {
             my $msg = "";
+
             if ($col_compare) {
                 $msg .= $col_compare . "\n";
             }
+
+            my %source_colinfo = %{ $sclient->colinfo() };
+            my %dest_colinfo   = %{ $dclient->colinfo() };
+            my %skipcols       = %{ $sclient->skipcols() };
 
             my $dindex = 0;
             for ( my $sindex = 0; $sindex < $source_colinfo{numcols}; $sindex++ ) {
@@ -786,103 +520,6 @@ sub SyncTables {
     }
 
     #
-    # Open the update/insert queries
-    #
-    $self->_dprint("opening insert/delete query handles for sync of $source_table to $dest_table");
-
-    my ( $ins_cid, $del_cid, $dest_ins_qry, $dest_del_qry );
-    if ( !$dry_run ) {
-        my $dest_places = join( ",", ("?") x ( $#dest_cols + 1 ) );
-
-        $dest_ins_qry = "insert into $dest_table ($dest_cols) values ($dest_places)";
-
-        $self->_dprint("\nOpening Insert Query: $dest_ins_qry");
-        $ins_cid = $dest_db->SQL_OpenBoundQuery($dest_ins_qry);
-
-        my $dest_del_qry = "delete from $dest_table where ";
-        my @where;
-
-        foreach my $col (@dest_cols) {
-
-            # MySQL LONG comparison does not require any special handling
-            # only consider skiplong if $dest_db is Local::OracleObject
-            if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/ ) {
-                push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
-            }
-            else {
-                if ( $dest_ref =~ /Oracle/ ) {
-                    push( @where, "($col=? or (? is null and $col is null))" );
-                }
-                elsif ( $dest_ref =~ /MySQL/ ) {
-                    push( @where, "(`$col`=? or (? is null and `$col` is null))" );
-                }
-            }
-        }
-        if ($dest_where) {
-            push( @where, "($dest_where)" );
-        }
-
-        $dest_del_qry .= join( " and ", @where );
-
-        # If no unique column sets, then we have to limit to a single delete
-        # otherwise, we know there are no duplicates
-        if ( scalar(@unique_info) == 0 && !$no_dups ) {
-            if ( $dest_ref =~ /Oracle/ ) {
-                $dest_del_qry .= " and rownum=1 ";
-            }
-            elsif ( $dest_ref =~ /MySQL/ ) {
-                $dest_del_qry .= " limit 1";
-            }
-            else {
-                $self->{error} = "unable to limit delete to single row";
-                return ( error => $self->{error}, status => "failed" );
-            }
-        }
-
-        $self->_dprint("\nOpening Delete Query: $dest_del_qry");
-        $del_cid = $dest_db->SQL_OpenBoundQuery($dest_del_qry);
-
-        #
-        # Open the "unique'ing" delete queries
-        #
-        foreach my $uref (@unique_info) {
-            my @where = ();
-
-            foreach my $col (@dest_cols) {
-                if ( $uref->{fields}->{ uc $col } ) {
-
-                    # MySQL LONG comparison does not require any special handling
-                    # only consider skiplong if $dest_db is Local::OracleObject
-                    if ( $skiplong{ lc $col } && $dest_ref =~ /Oracle/ ) {
-                        push( @where, "(dbms_lob.compare($col,?)=0 or (? is null and $col is null))" );
-                    }
-                    else {
-                        if ( $dest_ref =~ /Oracle/ ) {
-                            push( @where, "($col=? or (? is null and $col is null))" );
-                        }
-                        elsif ( $dest_ref =~ /MySQL/ ) {
-                            push( @where, "(`$col`=? or (? is null and `$col` is null))" );
-                        }
-                    }
-                }
-                else {
-
-                    # yes, this is a hack, but it allows for must faster code later
-                    # since it doesn't have to worry about building a column list
-                    push( @where, "(? is null or ? is not null)" );
-                }
-            }
-
-            if ($dest_where) {
-                push( @where, "($dest_where)" );
-            }
-
-            $uref->{qry} = "delete from $dest_table where " . join( " and ", @where );
-            $uref->{cid} = $dest_db->SQL_OpenBoundQuery( $uref->{qry} );
-        }
-    }
-
-    #
     # Runs the pre_select_check callback
     #
     if ( $opts{pre_select_check} ) {
@@ -893,13 +530,6 @@ sub SyncTables {
                 status => "failed"
             );
         }
-    }
-
-    #
-    # Turn off autocommit if we're going to do any updates
-    #
-    if ( !$dry_run ) {
-        $dest_db->SQL_AutoCommit(0);
     }
 
     #
@@ -916,7 +546,6 @@ sub SyncTables {
     my $matching_rows    = 0;
     my $inserts          = 0;
     my $deletes          = 0;
-    my $pending          = 0;
     my $commits          = 0;
 
     my $elap_fetch_source = 0;
@@ -928,71 +557,12 @@ sub SyncTables {
 
     my $status = "ok";
 
-    $self->_dprint("\nOpening select queries...");
-
-    #
-    # Source table
-    #
-    my $source_sel_qry = "select";
-    if ($no_dups) {
-        $source_sel_qry .= " distinct";
-    }
-    $source_sel_qry .= " $source_cols from $source_table $source_alias";
-    if ($source_where) {
-        $source_sel_qry .= " where $source_where";
-    }
-    $source_sel_qry .= " order by $source_sort_cols";
-    $self->_dprint("\nOpening Source Select Query: $source_sel_qry");
-    my $source_cid;
-    if ($source_args) {
-        $source_cid = $source_db->SQL_OpenQuery( $source_sel_qry, @$source_args );
-    }
-    else {
-        $source_cid = $source_db->SQL_OpenQuery($source_sel_qry);
-    }
-    if ( !$source_cid ) {
-        $self->{error} = "opening source select failed: " . $source_db->SQL_ErrorString();
-        if ( !$dry_run ) {
-            $dest_db->SQL_RollBack();
-        }
-        return ( error => $self->{error}, status => "failed" );
-    }
-
-    #
-    # Destination table
-    #
-    my $dest_sel_qry = "select";
-    if ($no_dups) {
-        $dest_sel_qry .= " distinct";
-    }
-    $dest_sel_qry .= " $dest_cols from $dest_table $dest_alias";
-    if ($dest_where) {
-        $dest_sel_qry .= " where $dest_where";
-    }
-    $dest_sel_qry .= " order by $dest_sort_cols";
-    $self->_dprint("\nOpening Dest Select Query: $dest_sel_qry");
-    my $dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
-    if ( !$dest_cid ) {
-        $self->{error} = "opening dest select failed: " . $dest_db->SQL_ErrorString();
-        if ( !$dry_run ) {
-            $dest_db->SQL_RollBack();
-        }
-        return ( error => $self->{error}, status => "failed" );
-    }
-
     if ($dumpfile) {
-        my $csv = Text::CSV->new( { binary => 1 } );
-
         $self->_dprint("\nDumping content of original destination table.");
-        open( my $out, ">${dumpfile}.dest-pre.csv" ) || die;
-        my $tmp_dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
-        while ( my @tmp = $dest_db->SQL_FetchRow($tmp_dest_cid) ) {
-            my $status = $csv->combine(@tmp);
-            print $out $csv->string(), "\n";
-        }
-        $dest_db->SQL_CloseQuery($tmp_dest_cid);
-        close($out);
 
+        if ( !$dclient->dump_table( "${dumpfile}.dest-pre.csv", "read_db" ) ) {
+            return ( error => $dclient->error(), status => "failed" );
+        }
     }
 
 MAIN: while ( $more_source || $more_dest ) {
@@ -1000,71 +570,18 @@ MAIN: while ( $more_source || $more_dest ) {
         #
         # Commit progress periodically if we are in force mode
         #
-        if ( $force && $pending > 500 ) {
-            $self->_dprint("max pending updates reached, committing.");
-            if ( !$dry_run ) {
-                $dest_db->SQL_Commit();
-            }
-            $pending = 0;
-            $commits++;
-        }
-
-        #
-        # Validate that we haven't exceeded any thresholds, and if we are not
-        # forcing or dryrun, stop processing and roll back
-        #
-        if ( !$force ) {
-            if (   !$hit_max_deletes
-                && defined($max_deletes)
-                && $deletes >= $max_deletes )
-            {
-                $status          = "failed";
-                $hit_max_deletes = 1;          # only report error first time
-
-                $self->_dprint("max deletes reached ($max_deletes)");
-                $self->{error} = "max deletes reached";
-
-                # If we're doing a dry run, continue through loop
-                if ( !$dry_run ) {
-                    $self->_dprint("rolling back updates.");
-                    if ( !$dry_run ) {
-                        $dest_db->SQL_RollBack();
-                    }
-                    last MAIN;
-                }
-            }
-
-            if (   !$hit_max_inserts
-                && defined($max_inserts)
-                && $inserts >= $max_inserts )
-            {
-                $status          = "failed";
-                $hit_max_inserts = 1;          # only report error first time
-
-                $self->_dprint("max inserts reached ($max_inserts)");
-                $self->{error} = "max inserts reached";
-
-                # If we're doing a dry run, continue through loop
-                if ( !$dry_run ) {
-                    $self->_dprint("rolling back updates.");
-                    if ( !$dry_run ) {
-                        $dest_db->SQL_RollBack();
-                    }
-                    last MAIN;
-                }
-            }
-        }
+        $dclient->check_pending();
 
         #
         # Attempt to read a row from source (if needed)
         #
         if ( !$src_row && $more_source ) {
             my $fetch_st    = time;
-            my $tmp_src_row = $source_db->SQL_FetchRowRef($source_cid);
+            my $tmp_src_row = $sclient->fetch_row();
             my $fetch_et    = time;
             $elap_fetch_source += ( $fetch_et - $fetch_st );
-            if ( $source_db->SQL_ErrorCode() ) {
-                $self->{error} = "select from source failed: " . $source_db->SQL_ErrorString();
+            if ( !$tmp_src_row && $sclient->error() ) {
+                $self->{error} = "select from source failed: " . $sclient->error();
                 $status = "failed";
                 last MAIN;
             }
@@ -1090,11 +607,11 @@ MAIN: while ( $more_source || $more_dest ) {
         #
         if ( !$dest_row && $more_dest ) {
             my $fetch_st     = time;
-            my $tmp_dest_row = $dest_db->SQL_FetchRowRef($dest_cid);
+            my $tmp_dest_row = $dclient->fetch_row();
             my $fetch_et     = time;
             $elap_fetch_dest += ( $fetch_et - $fetch_st );
-            if ( $dest_db->SQL_ErrorCode() ) {
-                $self->{error} = "select from dest failed: " . $dest_db->SQL_ErrorString();
+            if ( !$tmp_dest_row && $dclient->error() ) {
+                $self->{error} = "select from dest failed: " . $dclient->error();
                 $status = "failed";
                 last MAIN;
             }
@@ -1106,7 +623,7 @@ MAIN: while ( $more_source || $more_dest ) {
                     $self->_dprint("read $seen_dest_rows rows from destination");
                 }
 
-                $self->_dprintrowall( "FetchDst", $src_row );
+                $self->_dprintrowall( "FetchDst", $dest_row );
                 next MAIN;
             }
             else {
@@ -1126,7 +643,7 @@ MAIN: while ( $more_source || $more_dest ) {
         # Do row comparisons and act process through rows
         # Need to re-order this section for efficiency later
         #
-        my $rel = $self->_compare( $src_row, $dest_row, \@coltypes );
+        my $rel = $self->_compare( $src_row, $dest_row, $sclient->coltypes() );
 
         # have a pair of matching rows in source and destination
         if ( $src_row && $dest_row && $rel == 0 ) {
@@ -1156,18 +673,13 @@ MAIN: while ( $more_source || $more_dest ) {
             }
 
             if ( !$dry_run ) {
-                my @vals = map { $_, $_ } @{$dest_row};
                 $self->_dprintrow( "deleting", $dest_row );
-                my $res = $dest_db->SQL_ExecQuery( $del_cid, @vals );
-                if ( !$res ) {
-                    $self->{error} = "delete from dest failed: " . $dest_db->SQL_ErrorString();
+                my $cnt = $dclient->delete_row( @{$dest_row} );
+                if ( !defined($cnt) ) {
+                    $self->{error} = "delete from dest failed: " . $dclient->error();
                     $status = "failed";
                     last MAIN;
                 }
-                else {
-                    $pending++;
-                }
-                my $cnt = $dest_db->SQL_RowCount($del_cid);
                 $self->_dprintrow( "deleted ($cnt)", $dest_row );
             }
 
@@ -1189,32 +701,22 @@ MAIN: while ( $more_source || $more_dest ) {
             }
 
             if ( !$dry_run ) {
-                my @vals = map { $_, $_ } @{$src_row};
                 $self->_dprintrow( "deleting (unique)", $src_row );
-                foreach my $uref (@unique_info) {
-                    my $res = $dest_db->SQL_ExecQuery( $uref->{cid}, @vals );
-                    if ( !$res ) {
-                        $self->{error} = "delete unique from dest failed: " . $dest_db->SQL_ErrorString();
-                        $status = "failed";
-                        last MAIN;
-                    }
-                    else {
-                        $pending++;
-                    }
-                    my $cnt = $dest_db->SQL_RowCount( $uref->{cid} );
-                    $self->_dprintrow( "deleted (unique) ($cnt)", $src_row );
-                }
+                my $cnt = $dclient->delete_uniq_row( @{$src_row} );
 
-                $self->_dprintrow( "inserting", $src_row );
-                my $res = $dest_db->SQL_ExecQuery( $ins_cid, @{$src_row} );
-                if ( !$res ) {
-                    $self->_dprint( "insert into dest failed (" . $dest_db->SQL_ErrorString() . ")" );
-                    $self->{error} = "insert into dest failed: " . $dest_db->SQL_ErrorString();
+                if ( !defined($cnt) ) {
+                    $self->{error} = "delete unique from dest failed: " . $dclient->error();
                     $status = "failed";
                     last MAIN;
                 }
-                else {
-                    $pending++;
+
+                $self->_dprintrow( "deleted (unique) ($cnt)", $src_row );
+                $self->_dprintrow( "inserting",               $src_row );
+                if ( !$dclient->insert_row( @{$src_row} ) ) {
+                    $self->_dprint( "insert into dest failed (" . $dclient->error() . ")" );
+                    $self->{error} = "insert into dest failed: " . $dclient->error();
+                    $status = "failed";
+                    last MAIN;
                 }
             }
 
@@ -1229,9 +731,6 @@ MAIN: while ( $more_source || $more_dest ) {
             die "should not get here!";
         }
     }
-    $self->_dprint("closing select queries...");
-    $source_db->SQL_CloseQuery($source_cid);
-    $dest_db->SQL_CloseQuery($dest_cid);
 
     #
     # Check for empty source table
@@ -1244,7 +743,7 @@ MAIN: while ( $more_source || $more_dest ) {
                 $err .= " Previous/nested error (" . $self->{error} . ")";
             }
             $self->_dprint( "\n" . $err );
-            $dest_db->SQL_RollBack();
+            $dclient->roll_back();
             return (
                 error  => $err,
                 status => "failed"
@@ -1254,58 +753,31 @@ MAIN: while ( $more_source || $more_dest ) {
 
     if ($dumpfile) {
         $self->_dprint("\nDumping content of source table.");
-        my $csv = Text::CSV->new( { binary => 1 } );
-
-        open( my $out, ">${dumpfile}.src.csv" ) || die;
-        my $src_cid = $source_db->SQL_OpenQuery($source_sel_qry);
-        while ( my @tmp = $source_db->SQL_FetchRow($src_cid) ) {
-            my $status = $csv->combine(@tmp);
-            print $out $csv->string(), "\n";
+        if ( !$sclient->dump_table("${dumpfile}.src.csv") ) {
+            return ( error => $sclient->error(), status => "failed" );
         }
-        $source_db->SQL_CloseQuery($src_cid);
-        close($out);
 
         $self->_dprint("\nDumping content of final destination table.");
-        open( my $out, ">${dumpfile}.dest.csv" ) || die;
-        my $dest_cid = $dest_db->SQL_OpenQuery($dest_sel_qry);
-        while ( my @tmp = $dest_db->SQL_FetchRow($dest_cid) ) {
-            my $status = $csv->combine(@tmp);
-            print $out $csv->string(), "\n";
+        if ( !$dclient->dump_table("${dumpfile}.dest.csv") ) {
+            return ( error => $dclient->error(), status => "failed" );
         }
-        $dest_db->SQL_CloseQuery($dest_cid);
-        close($out);
-
     }
 
     my $final_row_count;
     if ( !$self->{error} ) {
         $self->_dprint("getting final row count");
-        my $final_cnt_qry = "select count(*) from $dest_table $dest_alias";
-        if ($dest_where) {
-            $final_cnt_qry .= " where $dest_where";
+        $final_row_count = $dclient->row_count();
+
+        if ( !defined($final_row_count) ) {
+            return ( error => $dclient->error(), status => "failed" );
         }
-        $self->_dprint("\nOpening Final Count Query: $final_cnt_qry");
-        my $final_cnt_cid = $dest_db->SQL_OpenQuery($final_cnt_qry);
-        if ( !$final_cnt_cid ) {
-            my $err = "opening dest count select failed: " . $dest_db->SQL_ErrorString();
-            $dest_db->SQL_RollBack();
+
+        if ( !$ignore_row_count && $final_row_count != $seen_source_rows ) {
             return (
-                error  => $err,
+                error =>
+                    "final dest row count (${final_row_count}) did not match source (${seen_source_rows}), check primary key definition",
                 status => "failed"
             );
-        }
-        else {
-            ($final_row_count) = $dest_db->SQL_FetchRow($final_cnt_cid);
-            $dest_db->SQL_CloseQuery($final_cnt_cid);
-
-            if ( !$ignore_row_count && $final_row_count != $seen_source_rows ) {
-                $dest_db->SQL_RollBack();
-                return (
-                    error =>
-                        "final dest row count ($final_row_count) did not match source ($seen_source_rows), check primary key definition",
-                    status => "failed"
-                );
-            }
         }
         $self->_dprint("final row count = $final_row_count");
     }
@@ -1317,7 +789,7 @@ MAIN: while ( $more_source || $more_dest ) {
         $self->_dprint("\nRunning post sync check function.");
         my $res = $opts{post_sync_check}->(%opts);
         if ($res) {
-            $dest_db->SQL_RollBack();
+            $dclient->roll_back();
             return (
                 error  => "post_sync_check failed: $res",
                 status => "failed"
@@ -1326,23 +798,9 @@ MAIN: while ( $more_source || $more_dest ) {
     }
 
     $self->_dprint("closing queries...");
-    if ( !$dry_run ) {
-        if ( !$self->{error} ) {
-            if ($pending) {
-                $self->_dprint("pending changes, issuing commit.");
-                $dest_db->SQL_Commit();
-                $commits++;
-            }
-        }
-        $dest_db->SQL_CloseQuery($del_cid);
-        $dest_db->SQL_CloseQuery($ins_cid);
 
-        foreach my $uref (@unique_info) {
-            $dest_db->SQL_CloseQuery( $uref->{cid} );
-        }
-
-        $dest_db->SQL_AutoCommit(1);
-    }
+    $sclient->close_queries();
+    $dclient->close_queries();
 
     $self->_dprint("done with sync of $source_table to $dest_table");
 
@@ -1367,13 +825,13 @@ MAIN: while ( $more_source || $more_dest ) {
     return (
         status               => $status,
         error                => $self->{error},
-        inserts              => $inserts,
-        deletes              => $deletes,
+        inserts              => $dclient->inserts(),
+        deletes              => $dclient->deletes(),
+        commits              => $dclient->commits(),
         seen_source_rows     => $seen_source_rows,
         seen_dest_rows       => $seen_dest_rows,
         final_dest_rows      => $final_row_count,
         matching_rows        => $matching_rows,
-        commits              => $commits,
         elapsed              => $self->{end_time} - $self->{start_time},
         elapsed_user_cpu     => $self->{end_user_cpu} - $self->{start_user_cpu},
         elapsed_system_cpu   => $self->{end_system_cpu} - $self->{start_system_cpu},
@@ -1383,7 +841,7 @@ MAIN: while ( $more_source || $more_dest ) {
 }
 
 # Begin-Doc
-# Name: _compar
+# Name: _compare
 # Type: method
 # Description: Performs a columnwise comparison of two rows, returning -1,0,1 similar to cmp
 # Syntax: $obj->_compare($srow,$drow,$coltypesref)
