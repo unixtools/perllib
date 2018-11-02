@@ -299,7 +299,7 @@ sub _build_coltypes {
             push( @{ $self->{coltypes} }, "numeric" );
         }
         else {
-            $self->{error} = ref($self) . "::_coltypes - build_don't know how to compare $name (type $type [$tname])";
+            $self->{error} = ref($self) . "::_build_coltypes - don't know how to compare $name (type $type [$tname])";
             return undef;
         }
     }
@@ -765,6 +765,89 @@ sub roll_back {
 # End-Doc
 package Local::DBTableSync::Client::MySQLObject;
 use parent "Local::DBTableSync::Client";
+
+# Begin-Doc
+# Name: _build_coltypes
+# Type: method
+# Description: analyzes the schema of the table/query in question to determine each column type
+#              this information is used later in the comparison routine in Local::DBTableSync
+# End-Doc
+sub _build_coltypes {
+    my $self = shift;
+
+    $self->{coltypes} = [];
+    $self->{skipcols} = {};
+    $self->{skiplong} = {};
+
+    my $dbh = $self->{read_db}->dbhandle;
+    my $tia = $dbh->type_info_all;
+
+    my %sql_type_to_name = ();
+    foreach my $entry ( @{$tia} ) {
+        if ( ref($entry) eq "ARRAY" ) {
+            my ( $name, $itype ) = @{$entry};
+
+            next if ( $sql_type_to_name{$itype} );
+            $sql_type_to_name{$itype} = $name;
+        }
+    }
+
+    my @types = @{ $self->{colinfo}->{coltypes} };
+    my @names = @{ $self->{colinfo}->{colnames} };
+    for ( my $index = 0; $index <= $#types; $index++ ) {
+        my $type  = $types[$index];
+        my $name  = lc $names[$index];
+        my $tname = uc $sql_type_to_name{$type};
+
+        # Check for excluded columns
+        if ( exists( $self->{excl_cols}->{$name} ) ) {
+            $self->{skipcols}->{$name} = 1;
+            next;
+        }
+
+        if ( exists( $self->{mask_cols}->{$name} ) ) {
+            push( @{ $self->{coltypes} }, "string" );
+        }
+        elsif ($tname =~ /CHAR/
+            || $tname =~ /TIME/
+            || $tname =~ /DATE/
+            || $tname =~ /BIN/
+            || $tname =~ /BLOB/ )
+        {
+            push( @{ $self->{coltypes} }, "string" );
+        }
+        elsif ( $tname =~ /RAW/ ) {
+
+            # can't handle LONG RAW right now
+            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{skipcols}->{$name} = 1;
+        }
+        elsif ( $tname =~ /LONG/ || $type == 40 ) {
+
+            # 40 = CLOB
+            push( @{ $self->{coltypes} }, "string" );
+            $self->{skiplong}->{$name} = 1;
+        }
+        elsif ( $tname =~ /BFILE/ ) {
+            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{skipcols}->{$name} = 1;
+        }
+        elsif ($tname =~ /DEC/
+            || $tname =~ /INT/
+            || $tname =~ /NUM/
+            || $tname =~ /DOUBLE/ )
+
+        {
+            push( @{ $self->{coltypes} }, "numeric" );
+        }
+        else {
+            $self->{error} = ref($self) . "::_build_coltypes - don't know how to compare $name (type $type [$tname])";
+            return undef;
+        }
+    }
+
+    return 1;
+}
 
 # Begin-Doc
 # Name: _build_collists
