@@ -616,13 +616,13 @@ sub delete_row {
 }
 
 # Begin-Doc
-# Name: delete_uniq_row
+# Name: delete_uniq
 # Type: method
 # Description: deletes any rows from database on any matching unique keys
-# Syntax: $obj->delete_uniq_row( @row_values );
+# Syntax: $obj->delete_uniq( @row_values );
 # Returns: number of rows deleted on success, undef on error
 # End-Doc
-sub delete_uniq_row {
+sub delete_uniq {
     my $self     = shift;
     my $cnt      = 0;
     my @colnames = @{ $self->colnames() };
@@ -636,7 +636,7 @@ sub delete_uniq_row {
         my @fields = @{ $qryref->{fields} };
 
         unless ( $db->SQL_ExecQuery( $cid, @rowdata{@fields} ) ) {
-            $self->{error} = ref($self) . "::delete_uniq_row - unable to delete row - " . $db->SQL_ErrorString();
+            $self->{error} = ref($self) . "::delete_uniq - unable to delete row - " . $db->SQL_ErrorString();
             return undef;
         }
         $cnt += $db->SQL_RowCount();

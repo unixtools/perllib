@@ -689,7 +689,7 @@ MAIN: while ( $more_source || $more_dest ) {
 
             if ( !$dry_run ) {
                 $self->_dprintrow( "deleting (unique)", $src_row );
-                my $cnt = $dclient->delete_uniq_row( @{$src_row} );
+                my $cnt = $dclient->delete_uniq( @{$src_row} );
 
                 if ( !defined($cnt) ) {
                     $self->{error} = "delete unique from dest failed: " . $dclient->error();
