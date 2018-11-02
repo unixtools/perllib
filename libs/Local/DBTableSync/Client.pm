@@ -312,7 +312,7 @@ sub _build_coltypes {
 # Type: method
 # Description: builds the following column lists
 #       $self->{select_cols} - arrayref (ordered) list of database specific column statements - used to build select statements
-#       $self->{colnames}    - arrayref of lowercase column names 
+#       $self->{colnames}    - arrayref of lowercase column names
 #       $self->{sort_cols}   - arrayref order in which results of select statement will be ordered - ensure NULLs first
 # Comments: non-implemented stub - each database specific implementation differs
 # End-Doc
@@ -425,7 +425,6 @@ sub error {
     return $self->{error};
 }
 
-
 # Begin-Doc
 # Name: _dprint
 # Type: method
@@ -477,7 +476,8 @@ sub _open_select {
     my $type = $self->{type};
     my $db   = $self->{read_db};
     my $qry  = $self->{queries}->{select}->{qry};
-    my $cid  = $db->SQL_OpenQuery( $qry, @{ $self->{args} } );
+    my $args = $self->{queries}->{select}->{args};
+    my $cid  = $db->SQL_OpenQuery( $qry, @{$args} );
 
     $self->_dprint("\nOpening select query (${type}): ${qry}");
 
@@ -761,7 +761,7 @@ sub roll_back {
 # Begin-Doc
 # Name: Local::DBTableSync::Client::MySQLObject
 # Type: module
-# Description: MySQL specific implementation of the DBTableSync client module 
+# Description: MySQL specific implementation of the DBTableSync client module
 # End-Doc
 package Local::DBTableSync::Client::MySQLObject;
 use parent "Local::DBTableSync::Client";
@@ -771,7 +771,7 @@ use parent "Local::DBTableSync::Client";
 # Type: method
 # Description: builds the following column lists
 #       $self->{select_cols} - arrayref (ordered) list of database specific column statements - used to build select statements
-#       $self->{colnames}    - arrayref of lowercase column names 
+#       $self->{colnames}    - arrayref of lowercase column names
 #       $self->{sort_cols}   - arrayref order in which results of select statement will be ordered - ensure NULLs first
 # End-Doc
 sub _build_collists {
@@ -896,7 +896,7 @@ sub _build_delete {
 # Begin-Doc
 # Name: Local::DBTableSync::Client::OracleObject
 # Type: module
-# Description: Oracle specific implementation of the DBTableSync client module 
+# Description: Oracle specific implementation of the DBTableSync client module
 # End-Doc
 package Local::DBTableSync::Client::OracleObject;
 use parent "Local::DBTableSync::Client";
@@ -957,7 +957,7 @@ sub init {
 # Type: method
 # Description: builds the following column lists
 #       $self->{select_cols} - arrayref (ordered) list of database specific column statements - used to build select statements
-#       $self->{colnames}    - arrayref of lowercase column names 
+#       $self->{colnames}    - arrayref of lowercase column names
 #       $self->{sort_cols}   - arrayref order in which results of select statement will be ordered - ensure NULLs first
 # End-Doc
 sub _build_collists {
