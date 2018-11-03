@@ -1136,7 +1136,7 @@ sub _build_delete {
 
     foreach my $field ( @{ $self->colnames() } ) {
         if ( $self->{skiplong}->{$field} ) {
-            push( @where, "(dbms_lob.compare(${field},?)=0 or (? is null and ${field} is null)" );
+            push( @where, "(dbms_lob.compare(${field},?)=0 or (? is null and ${field} is null))" );
         }
         else {
             push( @where, "(${field}=? or (? is null and ${field} is null))" );
