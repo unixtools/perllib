@@ -293,7 +293,8 @@ sub _build_coltypes {
         elsif ($tname =~ /DEC/
             || $tname =~ /INT/
             || $tname =~ /NUM/
-            || $tname =~ /DOUBLE/ )
+            || $tname =~ /DOUBLE/
+            || $tname =~ /FLOAT/ )
 
         {
             push( @{ $self->{coltypes} }, "numeric" );
@@ -835,7 +836,8 @@ sub _build_coltypes {
         elsif ($tname =~ /DEC/
             || $tname =~ /INT/
             || $tname =~ /NUM/
-            || $tname =~ /DOUBLE/ )
+            || $tname =~ /DOUBLE/
+            || $tname =~ /FLOAT/ )
 
         {
             push( @{ $self->{coltypes} }, "numeric" );
