@@ -1,7 +1,7 @@
 #
 # This file is licensed under the Perl Artistic License 2.0 - http://www.opensource.org/licenses/artistic-license-2.0
 # Development copy of this package available from: https://github.com/unixtools/perllib
-# Cross contributions/development maintained in parallel with Missouri S&T/UMRPerl library
+# Cross contributions/development maintained in parallel with Missouri S&T Perl library
 #
 
 =begin
