@@ -287,7 +287,7 @@ sub release_item {
     my $tbl  = $self->{table};
     my $db   = $self->db();
 
-    my $dqry = "update $tbl set grabbed='N',grabhost='',grabpid='' where 
+    my $dqry = "update $tbl set grabbed='N',grabhost=null,grabpid=null where 
                 queue=? and itemid=? and grabhost=? and grabpid=?";
     $db->SQL_ExecQuery( $dqry, $item->{queue}, $item->{itemid}, $item->{grabhost}, $item->{grabpid} )
         || $db->SQL_Error($dqry) && return undef;
