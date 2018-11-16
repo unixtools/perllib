@@ -774,7 +774,6 @@ sub roll_back {
 package Local::DBTableSync::Client::MySQLObject;
 use parent "Local::DBTableSync::Client";
 
-
 # Begin-Doc
 # Name: _build_coltypes
 # Type: method
@@ -896,6 +895,19 @@ sub _build_collists {
         }
     }
 
+    #
+    # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
+    # For now, just grab the first one in the list
+    #
+    foreach my $keys ( @{ $self->{unique_keys} } ) {
+        next unless scalar @{$keys};
+        $self->{sort_cols} = [];
+        foreach my $col (@$keys) {
+            push( @{ $self->{sort_cols} }, "`${col}`" );
+        }
+        last;
+    }
+
     return 1;
 }
 
@@ -906,7 +918,7 @@ sub _build_collists {
 # End-Doc
 sub _build_insert {
     my $self        = shift;
-    my $insert_cols = join( ",", map { "`$_`" } @{ $self->colnames() } );
+    my $insert_cols = join( ",", map {"`$_`"} @{ $self->colnames() } );
     my $table       = $self->{table};
     my $args        = join( ",", ("?") x scalar @{ $self->colnames() } );
     my $qry         = "insert into ${table} (${insert_cols}) values (${args})";
@@ -1106,6 +1118,16 @@ sub _build_collists {
         unless ( $self->{skipcols}->{$col} || $self->{skiplong}->{$col} ) {
             push( @{ $self->{sort_cols} }, $col );
         }
+    }
+
+    #
+    # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
+    # For now, just grab the first one in the list
+    #
+    foreach my $keys ( @{ $self->{unique_keys} } ) {
+        next unless scalar @{$keys};
+        $self->{sort_cols} = @$keys;
+        last;
     }
 
     return 1;

@@ -32,6 +32,7 @@ my %res = $sync->SyncTables(
     source_table => "table_name_on_test",
     dest_table => "table_name_on_dev",
     max_inserts => 10000,
+    row_count_interval => 1000,
 
     # Example table: position, department, user
     # Unique index on position,department and a unique index on user (one job per userid and per position nbr)
@@ -314,6 +315,11 @@ sub SyncTables {
         $dumpfile = $opts{dumpfile};
     }
 
+    my $row_count_interval = 1000;
+    if ( exists( $opts{row_count_interval} ) ) {
+        $row_count_interval = $opts{row_count_interval};
+    }
+
     foreach my $required (qw/source_db source_table dest_db dest_table/) {
         if ( !$opts{$required} ) {
             return ( error => "missing ${required}", status => "failed" );
@@ -582,7 +588,7 @@ MAIN: while ( $more_source || $more_dest ) {
                 $seen_source_rows++;
                 $src_row = $tmp_src_row;
 
-                if ( $seen_source_rows % 1000 == 0 ) {
+                if ( $seen_source_rows % $row_count_interval == 0 ) {
                     $self->_dprint("read $seen_source_rows rows from source");
                 }
 
@@ -612,7 +618,7 @@ MAIN: while ( $more_source || $more_dest ) {
                 $seen_dest_rows++;
                 $dest_row = $tmp_dest_row;
 
-                if ( $seen_dest_rows % 1000 == 0 ) {
+                if ( $seen_dest_rows % $row_count_interval == 0 ) {
                     $self->_dprint("read $seen_dest_rows rows from destination");
                 }
 
