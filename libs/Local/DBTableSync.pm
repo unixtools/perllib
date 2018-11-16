@@ -349,6 +349,14 @@ sub SyncTables {
     my %sopts = map { my $key = $_; $key =~ s/source_//r => $opts{$_} } keys %opts;
     my %dopts = map { my $key = $_; $key =~ s/dest_//r   => $opts{$_} } keys %opts;
 
+    #
+    # Determine if we can use the PK based sort
+    #
+    my $pk_sort_allowed = 1;
+    if ( $opts{source_table} =~ /\(/sgm && $opts{source_table} =~ /\s+/sgm ) {
+        $pk_sort_allowed = 0;
+    }
+
     my $sclient;
     my $dclient;
 
@@ -361,7 +369,7 @@ sub SyncTables {
         }
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $sclient = $module->new( %sopts, type => "source" );
+            $sclient = $module->new( %sopts, type => "source", pk_sort_allowed => $pk_sort_allowed );
         }
         else {
             return (
@@ -383,7 +391,7 @@ sub SyncTables {
 
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $dclient = $module->new( %dopts, type => "dest" );
+            $dclient = $module->new( %dopts, type => "dest", pk_sort_allowed => $pk_sort_allowed );
         }
         else {
             return (
