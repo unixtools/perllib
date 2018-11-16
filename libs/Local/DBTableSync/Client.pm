@@ -44,7 +44,7 @@ sub new {
     my @params = qw{
         table   alias where       args
         dry_run force max_deletes max_inserts
-        no_dups debug unique_keys pk_sort_allowed
+        no_dups debug unique_keys ukey_sort_allowed
     };
 
     @{$tmp}{@params} = @opts{@params};
@@ -899,14 +899,15 @@ sub _build_collists {
     # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
     # For now, just grab the first one in the list
     #
-    if ( $self->{pk_sort_allowed} ) {
-        $self->_dprint( "Checking for primary key based sort.\n");
+    if ( $self->{ukey_sort_allowed} ) {
+        $self->_dprint("Checking for primary key based sort.\n");
         foreach my $keys ( @{ $self->{unique_keys} } ) {
             next unless scalar @{$keys};
             $self->{sort_cols} = [];
             foreach my $col (@$keys) {
                 push( @{ $self->{sort_cols} }, "`${col}`" );
             }
+            $self->_dprint( "Elected to use key as sort: " . join( ", ", @{ $self->{sort_cols} } ) . "\n" );
             last;
         }
     }
@@ -1127,14 +1128,15 @@ sub _build_collists {
     # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
     # For now, just grab the first one in the list
     #
-    if ( $self->{pk_sort_allowed} ) {
-        $self->_dprint( "Checking for primary key based sort.\n");
+    if ( $self->{ukey_sort_allowed} ) {
+        $self->_dprint("Checking for primary key based sort.\n");
         foreach my $keys ( @{ $self->{unique_keys} } ) {
             next unless scalar @{$keys};
             $self->{sort_cols} = [];
             foreach my $col (@$keys) {
                 push( @{ $self->{sort_cols} }, $col );
             }
+            $self->_dprint( "Elected to use key as sort: " . join( ", ", @{ $self->{sort_cols} } ) . "\n" );
             last;
         }
     }

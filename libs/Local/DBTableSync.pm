@@ -243,6 +243,7 @@ sub _dprintrowall {
 #    source_alias => alias for primary source table, can be useful in where clause
 #    dest_alias => alias for primary dest table, can be useful in where clause
 #
+#    ukey_sort_allowed => allow sorting by a unique key instead of calculated column list
 #    pre_setup_check => callback sub reference, called prior to schema analysis
 #    pre_select_check => callback sub reference, called prior to opening of select/insert queries
 #    post_sync_check => callback sub reference, called prior to final commit, after all inserts/deletes
@@ -289,6 +290,11 @@ sub SyncTables {
     my $force = $self->{force};
     if ( exists( $opts{force} ) ) {
         $force = $opts{force};
+    }
+
+    my $debug = $self->{debug};
+    if ( exists( $opts{debug} ) ) {
+        $debug = $opts{debug};
     }
 
     my $max_deletes = $self->{max_deletes};
@@ -352,9 +358,17 @@ sub SyncTables {
     #
     # Determine if we can use the PK based sort
     #
-    my $pk_sort_allowed = 1;
+    my $ukey_sort_allowed = 1;
     if ( $opts{source_table} =~ /\(/sgm && $opts{source_table} =~ /\s+/sgm ) {
-        $pk_sort_allowed = 0;
+        $ukey_sort_allowed = 0;
+    }
+
+    # For now, pk sort is causing problems, so don't allow it unless specifically requested
+    $ukey_sort_allowed = 0;
+
+    # Override with out specific selection
+    if ( exists( $opts{ukey_sort_allowed} ) ) {
+        $ukey_sort_allowed = $opts{ukey_sort_allowed};
     }
 
     my $sclient;
@@ -369,7 +383,7 @@ sub SyncTables {
         }
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $sclient = $module->new( %sopts, type => "source", pk_sort_allowed => $pk_sort_allowed );
+            $sclient = $module->new( %sopts, debug => $debug, type => "source", ukey_sort_allowed => $ukey_sort_allowed );
         }
         else {
             return (
@@ -391,7 +405,7 @@ sub SyncTables {
 
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $dclient = $module->new( %dopts, type => "dest", pk_sort_allowed => $pk_sort_allowed );
+            $dclient = $module->new( %dopts, debug => $debug, type => "dest", ukey_sort_allowed => $ukey_sort_allowed );
         }
         else {
             return (
