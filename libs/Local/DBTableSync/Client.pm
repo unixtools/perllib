@@ -1126,7 +1126,10 @@ sub _build_collists {
     #
     foreach my $keys ( @{ $self->{unique_keys} } ) {
         next unless scalar @{$keys};
-        $self->{sort_cols} = @$keys;
+        $self->{sort_cols} = [];
+        foreach my $col (@$keys) {
+            push( @{ $self->{sort_cols} }, $col );
+        }
         last;
     }
 
