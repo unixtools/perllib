@@ -103,8 +103,8 @@ sub init {
 
     $self->{colinfo} = { $self->{read_db}->SQL_ColumnInfo($cid) };
 
-    $self->_build_collists() || return undef;
     $self->_build_coltypes() || return undef;
+    $self->_build_collists() || return undef;
     $self->_build_queries()  || return undef;
 
     #
@@ -189,6 +189,10 @@ sub colnames {
 # End-Doc
 sub coltypes {
     my $self = shift;
+    if ( !$self->{coltypes} ) {
+        my @cols = @{ $self->colnames() };
+        @{ $self->{coltypes} } = @{ $self->{types} }{@cols};
+    }
     return $self->{coltypes};
 }
 
@@ -241,9 +245,10 @@ sub deletes {
 sub _build_coltypes {
     my $self = shift;
 
-    $self->{coltypes} = [];
     $self->{skipcols} = {};
     $self->{skiplong} = {};
+    $self->{coltypes} = undef;
+    $self->{types}    = {};
 
     my $dbh = $self->{read_db}->dbhandle;
     my $tia = $dbh->type_info_all;
@@ -258,16 +263,13 @@ sub _build_coltypes {
         }
     }
 
-    # the order in which the database stores column names
-    # is not necessarily the same order we will be selecting them
-    # build coltypes array based on our select ordering
     my @names = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my @types = @{ $self->{colinfo}->{coltypes} };
     my %types;
 
     @types{@names} = @types;
 
-    foreach my $name ( @{ $self->colnames() } ) {
+    foreach my $name (@names) {
         my $type  = $types{$name};
         my $tname = uc $sql_type_to_name{$type};
 
@@ -278,29 +280,29 @@ sub _build_coltypes {
         }
 
         if ( exists( $self->{mask_cols}->{$name} ) ) {
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name} = "string";
         }
         elsif ($tname =~ /CHAR/
             || $tname =~ /TIME/
             || $tname =~ /DATE/
             || $tname =~ /BIN/ )
         {
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name} = "string";
         }
         elsif ( $tname =~ /RAW/ ) {
 
             # can't handle LONG RAW right now
-            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{types}->{$name}    = "unknown";
             $self->{skipcols}->{$name} = 1;
         }
         elsif ( $tname =~ /LONG/ || $type == 40 ) {
 
             # 40 = CLOB
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name}    = "string";
             $self->{skiplong}->{$name} = 1;
         }
         elsif ( $tname =~ /BFILE/ ) {
-            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{types}->{$name}    = "unknown";
             $self->{skipcols}->{$name} = 1;
         }
         elsif ($tname =~ /DEC/
@@ -310,7 +312,7 @@ sub _build_coltypes {
             || $tname =~ /FLOAT/ )
 
         {
-            push( @{ $self->{coltypes} }, "numeric" );
+            $self->{types}->{$name} = "numeric";
         }
         else {
             $self->{error} = ref($self) . "::_build_coltypes - don't know how to compare $name (type $type [$tname])";
@@ -789,9 +791,10 @@ use parent "Local::DBTableSync::Client";
 sub _build_coltypes {
     my $self = shift;
 
-    $self->{coltypes} = [];
     $self->{skipcols} = {};
     $self->{skiplong} = {};
+    $self->{coltypes} = undef;
+    $self->{types}    = {};
 
     my $dbh = $self->{read_db}->dbhandle;
     my $tia = $dbh->type_info_all;
@@ -806,16 +809,13 @@ sub _build_coltypes {
         }
     }
 
-    # the order in which the database stores column names
-    # is not necessarily the same order we will be selecting them
-    # build coltypes array based on our select ordering
     my @names = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my @types = @{ $self->{colinfo}->{coltypes} };
     my %types;
 
     @types{@names} = @types;
 
-    foreach my $name ( @{ $self->colnames() } ) {
+    foreach my $name (@names) {
         my $type  = $types{$name};
         my $tname = uc $sql_type_to_name{$type};
 
@@ -826,7 +826,7 @@ sub _build_coltypes {
         }
 
         if ( exists( $self->{mask_cols}->{$name} ) ) {
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name} = "string";
         }
         elsif ($tname =~ /CHAR/
             || $tname =~ /TIME/
@@ -834,22 +834,22 @@ sub _build_coltypes {
             || $tname =~ /BIN/
             || $tname =~ /BLOB/ )
         {
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name} = "string";
         }
         elsif ( $tname =~ /RAW/ ) {
 
             # can't handle LONG RAW right now
-            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{types}->{$name}    = "unknown";
             $self->{skipcols}->{$name} = 1;
         }
         elsif ( $tname =~ /LONG/ || $type == 40 ) {
 
             # 40 = CLOB
-            push( @{ $self->{coltypes} }, "string" );
+            $self->{types}->{$name}    = "string";
             $self->{skiplong}->{$name} = 1;
         }
         elsif ( $tname =~ /BFILE/ ) {
-            push( @{ $self->{coltypes} }, "unknown" );
+            $self->{types}->{$name}    = "unknown";
             $self->{skipcols}->{$name} = 1;
         }
         elsif ($tname =~ /DEC/
@@ -859,7 +859,7 @@ sub _build_coltypes {
             || $tname =~ /FLOAT/ )
 
         {
-            push( @{ $self->{coltypes} }, "numeric" );
+            $self->{types}->{$name} = "numeric";
         }
         else {
             $self->{error} = ref($self) . "::_build_coltypes - don't know how to compare $name (type $type [$tname])";
@@ -943,7 +943,7 @@ sub _build_collists {
             else {
                 push( @{ $self->{select_cols} }, "`${col}`" );
             }
-            push( @{ $self->{colnames} }, $col );
+            push( @{ $self->{colnames} },    $col );
             push( @{ $self->{insert_cols} }, "`${col}`" );
         }
 
@@ -1177,7 +1177,7 @@ sub _build_collists {
             else {
                 push( @{ $self->{select_cols} }, $col );
             }
-            push( @{ $self->{colnames} }, $col );
+            push( @{ $self->{colnames} },    $col );
             push( @{ $self->{insert_cols} }, $col );
         }
 
