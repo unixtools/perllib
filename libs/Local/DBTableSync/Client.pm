@@ -44,7 +44,7 @@ sub new {
     my @params = qw{
         table   alias where       args
         dry_run force max_deletes max_inserts
-        no_dups debug unique_keys ukey_sort_allowed
+        no_dups debug unique_keys ukey_sort
     };
 
     @{$tmp}{@params} = @opts{@params};
@@ -103,8 +103,8 @@ sub init {
 
     $self->{colinfo} = { $self->{read_db}->SQL_ColumnInfo($cid) };
 
-    $self->_build_coltypes() || return undef;
     $self->_build_collists() || return undef;
+    $self->_build_coltypes() || return undef;
     $self->_build_queries()  || return undef;
 
     #
@@ -258,11 +258,17 @@ sub _build_coltypes {
         }
     }
 
+    # the order in which the database stores column names
+    # is not necessarily the same order we will be selecting them
+    # build coltypes array based on our select ordering
+    my @names = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my @types = @{ $self->{colinfo}->{coltypes} };
-    my @names = @{ $self->{colinfo}->{colnames} };
-    for ( my $index = 0; $index <= $#types; $index++ ) {
-        my $type  = $types[$index];
-        my $name  = lc $names[$index];
+    my %types;
+
+    @types{@names} = @types;
+
+    foreach my $name ( @{ $self->colnames() } ) {
+        my $type  = $types{$name};
         my $tname = uc $sql_type_to_name{$type};
 
         # Check for excluded columns
@@ -800,11 +806,17 @@ sub _build_coltypes {
         }
     }
 
+    # the order in which the database stores column names
+    # is not necessarily the same order we will be selecting them
+    # build coltypes array based on our select ordering
+    my @names = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my @types = @{ $self->{colinfo}->{coltypes} };
-    my @names = @{ $self->{colinfo}->{colnames} };
-    for ( my $index = 0; $index <= $#types; $index++ ) {
-        my $type  = $types[$index];
-        my $name  = lc $names[$index];
+    my %types;
+
+    @types{@names} = @types;
+
+    foreach my $name ( @{ $self->colnames() } ) {
+        my $type  = $types{$name};
         my $tname = uc $sql_type_to_name{$type};
 
         # Check for excluded columns
@@ -874,6 +886,52 @@ sub _build_collists {
     $self->{sort_cols}   = [];
 
     my @lower_cols = map { lc $_ } @{ $self->{colinfo}->{colnames} };
+    my $default_ordering = 1;
+
+    if ( $self->{ukey_sort} ) {
+        my $ukey;
+        $self->_dprint("Checking for unique key based sort.\n");
+
+        if ( ref( $self->{ukey_sort} ) eq "ARRAY" && scalar @{ $self->{ukey_sort} } ) {
+            $self->_dprint( "Elected to use supplied key as sort: " . join( ", ", @{ $self->{ukey_sort} } ) . "\n" );
+            $ukey             = $self->{ukey_sort};
+            $default_ordering = 0;
+        }
+        else {
+
+            #
+            # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
+            # For now, just grab the first one in the list
+            #
+            foreach my $keys ( @{ $self->{unique_keys} } ) {
+                next unless scalar @{$keys};
+                $self->_dprint( "Elected to use unique key as sort: " . join( ", ", @{$keys} ) . "\n" );
+                $ukey             = $keys;
+                $default_ordering = 0;
+                last;
+            }
+        }
+
+        #
+        # Now that we have a unique key selected for sort ordering
+        # build up colnames ordering to maintain lock-step ordering/comparator
+        #
+        if ( !$default_ordering ) {
+            my $ulen     = scalar @{$ukey};
+            my $rank     = $ulen + 1;
+            my %colranks = map { $_ => $rank++; } @lower_cols;
+
+            $rank = 0;
+            foreach my $col ( map { lc $_ } @{$ukey} ) {
+                $colranks{$col} = $rank++;
+
+                push( @{ $self->{sort_cols} }, "`${col}` IS NULL" );
+                push( @{ $self->{sort_cols} }, "`${col}`" );
+            }
+
+            @lower_cols = sort { $colranks{$a} <=> $colranks{$b} } @lower_cols;
+        }
+    }
 
     foreach my $col (@lower_cols) {
         unless ( $self->{skipcols}->{$col} ) {
@@ -888,27 +946,12 @@ sub _build_collists {
         }
 
         unless ( $self->{skipcols}->{$col} || $self->{skiplong}->{$col} ) {
+            if ($default_ordering) {
 
-            # Force MySQL to NULLS first ordering
-            push( @{ $self->{sort_cols} }, "`${col}` IS NULL" );
-            push( @{ $self->{sort_cols} }, "`${col}`" );
-        }
-    }
-
-    #
-    # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
-    # For now, just grab the first one in the list
-    #
-    if ( $self->{ukey_sort_allowed} ) {
-        $self->_dprint("Checking for primary key based sort.\n");
-        foreach my $keys ( @{ $self->{unique_keys} } ) {
-            next unless scalar @{$keys};
-            $self->{sort_cols} = [];
-            foreach my $col (@$keys) {
+                # Force MySQL to NULLS first ordering
+                push( @{ $self->{sort_cols} }, "`${col}` IS NULL" );
                 push( @{ $self->{sort_cols} }, "`${col}`" );
             }
-            $self->_dprint( "Elected to use key as sort: " . join( ", ", @{ $self->{sort_cols} } ) . "\n" );
-            last;
         }
     }
 
@@ -1106,6 +1149,50 @@ sub _build_collists {
     $self->{sort_cols}   = [];
 
     my @lower_cols = map { lc $_ } @{ $self->{colinfo}->{colnames} };
+    my $default_ordering = 1;
+
+    if ( $self->{ukey_sort} ) {
+        my $ukey;
+        $self->_dprint("Checking for unique key based sort.\n");
+
+        if ( ref( $self->{ukey_sort} ) eq "ARRAY" && scalar @{ $self->{ukey_sort} } ) {
+            $self->_dprint( "Elected to use supplied key as sort: " . join( ", ", @{ $self->{ukey_sort} } ) . "\n" );
+            $ukey             = $self->{ukey_sort};
+            $default_ordering = 0;
+        }
+        else {
+
+            #
+            # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
+            # For now, just grab the first one in the list
+            #
+            foreach my $keys ( @{ $self->{unique_keys} } ) {
+                next unless scalar @{$keys};
+                $self->_dprint( "Elected to use unique key as sort: " . join( ", ", @{$keys} ) . "\n" );
+                $ukey             = $keys;
+                $default_ordering = 0;
+                last;
+            }
+        }
+
+        #
+        # Now that we have a unique key selected for sort ordering
+        # build up colnames ordering to maintain lock-step ordering/comparator
+        #
+        if ( !$default_ordering ) {
+            my $ulen     = scalar @{$ukey};
+            my $rank     = $ulen + 1;
+            my %colranks = map { $_ => $rank++; } @lower_cols;
+
+            $rank = 0;
+            foreach my $col ( map { lc $_ } @{$ukey} ) {
+                $colranks{$col} = $rank++;
+                push( @{ $self->{sort_cols} }, $col );
+            }
+
+            @lower_cols = sort { $colranks{$a} <=> $colranks{$b} } @lower_cols;
+        }
+    }
 
     foreach my $col (@lower_cols) {
         unless ( $self->{skipcols}->{$col} ) {
@@ -1120,24 +1207,9 @@ sub _build_collists {
         }
 
         unless ( $self->{skipcols}->{$col} || $self->{skiplong}->{$col} ) {
-            push( @{ $self->{sort_cols} }, $col );
-        }
-    }
-
-    #
-    # If we have any unique keys, we can sort on the shortest key for the fastest possible sort
-    # For now, just grab the first one in the list
-    #
-    if ( $self->{ukey_sort_allowed} ) {
-        $self->_dprint("Checking for primary key based sort.\n");
-        foreach my $keys ( @{ $self->{unique_keys} } ) {
-            next unless scalar @{$keys};
-            $self->{sort_cols} = [];
-            foreach my $col (@$keys) {
+            if ($default_ordering) {
                 push( @{ $self->{sort_cols} }, $col );
             }
-            $self->_dprint( "Elected to use key as sort: " . join( ", ", @{ $self->{sort_cols} } ) . "\n" );
-            last;
         }
     }
 

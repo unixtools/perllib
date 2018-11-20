@@ -243,7 +243,8 @@ sub _dprintrowall {
 #    source_alias => alias for primary source table, can be useful in where clause
 #    dest_alias => alias for primary dest table, can be useful in where clause
 #
-#    ukey_sort_allowed => allow sorting by a unique key instead of calculated column list
+#    ukey_sort => allow sorting by a unique key instead of calculated column list.
+#      Optional: pass array reference of column names to use for unique key sorting
 #    pre_setup_check => callback sub reference, called prior to schema analysis
 #    pre_select_check => callback sub reference, called prior to opening of select/insert queries
 #    post_sync_check => callback sub reference, called prior to final commit, after all inserts/deletes
@@ -356,19 +357,13 @@ sub SyncTables {
     my %dopts = map { my $key = $_; $key =~ s/dest_//r   => $opts{$_} } keys %opts;
 
     #
-    # Determine if we can use the PK based sort
+    # Determine if we can use the Unique key based sort
     #
-    my $ukey_sort_allowed = 1;
-    if ( $opts{source_table} =~ /\(/sgm && $opts{source_table} =~ /\s+/sgm ) {
-        $ukey_sort_allowed = 0;
-    }
-
-    # For now, pk sort is causing problems, so don't allow it unless specifically requested
-    $ukey_sort_allowed = 0;
+    my $ukey_sort = 0;
 
     # Override with out specific selection
-    if ( exists( $opts{ukey_sort_allowed} ) ) {
-        $ukey_sort_allowed = $opts{ukey_sort_allowed};
+    if ( exists( $opts{ukey_sort} ) ) {
+        $ukey_sort = $opts{ukey_sort};
     }
 
     my $sclient;
@@ -383,7 +378,7 @@ sub SyncTables {
         }
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $sclient = $module->new( %sopts, debug => $debug, type => "source", ukey_sort_allowed => $ukey_sort_allowed );
+            $sclient = $module->new( %sopts, debug => $debug, type => "source", ukey_sort => $ukey_sort );
         }
         else {
             return (
@@ -405,7 +400,7 @@ sub SyncTables {
 
         my $module = "Local::DBTableSync::Client::${submodule}";
         if ( $module->can("new") ) {
-            $dclient = $module->new( %dopts, debug => $debug, type => "dest", ukey_sort_allowed => $ukey_sort_allowed );
+            $dclient = $module->new( %dopts, debug => $debug, type => "dest", ukey_sort => $ukey_sort );
         }
         else {
             return (
