@@ -395,7 +395,7 @@ sub _build_select {
 # End-Doc
 sub _build_insert {
     my $self        = shift;
-    my $insert_cols = join( ",", @{ $self->colnames() } );
+    my $insert_cols = join( ",", @{ $self->{insert_cols} } );
     my $table       = $self->{table};
     my $args        = join( ",", ("?") x scalar @{ $self->colnames() } );
     my $qry         = "insert into ${table} (${insert_cols}) values (${args})";
@@ -882,6 +882,7 @@ sub _build_collists {
     my $self = shift;
 
     $self->{select_cols} = [];
+    $self->{insert_cols} = [];
     $self->{colnames}    = [];
     $self->{sort_cols}   = [];
 
@@ -943,6 +944,7 @@ sub _build_collists {
                 push( @{ $self->{select_cols} }, "`${col}`" );
             }
             push( @{ $self->{colnames} }, $col );
+            push( @{ $self->{insert_cols} }, "`${col}`" );
         }
 
         unless ( $self->{skipcols}->{$col} || $self->{skiplong}->{$col} ) {
@@ -954,35 +956,6 @@ sub _build_collists {
             }
         }
     }
-
-    return 1;
-}
-
-# Begin-Doc
-# Name: _build_insert
-# Type: method
-# Description: builds internal insert query for later use
-# End-Doc
-sub _build_insert {
-    my $self        = shift;
-    my $insert_cols = join( ",", map {"`$_`"} @{ $self->colnames() } );
-    my $table       = $self->{table};
-    my $args        = join( ",", ("?") x scalar @{ $self->colnames() } );
-    my $qry         = "insert into ${table} (${insert_cols}) values (${args})";
-
-    $self->_dprint("\nOpening insert query: ${qry}");
-    my $cid = $self->{write_db}->SQL_OpenBoundQuery($qry);
-    unless ($cid) {
-        $self->{error} = ref($self) . "::_build_insert - failed to open insert query";
-        return undef;
-    }
-
-    $self->{queries}->{insert} = {
-        cid    => $cid,
-        qry    => $qry,
-        db     => $self->{write_db},
-        fields => $self->colnames()
-    };
 
     return 1;
 }
@@ -1145,6 +1118,7 @@ sub _build_collists {
     my $self = shift;
 
     $self->{select_cols} = [];
+    $self->{insert_cols} = [];
     $self->{colnames}    = [];
     $self->{sort_cols}   = [];
 
@@ -1204,6 +1178,7 @@ sub _build_collists {
                 push( @{ $self->{select_cols} }, $col );
             }
             push( @{ $self->{colnames} }, $col );
+            push( @{ $self->{insert_cols} }, $col );
         }
 
         unless ( $self->{skipcols}->{$col} || $self->{skiplong}->{$col} ) {
