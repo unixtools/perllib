@@ -917,7 +917,7 @@ sub _build_collists {
         # Now that we have a unique key selected for sort ordering
         # build up colnames ordering to maintain lock-step ordering/comparator
         #
-        if ( !$default_ordering ) {
+        if ( !$default_ordering && $ukey ) {
             my $ulen     = scalar @{$ukey};
             my $rank     = $ulen + 1;
             my %colranks = map { $_ => $rank++; } @lower_cols;
@@ -1153,7 +1153,7 @@ sub _build_collists {
         # Now that we have a unique key selected for sort ordering
         # build up colnames ordering to maintain lock-step ordering/comparator
         #
-        if ( !$default_ordering ) {
+        if ( !$default_ordering && $ukey ) {
             my $ulen     = scalar @{$ukey};
             my $rank     = $ulen + 1;
             my %colranks = map { $_ => $rank++; } @lower_cols;
