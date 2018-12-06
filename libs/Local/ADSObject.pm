@@ -1076,7 +1076,7 @@ sub GetAttributesMatchCB {
 # Type: method
 # Description:  Sets a list of attributes for a userid
 # Syntax:  $res = $ex->SetAttributes(
-#			userid => "miner",
+#			[userid => "miner" | dn => $dn],
 #			[replace => $info],
 #			[add => $info],
 #			[delete => $info],
@@ -1090,7 +1090,12 @@ sub SetAttributes {
     my $self = shift;
     my (%info) = @_;
 
-    my $userid  = $info{userid}  || return "need a userid\n";
+    my $dn     = $info{dn};
+    my $userid = $info{userid};
+
+    if ( !$userid && !$dn ) {
+        return "need a userid or dn";
+    }
     my $replace = $info{replace} || $info{attributes};
     my $add     = $info{add};
     my $delete  = $info{delete};
@@ -1099,9 +1104,11 @@ sub SetAttributes {
         return "need list of attributes to change\n";
     }
 
-    my $dn = $self->_GetDN($userid);
+    if ( !$dn ) {
+        $dn = $self->_GetDN($userid);
+        $self->debug && print "userid is $userid\n";
+    }
     $self->debug && print "dn is $dn\n";
-    $self->debug && print "userid is $userid\n";
 
     my @parms = ();
     if ($replace) {
@@ -1267,6 +1274,26 @@ sub EnableAccount {
 }
 
 # Begin-Doc
+# Name: EnableAccountDN
+# Type: method
+# Description: Enables user account by dn
+# Syntax:  $res = $ex->EnableAccountDN($dn)
+# Returns: undef if successful otherwise the error
+# Access: public
+# End-Doc
+sub EnableAccountDN {
+    my $self = shift;
+    my $dn   = shift;
+
+    return "invalid dn" if ( !defined($dn) );
+    return $self->_ModifyUACBitsDN(
+        dn    => $dn,
+        set   => $UAC_INITIALIZED,
+        reset => $UAC_DISABLED
+    );
+}
+
+# Begin-Doc
 # Name: DisableAccount
 # Type: method
 # Description: Disables user account
@@ -1286,6 +1313,25 @@ sub DisableAccount {
 }
 
 # Begin-Doc
+# Name: DisableAccountDN
+# Type: method
+# Description: Disables user account by dn
+# Syntax:  $res = $ex->DisablesAccountDN($dn)
+# Returns: undef if successful otherwise the error
+# Access: public
+# End-Doc
+sub DisableAccountDN {
+    my $self = shift;
+    my $dn   = shift;
+
+    return "invalid dn" if ( !defined($dn) );
+    return $self->_ModifyUACBitsDN(
+        dn  => $dn,
+        set => $UAC_DISABLED
+    );
+}
+
+# Begin-Doc
 # Name: GetUserAccountControl
 # Description: Fetches the contents of the userAccountControl attribute for a user
 # Syntax: $res = $ex->GetUserAccountControl($userid);
@@ -1296,6 +1342,24 @@ sub GetUserAccountControl {
     my $userid = shift || return "must specify userid";
 
     my $info = $self->GetAttributes( $userid, attributes => [qw(userAccountControl)] );
+    if ( defined($info) ) {
+        my ($uac) = @{ $info->{userAccountControl} };
+        return int($uac);
+    }
+    return undef;
+}
+
+# Begin-Doc
+# Name: GetUserAccountControlDN
+# Description: Fetches the contents of the userAccountControl attribute for a user by dn
+# Syntax: $res = $ex->GetUserAccountControlDN($dn);
+# Returns: integer with contents of attribute
+# End-Doc
+sub GetUserAccountControlDN {
+    my $self = shift;
+    my $dn = shift || return "must specify dn";
+
+    my $info = $self->GetDNAttributes( $dn, attributes => [qw(userAccountControl)] );
     if ( defined($info) ) {
         my ($uac) = @{ $info->{userAccountControl} };
         return int($uac);
@@ -1524,7 +1588,7 @@ sub ParseProtocolSettings {
 # Type: method
 # Description: Sets some userAccountControl bits for a userid, if set and reset
 # overlap, the reset takes precedence.
-# Syntax:  $res = $ex->Set_userAccountControl(
+# Syntax:  $res = $ex->_ModifyUACBits(
 #			userid => "userid",
 #			[set => $bits,]
 #			[reset => $bits]);
@@ -1571,6 +1635,66 @@ sub _ModifyUACBits {
     );
 
     my $changed_uac = $self->GetUserAccountControl($userid);
+    $debug && print "changed uac = $changed_uac\n";
+    $debug
+        && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
+        "\n";
+
+    return $res;
+}
+
+# Begin-Doc
+# Name: _ModifyUACBits
+# Type: method
+# Description: Sets some userAccountControl bits for a userid, if set and reset
+# overlap, the reset takes precedence.
+# Syntax:  $res = $ex->_ModifyUACBitsDN(
+#			dn => "dn",
+#			[set => $bits,]
+#			[reset => $bits]);
+# Returns: undef if successful otherwise the error
+# Access: private
+# End-Doc
+sub _ModifyUACBitsDN {
+    my $self    = shift;
+    my %opts    = @_;
+    my $dn      = $opts{dn} || return "must specify dn";
+    my $set     = int( $opts{set} );
+    my $reset   = int( $opts{reset} );
+    my $old_uac = $self->GetUserAccountControlDN($dn);
+    my $new_uac = $old_uac;
+    my $debug   = $self->debug;
+
+    if ( !$old_uac ) {
+        print "Couldn't retrieve old userAccountControl value.\n";
+    }
+
+    $debug && print "old uac = $old_uac\n";
+
+    $debug && print join( "\n", $self->ParseUserAccountControl($old_uac) ), "\n";
+
+    #	$debug && printf "\t%.8X/%d | %.8X/%d == %.8X/%d\n",
+    #		$new_uac, $new_uac, $set, $set,
+    #		$new_uac | $set, $new_uac | $set;
+    $new_uac = $new_uac | $set;
+
+    # Clear bits that should be cleared
+    #	$debug && printf "\t%.8X/%d & ~%.8X/%d == %.8X/%d\n",
+    #		$new_uac, $new_uac, $reset, $reset,
+    #		$new_uac & ~$reset, $new_uac & ~$reset;
+
+    $new_uac = ( $new_uac & ~$reset ) & 0xFFFFFFFF;
+
+    # Add in bits that should be set
+    $debug && print "new uac = $new_uac\n";
+    $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ), "\n";
+
+    my $res = $self->SetDNAttributes(
+        dn         => $dn,
+        attributes => [ userAccountControl => int($new_uac), ],
+    );
+
+    my $changed_uac = $self->GetUserAccountControlDN($dn);
     $debug && print "changed uac = $changed_uac\n";
     $debug
         && print join( "\n", $self->ParseUserAccountControl($changed_uac) ),
