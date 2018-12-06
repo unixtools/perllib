@@ -46,7 +46,7 @@ our $ErrorMsg = "no error";
 # Flag bits for UserAccountControl field
 #
 
-my $UAC_BIT_INFO = [
+our $UAC_BIT_INFO = [
     [ 0x00000001, "",                    "UF_SCRIPT" ],
     [ 0x00000002, "Account Enabled",     "Account Disabled" ],
     [ 0x00000004, "",                    "Unk4" ],
@@ -70,21 +70,21 @@ my $UAC_BIT_INFO = [
     [ 0x00400000, "",                    "No preauth required" ],
     [ 0x00800000, "",                    "Password Expired" ],
 ];
-my $UAC_DISABLED               = 0x00000002;
-my $UAC_INITIALIZED            = 0x00000200;
-my $UAC_NEVER_EXPIRES          = 0x00010000;
-my $UAC_WORKSTATION_TRUST      = 0x00001000;
-my $UAC_TRUSTED_FOR_DELEGATION = 0x00080000;
-my $UAC_DES_ONLY               = 0x00200000;
-my $UAC_PW_NOT_REQUIRED        = 0x00000020;
-my $UAC_CANNOT_CHANGE_PW       = 0x00000040;
-my $UAC_NORMAL_ACCOUNT         = $UAC_INITIALIZED | $UAC_NEVER_EXPIRES;
-my $UAC_COMPUTER_ACCOUNT       = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_TRUSTED_FOR_DELEGATION;
+our $UAC_DISABLED               = 0x00000002;
+our $UAC_INITIALIZED            = 0x00000200;
+our $UAC_NEVER_EXPIRES          = 0x00010000;
+our $UAC_WORKSTATION_TRUST      = 0x00001000;
+our $UAC_TRUSTED_FOR_DELEGATION = 0x00080000;
+our $UAC_DES_ONLY               = 0x00200000;
+our $UAC_PW_NOT_REQUIRED        = 0x00000020;
+our $UAC_CANNOT_CHANGE_PW       = 0x00000040;
+our $UAC_NORMAL_ACCOUNT         = $UAC_INITIALIZED | $UAC_NEVER_EXPIRES;
+our $UAC_COMPUTER_ACCOUNT       = $UAC_NEVER_EXPIRES | $UAC_WORKSTATION_TRUST | $UAC_TRUSTED_FOR_DELEGATION;
 
 #
 # Flag bits for group type field
 #
-my $GTYPE_BIT_INFO = [
+our $GTYPE_BIT_INFO = [
     [ 0x00000002, "", "Global Group" ],
     [ 0x00000004, "", "[Domain] Local Group" ],
     [ 0x00000008, "", "Universal Group" ],
@@ -98,7 +98,7 @@ my $GTYPE_BIT_INFO = [
 #
 # Values account type field
 #
-my $ATYPE_VALS = [
+our $ATYPE_VALS = [
     [ 0x10000000, "Security Global Group" ],
     [ 0x10000001, "Distribution Group" ],
     [ 0x20000000, "Security Local Group" ],
@@ -506,126 +506,6 @@ sub _gen_random_pw {
     }
 
     return $pw;
-}
-
-# Begin-Doc
-# Name: CreateUser
-# Type: method
-# Description: Creates a user in AD...note that the userid is disabled until
-# Syntax: $crtusr = $ex->ADS_CreateUser(
-#			DistinguishedName => $dn,
-#			SamAccountName => $samaccount,
-#			DisplayName => $display,
-#			UserPrincipalName => $upn)
-# Returns: undef if success, else error
-# End-Doc
-
-sub CreateUser {
-    my $self     = shift;
-    my (%info)   = @_;
-    my $ldap     = $self->{ldap};
-    my $dn       = $info{DistinguishedName};
-    my $samName  = $info{SamAccountName};
-    my $dispName = $info{DisplayName};
-    my $userPN   = $info{UserPrincipalName};
-    my $spn      = $info{ServicePrincipalName};
-    $self->debug && print "dispName = $dispName\n";
-    $self->debug && print "userPN = $userPN\n";
-    $self->debug && print "samName = $samName\n";
-    $self->debug && print "dn = $dn\n";
-
-    $self->debug && print "inside create\n";
-    my $crtusr = $self->{ldap}->add(
-        dn   => "$dn",
-        attr => [
-            SamAccountName     => "$samName",
-            DisplayName        => "$dispName",
-            UserPrincipalName  => "$userPN\@" . $self->{domain},
-            objectclass        => [ 'top', 'person', 'organizationalPerson', 'user' ],
-            unicodePwd         => $self->_MakeUnicode( $self->_gen_random_pw() ),
-            userAccountControl => 0,
-        ]
-    );
-
-    if ( $crtusr->code ) {
-        $self->debug && print "Create failed: " . $crtusr->error . "\n";
-        $ErrorMsg = "create failed: " . $crtusr->error;
-        return "Create failed: " . $crtusr->error . "\n";
-    }
-    else {
-        $self->debug && print "create ok\n";
-    }
-
-    #
-    # Now enable the user
-    #
-    # and make it never expire
-    my $res = $self->EnableAccount($samName);
-    if ($res) { return $res; }
-
-    my $res = $self->_ModifyUACBits(
-        userid => $samName,
-        set    => $UAC_NEVER_EXPIRES,
-        reset  => $UAC_PW_NOT_REQUIRED,
-    );
-    if ($res) { return $res; }
-
-    return undef;
-}
-
-# Begin-Doc
-# Name: CreateSecurityGroup
-# Type: method
-# Description: Creates a security group netgroup
-# Syntax: $crtusr = $ex->CreateSecurityGroup(group => $group, ou => $ou)
-# Comments: Base DN is appended to ou
-# Returns: undef if success, else error
-# End-Doc
-
-sub CreateSecurityGroup {
-    my $self = shift;
-    my (%info) = @_;
-    my ($group);
-    my $ldap = $self->{ldap};
-    $group = $info{group};
-    my $dname = $info{displayname} || $group;
-    my $ou = $info{ou};
-
-    if ( !$ou ) {
-        $ErrorMsg = "Must specify OU.";
-        $self->debug && print $ErrorMsg . "\n";
-        return $ErrorMsg;
-    }
-    $ou .= "," . $self->{basedn};
-
-    my $pdname = $dname;
-    $pdname =~ s/\&//go;
-    $pdname =~ s/\_//go;
-
-    my $dn = "CN=$group,$ou";
-
-    $self->debug && print "dn = $dn\n";
-
-    $self->debug && print "inside create\n";
-    my $crtusr = $self->{ldap}->add(
-        dn   => $dn,
-        attr => [
-            sAMAccountName       => $group,
-            name                 => $group,
-            displayName          => $dname,
-            displayNamePrintable => $pdname,
-            objectclass          => [ 'top', 'group' ],
-            groupType            => -2147483640
-        ]
-    );
-
-    if ( $crtusr->code ) {
-        $self->debug && print "Create failed: " . $crtusr->error . "\n";
-        $ErrorMsg = "create failed: " . $crtusr->error;
-        return $ErrorMsg;
-    }
-
-    return undef;
 }
 
 # Begin-Doc
