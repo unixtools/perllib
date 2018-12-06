@@ -1689,7 +1689,7 @@ sub _ModifyUACBitsDN {
     $debug && print "new uac = $new_uac\n";
     $debug && print join( "\n", $self->ParseUserAccountControl($new_uac) ), "\n";
 
-    my $res = $self->SetDNAttributes(
+    my $res = $self->SetAttributes(
         dn         => $dn,
         attributes => [ userAccountControl => int($new_uac), ],
     );
