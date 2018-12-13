@@ -249,8 +249,7 @@ End-Doc
 sub SQL_Commit {
     my $self = shift;
 
-    $self->dbhandle->commit;
-    return 1;
+    return $self->dbhandle->commit;
 }
 
 =begin
