@@ -586,7 +586,11 @@ MAIN: while ( $more_source || $more_dest ) {
         #
         # Commit progress periodically if we are in force mode
         #
-        $dclient->check_pending();
+        if ( !$dclient->check_pending() ) {
+            $self->{error} = $dclient->error();
+            $status = "failed";
+            last MAIN;
+        }
 
         #
         # Attempt to read a row from source (if needed)
@@ -816,7 +820,12 @@ MAIN: while ( $more_source || $more_dest ) {
     $self->_dprint("closing queries...");
 
     $sclient->close_queries();
-    $dclient->close_queries();
+    if ( !$dclient->close_queries() ) {
+        return (
+            error  => $dclient->error(),
+            status => "failed",
+        );
+    }
 
     $self->_dprint("done with sync of $source_table to $dest_table");
 

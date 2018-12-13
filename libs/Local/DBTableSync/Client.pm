@@ -132,7 +132,11 @@ sub close_queries {
 
     if ( $self->{pending} && $self->{type} eq "dest" && !$self->{dry_run} ) {
         $self->_dprint("pending changes, issuing commit.");
-        $self->{write_db}->SQL_Commit();
+        if ( !$self->{write_db}->SQL_Commit() ) {
+            $self->{error}
+                = ref($self) . "::close_queries - unable to commit - " . $self->{write_db}->SQL_ErrorString();
+            return undef;
+        }
         $self->{commits}++;
     }
 
@@ -742,22 +746,24 @@ sub dump_table {
 # Name: check_pending
 # Type: method
 # Description: if in force mode, executes any pending commits (once in excess of MAX_PENDING commits)
+# Returns: 1 on success undef on failure
 # End-Doc
 sub check_pending {
     my $self = shift;
 
-    if ( $self->{type} ne "dest" ) {
-        return;
-    }
-
-    if ( $self->{force} && $self->{pending} > MAX_PENDING ) {
+    if ( $self->{type} eq "dest" && $self->{force} && $self->{pending} > MAX_PENDING ) {
         $self->_dprint("max pending updates reached, committing.");
         if ( !$self->{dry_run} ) {
-            $self->{write_db}->SQL_Commit();
+            if ( !$self->{write_db}->SQL_Commit() ) {
+                $self->{error}
+                    = ref($self) . "::check_pending - unable to commit - " . $self->{write_db}->SQL_ErrorString();
+                return undef;
+            }
         }
         $self->{pending} = 0;
         $self->{commits}++;
     }
+    return 1;
 }
 
 # Begin-Doc
