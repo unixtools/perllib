@@ -114,7 +114,7 @@ sub HTMLImpersonate {
 # Begin-Doc
 # Name: HTMLImpersonateAlways
 # Type: function
-# Syntax: &HTMLImpersonate();
+# Syntax: &HTMLImpersonateAlways();
 # Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if user has priv code
 #
 # Comment: Will be a no-op if the REMOTE_USER_IMPERSONATE environment variable is already defined. (To prevent reentrant requests)
