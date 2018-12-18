@@ -34,6 +34,9 @@ use Local::HTMLImpersonate;
 
 &HTMLImpersonate("myapp:allowimpersonate");
 
+# If you are doing your own access controls/checks for who is allowed to impersonate and don't want to check code
+# &HTMLImpersonateAlways();
+
 &do_stuff();
 
 End-Doc
@@ -104,6 +107,42 @@ sub HTMLImpersonate {
         # write out a log entry here to record the impersonation for tracking purposes
         syslog "debug", "HTMLImpersonate: %s denied impersonation of %s for application %s", $realuser, $newuser, $0;
     }
+
+    return;
+}
+
+# Begin-Doc
+# Name: HTMLImpersonateAlways
+# Type: function
+# Syntax: &HTMLImpersonate();
+# Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if user has priv code
+#
+# Comment: Will be a no-op if the REMOTE_USER_IMPERSONATE environment variable is already defined. (To prevent reentrant requests)
+#
+# End-Doc
+sub HTMLImpersonateAlways {
+    if ( !$ENV{REMOTE_USER} ) {
+        return;
+    }
+
+    if ( $ENV{REMOTE_USER_IMPERSONATE} ) {
+        return;
+    }
+
+    my %cookies = &HTMLGetCookies();
+    if ( !$cookies{REMOTE_USER_IMPERSONATE} ) {
+        return;
+    }
+
+    my $newuser  = $cookies{REMOTE_USER_IMPERSONATE};
+    my $realuser = $ENV{REMOTE_USER};
+
+    $ENV{REMOTE_USER_IMPERSONATE} = $newuser;
+    $ENV{REMOTE_USER_REAL}        = $realuser;
+    $ENV{REMOTE_USER}             = $newuser;
+
+    # write out a log entry here to record the impersonation for tracking purposes
+    syslog "debug", "HTMLImpersonate: %s impersonating %s for application %s", $realuser, $newuser, $0;
 
     return;
 }
