@@ -100,12 +100,12 @@ sub HTMLImpersonate {
         $ENV{REMOTE_USER}             = $newuser;
 
         # write out a log entry here to record the impersonation for tracking purposes
-        syslog "debug", "HTMLImpersonate: %s impersonating %s for application %s", $realuser, $newuser, $0;
+        syslog "debug", "HTMLImpersonate: %s impersonating %s for application %s via %s", $realuser, $newuser, $0, $privcode;
     }
     else {
 
         # write out a log entry here to record the impersonation for tracking purposes
-        syslog "debug", "HTMLImpersonate: %s denied impersonation of %s for application %s", $realuser, $newuser, $0;
+        syslog "debug", "HTMLImpersonate: %s denied impersonation of %s for application %s via %s", $realuser, $newuser, $0, $privcode;
     }
 
     return;
@@ -142,7 +142,7 @@ sub HTMLImpersonateAlways {
     $ENV{REMOTE_USER}             = $newuser;
 
     # write out a log entry here to record the impersonation for tracking purposes
-    syslog "debug", "HTMLImpersonate: %s impersonating %s for application %s", $realuser, $newuser, $0;
+    syslog "debug", "HTMLImpersonateAlways: %s impersonating %s for application %s", $realuser, $newuser, $0;
 
     return;
 }
