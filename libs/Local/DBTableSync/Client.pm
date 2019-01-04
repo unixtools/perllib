@@ -529,8 +529,14 @@ sub fetch_row {
 
     my $cid = $self->{queries}->{select}->{cid};
     my $db  = $self->{queries}->{select}->{db};
+    my $row = $db->SQL_FetchRowRef($cid);
+    my $err = $db->SQL_ErrorCode();
 
-    return $db->SQL_FetchRowRef($cid);
+    if ( !defined($row) && $err ) {
+        $self->{error} = ref($self) . "::fetch_row - ${err} - " . $db->SQL_ErrorString();
+    }
+
+    return $row;
 }
 
 # Begin-Doc
