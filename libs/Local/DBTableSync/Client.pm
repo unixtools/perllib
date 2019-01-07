@@ -130,7 +130,7 @@ sub close_queries {
         return undef;
     }
 
-    if ( $self->{pending} && $self->{type} eq "dest" && !$self->{dry_run} ) {
+    if ( $self->{pending} && $self->{type} eq "dest" && !$self->{dry_run} && !$self->{error} ) {
         $self->_dprint("pending changes, issuing commit.");
         if ( !$self->{write_db}->SQL_Commit() ) {
             $self->{error}
