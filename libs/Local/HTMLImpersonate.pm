@@ -57,6 +57,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw(
     HTMLImpersonate
+    HTMLImpersonateAlways
 );
 
 BEGIN {
