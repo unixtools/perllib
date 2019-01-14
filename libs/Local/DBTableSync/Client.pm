@@ -161,7 +161,9 @@ sub close_queries {
         delete $self->{queries}->{delete_uniq};
     }
 
-    $self->{write_db}->SQL_AutoCommit(1);
+    if ( $self->{type} eq "dest" ) {
+        $self->{write_db}->SQL_AutoCommit(1);
+    }
 
     return 1;
 }
