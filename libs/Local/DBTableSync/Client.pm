@@ -90,7 +90,7 @@ sub init {
     #
     $self->_dprint( "Starting schema analysis for: " . $self->{table} );
     my $qry = "select * from " . $self->{table} . " where 1=0";
-    my $cid = $self->{read_db}->SQL_OpenQuery($qry);
+    my $cid = $self->{read_db}->SQL_OpenQuery( $qry, @{ $self->{args} } );
 
     if ( !$cid ) {
         $self->{error}
