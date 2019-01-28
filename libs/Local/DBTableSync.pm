@@ -893,7 +893,20 @@ sub _compare {
     for ( my $i = 0; $i <= $cols; $i++ ) {
         my $tmp;
         if ( $coltypes[$i] eq "numeric" ) {
-            $tmp = $srow->[$i] <=> $drow->[$i];
+
+            # apply "nulls last" logic to numeric comparator
+            my $a = $srow->[$i];
+            my $b = $drow->[$i];
+
+            if ( !defined $a && defined $b ) {
+                $tmp = 1;
+            }
+            elsif ( defined $a && !defined $b ) {
+                $tmp = -1;
+            }
+            else {
+                $tmp = $srow->[$i] <=> $drow->[$i];
+            }
         }
         else {
             # SQL sorts nulls last
