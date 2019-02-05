@@ -53,7 +53,7 @@ sub SQL_OpenDatabase {
         }
 
         my $dbh;
-        if ( ! $info->{version} || $info->{version} eq "12.0" ) {
+        if ( ! $info{version} || $info{version} eq "12.0" ) {
             $dsn = "DBI:ADO:Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$database";
             $dbh = DBI->connect($dsn);
         }
