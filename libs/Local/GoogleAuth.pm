@@ -195,7 +195,7 @@ sub token {
     my $jwt = JSON::WebToken->encode(
         {   iss   => $iss,
             scope => $scope,
-            aud   => 'https://accounts.google.com/o/oauth2/token',
+            aud   => "https://www.googleapis.com/oauth2/v4/token",
             exp   => $expires,
             iat   => time,
             @prnsub
@@ -207,7 +207,7 @@ sub token {
 
     my $ua       = LWP::UserAgent->new();
     my $response = $ua->post(
-        'https://accounts.google.com/o/oauth2/token',
+        "https://www.googleapis.com/oauth2/v4/token",
         {   grant_type => encode_entities('urn:ietf:params:oauth:grant-type:jwt-bearer'),
             assertion  => $jwt
         }
