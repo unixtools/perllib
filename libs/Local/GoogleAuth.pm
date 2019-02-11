@@ -267,7 +267,7 @@ sub access_token_from_refresh_token {
     my $req_content = join( "&", @content_pieces );
 
     my $ua = LWP::UserAgent->new();
-    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v3/token" );
+    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v4/token" );
     $req->content_type("application/x-www-form-urlencoded");
     $req->content($req_content);
 
@@ -369,7 +369,7 @@ sub authorize {
     my $req_content = join( "&", @content_pieces );
 
     my $ua = LWP::UserAgent->new();
-    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v3/token" );
+    my $req = HTTP::Request->new( POST => "https://www.googleapis.com/oauth2/v4/token" );
     $req->content_type("application/x-www-form-urlencoded");
     $req->content($req_content);
 
