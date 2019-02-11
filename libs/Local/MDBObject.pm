@@ -52,8 +52,12 @@ sub SQL_OpenDatabase {
             $self->dbhandle->disconnect;
         }
 
-        $dsn = "DBI:ADO:Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$database";
-        my $dbh = DBI->connect($dsn);
+        my $dbh;
+        if ( ! $info{version} || $info{version} eq "12.0" ) {
+            $dsn = "DBI:ADO:Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$database";
+            $dbh = DBI->connect($dsn);
+        }
+
         if ( !$dbh ) {
             $dsn = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=$database";
             $dbh = DBI->connect($dsn);
