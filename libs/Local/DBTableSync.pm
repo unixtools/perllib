@@ -753,15 +753,25 @@ MAIN: while ( $more_source || $more_dest ) {
     }
 
     #
+    # Check for any errors from the Main processing loop
+    #
+    if ( $self->{error} ) {
+        $self->_dprint( "\nEncountered error from Main processing loop: " . $self->{error} );
+        $dclient->roll_back();
+        return (
+            error  => $self->{error},
+            status => $status
+        );
+    }
+
+    #
     # Check for empty source table
     #
     if ($check_empty_source) {
         if ( ( $matching_rows + $inserts ) < 1 || ( $seen_source_rows < 1 ) ) {
             my $err
                 = "Check for empty source table failed. (Matching=$matching_rows Inserts=$inserts SeenSource=$seen_source_rows)";
-            if ( $self->{error} ) {
-                $err .= " Previous/nested error (" . $self->{error} . ")";
-            }
+
             $self->_dprint( "\n" . $err );
             $dclient->roll_back();
             return (
