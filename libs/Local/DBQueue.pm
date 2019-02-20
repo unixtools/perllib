@@ -350,5 +350,29 @@ sub add {
     return undef;
 }
 
+=begin
+Begin-Doc
+Name: exists
+Type: method
+Description: returns if an item id is already in queue
+Comments: This is obviously polling and not atomic for other operations, but good for quick checks
+Syntax: $found = $obj->exists(queue => $queue, itemid => $itemid);
+End-Doc
+=cut
+
+sub exists {
+    my $self = shift;
+    my %opts = @_;
+    my $tbl  = $self->{table};
+    my $db   = $self->db();
+
+    my $id    = $opts{itemid} || return "missing item id";
+    my $queue = $opts{queue}  || return "missing queue";
+
+    my $qry = "select count(*) from $tbl where queue=? and itemid=?";
+    my ($cnt) = $db->SQL_DoQuery( $qry, $queue, $id );
+    return $cnt;
+}
+
 1;
 
