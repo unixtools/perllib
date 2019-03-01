@@ -325,7 +325,7 @@ Begin-Doc
 Name: add
 Type: method
 Description: adds or updates an item in the queue
-Syntax: $res = $obj->add(queue => $queue, itemid => $itemid, meta => $metadata)
+Syntax: $res = $obj->add(queue => $queue, itemid => $itemid, meta => $metadata, [delay => $true_false])
 End-Doc
 =cut
 
@@ -338,14 +338,23 @@ sub add {
     my $id    = $opts{itemid} || return "missing item id";
     my $queue = $opts{queue}  || return "missing queue";
     my $meta  = $opts{meta};
+    my $delay = $opts{delay};
     if ( ref($meta) ) {
         $meta = encode_json($meta);
     }
 
-    my $qry = "insert into $tbl (queue,itemid,meta,queuetime) values (?,?,?,now()) on duplicate key update 
-        queuetime=now(),meta=?";
-    $db->SQL_ExecQuery( $qry, $queue, $id, $meta, $meta )
-        || $db->SQL_Error($qry) && return "insert failed";
+    if ( !$delay ) {
+        my $qry
+            = "insert into $tbl (queue,itemid,meta,queuetime) values (?,?,?,now()) on duplicate key update queuetime=now(),meta=?";
+        $db->SQL_ExecQuery( $qry, $queue, $id, $meta, $meta )
+            || $db->SQL_Error($qry) && return "insert failed";
+    }
+    else {
+        my $qry
+            = "insert into $tbl (queue,itemid,meta,queuetime,grabtime) values (?,?,?,now(),now()) on duplicate key update queuetime=now(),grabtime=now(),meta=?";
+        $db->SQL_ExecQuery( $qry, $queue, $id, $meta, $meta )
+            || $db->SQL_Error($qry) && return "insert failed";
+    }
 
     return undef;
 }
