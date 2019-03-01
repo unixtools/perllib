@@ -151,8 +151,8 @@ sub count_workable {
     # grabbed and over window seconds ago
     # (basically, don't retry until window has passed, even if ungrabbed)
     my $qry = "select count(*) from $tbl where queue=? and 
-            (grabtime is null or (unix_timestamp(grabtime) < unix_timestamp(now())-?)) and
-            (grabbed != 'Y' or (grabbed='Y' and unix_timestamp(now())-unix_timestamp(grabtime) > ?))";
+            ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
+            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )";
     my $cid = $db->SQL_OpenQuery( $qry, $queue, $window, $window ) || $db->SQL_Error($qry) && return undef;
     my ($cnt) = $db->SQL_FetchRow($cid);
     $db->SQL_CloseQuery($cid);
@@ -184,8 +184,8 @@ sub grab_workable {
     # grabbed and over window seconds ago
     # (basically, don't retry until window has passed, even if ungrabbed)
     my $qry = "update $tbl set grabbed='Y',grabhost=?,grabpid=?,grabtime=now(),attempts=attempts+1 where queue=? and 
-            (grabtime is null or (unix_timestamp(grabtime) < unix_timestamp(now())-?)) and
-            (grabbed != 'Y' or (grabbed='Y' and unix_timestamp(now())-unix_timestamp(grabtime) > ?))
+            ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
+            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )
             order by queuetime limit ?";
     $db->SQL_ExecQuery( $qry, $hn, $$, $queue, $window, $window, $factor ) || $db->SQL_Error($qry) && return 0;
     my ($cnt) = $db->SQL_RowCount();
