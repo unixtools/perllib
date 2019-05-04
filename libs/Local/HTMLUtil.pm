@@ -127,11 +127,14 @@ sub HTMLGetCGI {
 sub HTMLScriptURL {
     my ( $port, $prefix, $hostport, $scriptname, $url );
 
-    if ( $ENV{"HTTPS"} ne "on" ) {
-        $prefix = "http";
+    if ( $ENV{REQUEST_SCHEME} ) {
+        $prefix = $ENV{REQUEST_SCHEME};
+    }
+    elsif ( $ENV{"HTTPS"} eq "on" || $ENV{SERVER_PORT} eq "443" ) {
+        $prefix = "https";
     }
     else {
-        $prefix = "https";
+        $prefix = "http";
     }
     $scriptname = $ENV{"SCRIPT_NAME"};
     $hostport   = $ENV{"HTTP_HOST"};
