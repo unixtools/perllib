@@ -73,16 +73,17 @@ sub _translate_raw_in {
     my @out   = ();
 
     foreach my $val (@in) {
-        if ( ref($val) eq "Local::JSON::Raw" ) {
+        my $ref = ref($val);
+        if ( $ref eq "Local::JSON::Raw" ) {
             push( @out, $wrapper . encode_base64($val->{value},'') . $wrapper );
         }
-        elsif ( ref($val) eq "SCALAR" || !ref($val) ) {
+        elsif ( $ref eq "SCALAR" || $ref =~ m/JSON::PP::Boolean/ || !$ref ) {
             push( @out, $val );
         }
-        elsif ( ref($val) eq "ARRAY" ) {
+        elsif ( $ref eq "ARRAY" ) {
             push( @out, [ $self->_translate_raw_in( $depth + 1, @$val ) ] );
         }
-        elsif ( ref($val) eq "HASH" ) {
+        elsif ( $ref eq "HASH" ) {
             my $tmph = {};
             foreach my $k ( keys(%$val) ) {
                 my ($tmpout) = $self->_translate_raw_in( $depth + 1, $val->{$k} );
@@ -91,7 +92,7 @@ sub _translate_raw_in {
             push( @out, $tmph );
         }
         else {
-            die "Unable to parse ($val)\n";
+            die "Unable to parse ($ref($val))\n";
         }
     }
 
