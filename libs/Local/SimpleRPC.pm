@@ -91,6 +91,7 @@ use Local::UsageLogger;
 use Carp;
 use LWP::UserAgent;
 use URI::Escape;
+use Encode qw(decode);
 use JSON;
 use strict;
 
@@ -295,7 +296,10 @@ sub CallRPC {
     $debug && print "response: $content\n";
 
     my $jsonret;
-    eval { $jsonret = from_json($content); };
+    eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
+    if ( !$jsonret ) {
+        eval { $jsonret = from_json($content); };
+    }
 
     if ($@) {
         $self->{error} = "Error parsing JSON response: " . $@;
