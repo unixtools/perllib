@@ -25,6 +25,7 @@ package Local::SimpleRPC::Client::Stub;
 use Carp;
 use strict;
 use Local::UsageLogger;
+
 our $AUTOLOAD;
 
 BEGIN {
@@ -331,6 +332,7 @@ use Local::HTMLUtil;
 use Local::UsageLogger;
 use JSON;
 use Carp;
+use Encode qw(encode);
 use strict;
 
 @ISA    = qw(Exporter);
@@ -467,6 +469,30 @@ sub Try {
 }
 
 # Begin-Doc
+# Name: _json_out
+# Type: method
+# Description: outputs a standard formatted response with ok status and exits
+# Syntax: $obj->_json_out(@results);
+# End-Doc
+sub _json_print {
+    my $self = shift;
+    my $json = new JSON;
+
+    my $js;
+    if ( $self->{pretty} ) {
+        $js = $json->pretty->encode(@_);
+    }
+    else {
+        $js = $json->encode(@_);
+    }
+
+    # Potential for mixed/partially converted output, but won't die
+    my $ejs = encode( 'UTF-8', $js, Encode::FB_QUIET );
+
+    print $ejs;
+}
+
+# Begin-Doc
 # Name: Finish
 # Type: method
 # Description: outputs a standard formatted response with ok status and exits
@@ -475,13 +501,7 @@ sub Try {
 sub Finish {
     my $self = shift;
 
-    if ( $self->{pretty} ) {
-        my $json = new JSON;
-        print $json->pretty->encode( [ 0, "", @_ ] );
-    }
-    else {
-        print to_json( [ 0, "", @_ ] );
-    }
+    $self->_json_print( [ 0, "", @_ ] );
     exit(0);
 }
 
@@ -494,13 +514,7 @@ sub Finish {
 sub FinishReturn {
     my $self = shift;
 
-    if ( $self->{pretty} ) {
-        my $json = new JSON;
-        print $json->pretty->encode( [ 0, "", @_ ] );
-    }
-    else {
-        print to_json( [ 0, "", @_ ] );
-    }
+    $self->_json_print( [ 0, "", @_ ] );
     return (0);
 }
 
@@ -514,13 +528,7 @@ sub Fail {
     my $self = shift;
     my $msg = shift || "Unknown Error";
 
-    if ( $self->{pretty} ) {
-        my $json = new JSON;
-        print $json->pretty->encode( [ 1, $msg ] );
-    }
-    else {
-        print to_json( [ 1, $msg ] );
-    }
+    $self->_json_print( [ 1, $msg ] );
     exit(0);
 }
 
@@ -534,13 +542,7 @@ sub FailReturn {
     my $self = shift;
     my $msg = shift || "Unknown Error";
 
-    if ( $self->{pretty} ) {
-        my $json = new JSON;
-        print $json->pretty->encode( [ 1, $msg ] );
-    }
-    else {
-        print to_json( [ 1, $msg ] );
-    }
+    $self->_json_print( [ 1, $msg ] );
     return (1);
 }
 
