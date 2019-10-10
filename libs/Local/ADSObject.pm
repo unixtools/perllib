@@ -126,7 +126,7 @@ sub _default_domain {
 # Type: function
 # Description:  Binds to AD
 # Syntax: $ex = new Local::ADSObject(
-#		user => $user,
+#		[user => $user | dn => $dn],
 #		password => $pw) || die $Local::ADSObject::ErrorMsg;
 # End-Doc
 sub new {
@@ -191,6 +191,8 @@ sub new {
     if ( !$user ) {
         $user = &Local_CurrentUser();
     }
+
+    # May want to adjust this handling in future for the 'dn' case
     my $pw = $info{password} || &AuthSrv_Fetch(
         user     => $user,
         instance => 'ads'
@@ -243,8 +245,16 @@ sub new {
     my $count = 0;
     my $res   = undef;
     my $bound = 0;
+    my $bindinfo;
     while ( $count < $retries && !$bound ) {
-        $res = $ldap->bind( "$user\@$domain", password => $pw );
+        if ( $info{dn} ) {
+            $bindinfo = $info{dn};
+            $res = $ldap->bind( $info{dn}, password => $pw );
+        }
+        else {
+            $bindinfo = "${user}\@$domain";
+            $res = $ldap->bind( "$user\@$domain", password => $pw );
+        }
         if ( !$res->code ) {
             $bound = 1;
             last;
@@ -252,7 +262,7 @@ sub new {
         $count++;
     }
     if ( !$bound ) {
-        $ErrorMsg = "ldap bind failed: " . $res->error;
+        $ErrorMsg = "ldap bind failed ($bindinfo): " . $res->error;
         return undef;
     }
     else {
@@ -1241,6 +1251,40 @@ sub CheckPassword {
 
     my $tmpad = new Local::ADSObject(
         user     => $userid,
+        password => $password,
+        domain   => $domain,
+    );
+
+    if ($tmpad) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+# Begin-Doc
+# Name: CheckDNPassword
+# Type: method
+# Description: Attempts to validate an ADS password
+# Syntax: $res = $ad->CheckDNPassword($dn, $password, $domain)
+# Comments: Actually attempts to bind to ADS with that dn and password, and returns
+# non-zero if it cannot.
+# End-Doc
+sub CheckDNPassword {
+    my $self = shift;
+    my ( $dn, $password, $domain ) = @_;
+
+    if ( !$dn || !$password ) {
+        return 1;
+    }
+
+    if ( !$domain ) {
+        $domain = $self->{domain};
+    }
+
+    my $tmpad = new Local::ADSObject(
+        dn       => $dn,
         password => $password,
         domain   => $domain,
     );
