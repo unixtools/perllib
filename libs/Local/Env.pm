@@ -41,7 +41,10 @@ our $detected_env;
 # End-Doc
 sub Local_Env {
     if ( !$detected_env ) {
-        if ( $ENV{HTTP_HOST} && $ENV{HTTP_HOST} =~ /-test\./ ) {
+        if ( $ENV{LOCAL_ENV} ) {
+            $detected_env = $ENV{LOCAL_ENV};
+        }
+        elsif ( $ENV{HTTP_HOST} && $ENV{HTTP_HOST} =~ /-test\./ ) {
             $detected_env = "test";
         }
         elsif ( $ENV{HTTP_HOST} && $ENV{HTTP_HOST} =~ /-dev\./ ) {
