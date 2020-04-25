@@ -213,13 +213,14 @@ sub get_marked {
 
     my $hn = hostname;
 
-    my $qry = "select itemid,queuetime,queue,grabhost,grabpid,attempts from $tbl 
+    my $qry = "select itemid,meta,queuetime,queue,grabhost,grabpid,attempts from $tbl
         where grabhost=? and grabpid=? and queue=? order by attempts desc,queuetime";
     my $cid = $db->SQL_OpenQuery( $qry, $hn, $$, $queue ) || $db->SQL_Error($qry) && next;
-    while ( my ( $itemid, $queuetime, $qqueue, $grabhost, $grabpid, $attempts ) = $db->SQL_FetchRow($cid) ) {
+    while ( my ( $itemid, $meta, $queuetime, $qqueue, $grabhost, $grabpid, $attempts ) = $db->SQL_FetchRow($cid) ) {
         push(
             @$res,
             {   itemid    => $itemid,
+                meta      => $meta,
                 queuetime => $queuetime,
                 queue     => $qqueue,
                 grabhost  => $grabhost,
