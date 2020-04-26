@@ -170,13 +170,14 @@ End-Doc
 =cut
 
 sub grab_workable {
-    my $self   = shift;
-    my %opts   = @_;
-    my $queue  = $opts{queue} || croak;
-    my $window = $opts{window} || 120;
-    my $factor = $opts{factor} || 1;
-    my $tbl    = $self->{table};
-    my $db     = $self->db();
+    my $self    = shift;
+    my %opts    = @_;
+    my $queue   = $opts{queue} || croak;
+    my $window  = $opts{window} || 120;
+    my $factor  = $opts{factor} || 1;
+    my $tbl     = $self->{table};
+    my $shuffle = $opts{shuffle};
+    my $db      = $self->db();
 
     my $hn = hostname;
 
@@ -185,8 +186,13 @@ sub grab_workable {
     # (basically, don't retry until window has passed, even if ungrabbed)
     my $qry = "update $tbl set grabbed='Y',grabhost=?,grabpid=?,grabtime=now(),attempts=attempts+1 where queue=? and 
             ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
-            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )
-            order by queuetime limit ?";
+            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )";
+    if ($shuffle) {
+        $qry .= " order by rand() limit ?";
+    }
+    else {
+        $qry .= " order by queuetime limit ?";
+    }
     $db->SQL_ExecQuery( $qry, $hn, $$, $queue, $window, $window, $factor ) || $db->SQL_Error($qry) && return 0;
     my ($cnt) = $db->SQL_RowCount();
 
@@ -204,17 +210,24 @@ End-Doc
 =cut
 
 sub get_marked {
-    my $self  = shift;
-    my %opts  = @_;
-    my $queue = $opts{queue} || croak;
-    my $tbl   = $self->{table};
-    my $db    = $self->db();
-    my $res   = [];
+    my $self    = shift;
+    my %opts    = @_;
+    my $queue   = $opts{queue} || croak;
+    my $tbl     = $self->{table};
+    my $shuffle = $opts{shuffle};
+    my $db      = $self->db();
+    my $res     = [];
 
     my $hn = hostname;
 
     my $qry = "select itemid,meta,queuetime,queue,grabhost,grabpid,attempts from $tbl
-        where grabhost=? and grabpid=? and queue=? order by attempts desc,queuetime";
+        where grabhost=? and grabpid=? and queue=? ";
+    if ($shuffle) {
+        $qry .= " order by rand()";
+    }
+    else {
+        $qry .= " order by attempts desc,queuetime";
+    }
     my $cid = $db->SQL_OpenQuery( $qry, $hn, $$, $queue ) || $db->SQL_Error($qry) && next;
     while ( my ( $itemid, $meta, $queuetime, $qqueue, $grabhost, $grabpid, $attempts ) = $db->SQL_FetchRow($cid) ) {
         push(
