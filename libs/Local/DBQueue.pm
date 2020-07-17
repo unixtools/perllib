@@ -165,7 +165,7 @@ Begin-Doc
 Name: grab_workable
 Type: method
 Description: marks workable items in work queue
-Syntax: $cnt = $obj->grab_workable(queue => "queuename", [window => $seconds], [factor => $max_to_grab])
+Syntax: $cnt = $obj->grab_workable(queue => "queuename", [order => $fieldlist], [window => $seconds], [factor => $max_to_grab])
 End-Doc
 =cut
 
@@ -177,6 +177,7 @@ sub grab_workable {
     my $factor  = $opts{factor} || 1;
     my $tbl     = $self->{table};
     my $shuffle = $opts{shuffle};
+    my $order   = $opts{order};
     my $db      = $self->db();
 
     my $hn = hostname;
@@ -187,7 +188,10 @@ sub grab_workable {
     my $qry = "update $tbl set grabbed='Y',grabhost=?,grabpid=?,grabtime=now(),attempts=attempts+1 where queue=? and 
             ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
             ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )";
-    if ($shuffle) {
+    if ($order) {
+        $qry .= " order by $order limit ?";
+    }
+    elsif ($shuffle) {
         $qry .= " order by rand() limit ?";
     }
     else {
