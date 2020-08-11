@@ -130,14 +130,15 @@ sub _default_domain {
 #		password => $pw) || die $Local::ADSObject::ErrorMsg;
 # End-Doc
 sub new {
-    my $self          = shift;
-    my $class         = ref($self) || $self;
-    my %info          = @_;
-    my $pref_pagesize = $info{pagesize} || 25;
-    my $pref_debug    = $info{debug} || 0;
-    my $timeout       = $info{timeout} || 60;
-    my $use_gc        = $info{use_gc} || 0;
-    my $domain        = $info{domain} || &_default_domain();
+    my $self            = shift;
+    my $class           = ref($self) || $self;
+    my %info            = @_;
+    my $pref_pagesize   = $info{pagesize} || 25;
+    my $pref_debug      = $info{debug} || 0;
+    my $timeout         = $info{timeout} || 60;
+    my $use_gc          = $info{use_gc} || 0;
+    my $domain          = $info{domain} || &_default_domain();
+    my $fallback_domain = $info{fallback_domain};
 
     my $server = $info{server};
 
@@ -254,6 +255,10 @@ sub new {
         else {
             $bindinfo = "${user}\@$domain";
             $res = $ldap->bind( "$user\@$domain", password => $pw );
+
+            if ( $res->code && $fallback_domain ) {
+                $res = $ldap->bind( "$user\@$fallback_domain", password => $pw );
+            }
         }
         if ( !$res->code ) {
             $bound = 1;
