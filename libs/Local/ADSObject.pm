@@ -1169,6 +1169,27 @@ sub ConvertTime {
 }
 
 # Begin-Doc
+# Name: ConvertToTime
+# Description: Converts a unix timestamp to ADS FileTime value
+# Syntax: $adtime = $ads->ConvertToTime($unixtime);
+# End-Doc
+sub ConvertToTime {
+    my $self = shift;
+    my $time = shift;
+    my ( $secs, $nsecs );
+
+    # convert from 100-nanosecond intervals to 1-sec intervals
+    $secs = new Math::BigInt $time;
+
+    # add base (seconds from 1601 to 1970)
+    $secs = $secs->badd("11644473600");
+
+    $nsecs  = new Math::BigInt $secs->bmul(10_000_000);
+
+    return $nsecs;
+}
+
+# Begin-Doc
 # Name: DumpLDIF
 # Type: method
 # Description: Dumps ldap info to an LDIF format file
