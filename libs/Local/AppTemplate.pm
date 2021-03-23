@@ -75,7 +75,7 @@ BEGIN {
 #  template_cache_dir - override default location where remote templates are cached
 #  disable_auto_header - disable automatically sending page header on exit or error routines
 #  disable_auto_ctype - disable automatically sending content-type when PageHeader is called if it hasn't been detectably sent
-#  app_extra - hash of values for replacement of any __APP_EXTRA_UPPERKEY__ values in template, keys are forced to uc for replacement
+#  app_extra_KEY - set of keys/values for replacement of any __APP_EXTRA_UPPERKEY__ values in template, keys are forced to uc for replacement
 #
 # End-Doc
 sub new {
@@ -171,6 +171,12 @@ sub configure {
     }
     elsif ( !exists( $config->{quiet} ) ) {
         $config->{quiet} = 0;
+    }
+
+    foreach my $field ( sort( keys(%opts) ) ) {
+        if ( $field =~ /^app_extra_.*/ ) {
+            $config->{$field} = $opts{$field};
+        }
     }
 }
 
@@ -367,8 +373,10 @@ sub _filter {
     my $app_menu  = $config->{app_menu};
 
     my %extra;
-    if ( $config->{app_extra} ) {
-        %extra = %{ $config->{app_extra} };
+    foreach my $k ( sort( keys(%$config) ) ) {
+        if ( $k =~ /app_extra_(.*)/ ) {
+            $extra{$1} = $config->{$k};
+        }
     }
 
     my $app_header_image = $config->{headerimage};
