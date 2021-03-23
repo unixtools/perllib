@@ -75,11 +75,11 @@ BEGIN {
 #  template_cache_dir - override default location where remote templates are cached
 #  disable_auto_header - disable automatically sending page header on exit or error routines
 #  disable_auto_ctype - disable automatically sending content-type when PageHeader is called if it hasn't been detectably sent
-#
+#  app_extra - hash of values for replacement of any __APP_EXTRA_UPPERKEY__ values in template, keys are forced to uc for replacement
 #
 # End-Doc
 sub new {
-    my $self = shift;
+    my $self  = shift;
     my $class = ref($self) || $self;
 
     my $tmp = {};
@@ -358,13 +358,18 @@ sub _filter {
     my $config  = $self->{config};
     my $app_env = $config->{app_env};
 
-    my $title = $config->{title};
+    my $title    = $config->{title};
     my $apptitle = $config->{apptitle} || $title;
 
     my $app_url   = $config->{app_url}       || "?";
     my $con_url   = $config->{contact_url}   || "/";
     my $con_label = $config->{contact_label} || "WebMaster";
     my $app_menu  = $config->{app_menu};
+
+    my %extra;
+    if ( $config->{app_extra} ) {
+        %extra = %{ $config->{app_extra} };
+    }
 
     my $app_header_image = $config->{headerimage};
 
@@ -429,6 +434,14 @@ sub _filter {
 
     my $base_url = $self->_server_base_url();
     $text =~ s/__BASE_URL__/$base_url/g;
+
+    foreach my $key (%extra) {
+        my $uckey = quotemeta( "__APP_EXTRA_" . uc($key) . "__" );
+        my $val   = $extra{$key};
+
+        $text =~ s/$uckey/$val/g;
+    }
+    $text =~ s/__APP_EXTRA_[A-Z_]+__//g;
 
     return $text;
 }
@@ -545,7 +558,7 @@ sub RequirePriv {
 # Syntax: $obj->RequirePrivRegex($regex);
 # End-Doc
 sub RequirePrivRegex {
-    my $self = shift;
+    my $self  = shift;
     my $regex = shift;
 
     if ( &PrivSys_CheckPrivRegex( $ENV{REMOTE_USER}, $regex ) ) {
