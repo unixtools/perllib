@@ -49,6 +49,7 @@ use Symbol 'gensym';
 @EXPORT = qw(
     AuthSrv_Fetch
     AuthSrv_FetchRaw
+    AuthSrv_Store
     AuthSrv_SetPathPrefix
 );
 
@@ -59,7 +60,9 @@ BEGIN {
 my $AUTHSRV_CACHE = {};
 
 my $AUTHSRV_DECRYPT;
+my $AUTHSRV_DELETE;
 my $AUTHSRV_RAW_DECRYPT;
+my $AUTHSRV_RAW_ENCRYPT;
 
 &AuthSrv_SetPathPrefix();
 
@@ -77,7 +80,9 @@ sub AuthSrv_SetPathPrefix {
     }
 
     $AUTHSRV_DECRYPT     = $prefix . "authsrv-decrypt";
+    $AUTHSRV_DELETE      = $prefix . "authsrv-delete";
     $AUTHSRV_RAW_DECRYPT = $prefix . "authsrv-raw-decrypt";
+    $AUTHSRV_RAW_ENCRYPT = $prefix . "authsrv-raw-encrypt";
 }
 
 # Begin-Doc
@@ -89,9 +94,9 @@ sub AuthSrv_SetPathPrefix {
 #       current userid on unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_Fetch {
-    my (%opts) = @_;
+    my (%opts)   = @_;
     my $instance = $opts{instance} || return undef;
-    my $user = $opts{user};
+    my $user     = $opts{user};
     if ( !defined($user) ) {
         $user = &Local_CurrentUser();
     }
@@ -162,9 +167,9 @@ sub AuthSrv_Fetch {
 #       current userid on unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_FetchRaw {
-    my (%opts) = @_;
+    my (%opts)   = @_;
     my $instance = $opts{instance} || return undef;
-    my $user = $opts{user};
+    my $user     = $opts{user};
     if ( !defined($user) ) {
         $user = &Local_CurrentUser();
     }
@@ -221,6 +226,77 @@ sub AuthSrv_FetchRaw {
     }
 
     return $AUTHSRV_CACHE->{$owner}->{$user}->{$instance};
+}
+
+# Begin-Doc
+# Name: AuthSrv_Store
+# Type: function
+# Description: stash a password
+# Syntax: &AuthSrv_Store(instance => $instance, [user => $userid], password => $pw );
+# Comments: Stashes a password. 'user' defaults to the
+#       current userid on unix. If running as root, 'owner' can be specified.
+# End-Doc
+sub AuthSrv_Store {
+    my (%opts)   = @_;
+    my $instance = $opts{instance} || return undef;
+    my $user     = $opts{user};
+    if ( !defined($user) ) {
+        $user = &Local_CurrentUser();
+    }
+    my $owner  = $opts{owner} || &Local_CurrentUser();
+    my $passwd = $opts{password};
+
+    &LogAPIUsage();
+
+    if ( !defined($passwd) || $passwd eq "" ) {
+        system( $AUTHSRV_DELETE, $owner, $user, $instance );
+        delete $AUTHSRV_CACHE->{$owner}->{$user}->{$instance};
+        return undef;
+    }
+
+    if ( $ENV{MOD_PERL} ) {
+        open( my $in, "|-", $AUTHSRV_RAW_ENCRYPT, $owner, $user, $instance );
+        print $in $passwd;
+        close($in);
+    }
+    else {
+        my ( $wtr, $rdr, $err );
+
+        my $opened_stdin;
+        my $opened_stdout;
+        my $opened_stderr;
+
+        if ( !defined( fileno(STDIN) ) ) {
+            open( STDIN, "</dev/null" );
+            $opened_stdin++;
+        }
+        if ( !defined( fileno(STDOUT) ) ) {
+            open( STDOUT, ">/dev/null" );
+            $opened_stdout++;
+        }
+        if ( !defined( fileno(STDERR) ) ) {
+            open( STDERR, ">/dev/null" );
+            $opened_stderr++;
+        }
+
+        $wtr = gensym;
+        $rdr = gensym;
+        $err = gensym;
+        my $childpid = open3( $wtr, $rdr, $err, $AUTHSRV_RAW_ENCRYPT, $owner, $user, $instance );
+        print $wtr $passwd;
+        close($wtr);
+        waitpid( $childpid, 0 );
+        close($rdr);
+        close($err);
+
+        if ($opened_stdin)  { close(STDIN); }
+        if ($opened_stdout) { close(STDOUT); }
+        if ($opened_stderr) { close(STDERR); }
+    }
+
+    $AUTHSRV_CACHE->{$owner}->{$user}->{$instance} = $passwd;
+
+    return undef;
 }
 
 1;
