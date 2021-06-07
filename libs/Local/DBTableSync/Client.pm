@@ -90,6 +90,9 @@ sub init {
     #
     $self->_dprint( "Starting schema analysis for: " . $self->{table} );
     my $qry = "select * from " . $self->{table} . " where 1=0";
+    if ( $self->{where} ) {
+        $qry = "select * from " . $self->{table} . " where $self->{where} and 1=0";
+    }
     my $cid = $self->{read_db}->SQL_OpenQuery( $qry, @{ $self->{args} } );
 
     if ( !$cid ) {
