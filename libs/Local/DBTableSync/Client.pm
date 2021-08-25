@@ -502,7 +502,13 @@ sub _open_select {
     my $db   = $self->{read_db};
     my $qry  = $self->{queries}->{select}->{qry};
     my $args = $self->{queries}->{select}->{args};
-    my $cid  = $db->SQL_OpenQuery( $qry, @{$args} );
+    my $cid;
+    if ( ref($db) =~ /Oracle/ ) {
+        $cid = $db->SQL_OpenQueryExtra( $qry, { ora_pers_lob => 1 }, @{$args} );
+    }
+    else {
+        $cid = $db->SQL_OpenQuery( $qry, @{$args} );
+    }
 
     $self->_dprint("\nOpening select query (${type}): ${qry}");
 
@@ -903,7 +909,7 @@ sub _build_collists {
     $self->{colnames}    = [];
     $self->{sort_cols}   = [];
 
-    my @lower_cols = map { lc $_ } @{ $self->{colinfo}->{colnames} };
+    my @lower_cols       = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my $default_ordering = 1;
 
     if ( $self->{ukey_sort} ) {
@@ -987,7 +993,7 @@ sub _build_delete {
 
     # check/validate unique_keys
     # if valid, build unique deletes
-    my $table = $self->{table};
+    my $table      = $self->{table};
     my %valid_cols = map { $_ => 1 } @{ $self->colnames() };
     foreach my $keys ( @{ $self->{unique_keys} } ) {
         next unless scalar @{$keys};
@@ -1139,7 +1145,7 @@ sub _build_collists {
     $self->{colnames}    = [];
     $self->{sort_cols}   = [];
 
-    my @lower_cols = map { lc $_ } @{ $self->{colinfo}->{colnames} };
+    my @lower_cols       = map { lc $_ } @{ $self->{colinfo}->{colnames} };
     my $default_ordering = 1;
 
     if ( $self->{ukey_sort} ) {
@@ -1218,7 +1224,7 @@ sub _build_delete {
 
     # check/validate unique_keys
     # if valid, build unique deletes
-    my $table = $self->{table};
+    my $table      = $self->{table};
     my %valid_cols = map { $_ => 1 } @{ $self->colnames() };
     foreach my $keys ( @{ $self->{unique_keys} } ) {
         next unless scalar @{$keys};
