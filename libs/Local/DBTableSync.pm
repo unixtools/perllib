@@ -1031,6 +1031,27 @@ sub GetUniqueKeys {
             }
             $db->SQL_CloseQuery($cid);
         }
+        elsif ( $db_ref =~ /PostgreSQL/ ) {
+            $qry = q{
+                    select t.constraint_name,
+                           k.column_name
+                      from information_schema.table_constraints t
+                inner join information_schema.key_column_usage k
+                        on t.constraint_name = k.constraint_name
+                       and t.table_schema = k.table_schema
+                       and t.table_name = k.table_name 
+                     where lower(t.table_schema) = ?
+                       and lower(t.table_name) = ?
+                       and t.constraint_type = 'PRIMARY KEY'
+                  order by k.ordinal_position asc
+            };
+            $cid = $db->SQL_OpenQuery( $qry, lc $owner, lc $table ) || $db->SQL_Error($qry) && die;
+            while ( my ( $cname, $col ) = $db->SQL_FetchRow($cid) ) {
+                $self->{debug} && print "Constraint ($cname) on Col ($col)\n";
+                push( @{ $ukeys{$cname} }, $col );
+            }
+            $db->SQL_CloseQuery($cid);
+        }
         else {
             die "Unsupported DBObject ${db_ref}\n";
         }
