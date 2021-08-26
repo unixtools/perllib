@@ -526,15 +526,17 @@ sub _open_select {
 # End-Doc
 sub fetch_row {
     my $self = shift;
+    my $db   = shift || $self->{queries}->{select}->{db};
+    my $cid  = shift || $self->{queries}->{select}->{cid};
 
-    if ( !$self->{queries}->{select}->{cid} ) {
+    if ( !$db || !$cid ) {
         if ( !$self->_open_select() ) {
             return undef;
         }
+        $db  = $self->{queries}->{select}->{db};
+        $cid = $self->{queries}->{select}->{cid};
     }
 
-    my $cid = $self->{queries}->{select}->{cid};
-    my $db  = $self->{queries}->{select}->{db};
     my $row = $db->SQL_FetchRowRef($cid);
     my $err = $db->SQL_ErrorCode();
 
@@ -745,8 +747,8 @@ sub dump_table {
     open( my $out, ">${file}" ) || die;
 
     my $cid = $db->SQL_OpenQuery( $qry, @{ $self->{args} } );
-    while ( my @tmp = $db->SQL_FetchRow($cid) ) {
-        $csv->combine(@tmp);
+    while ( my $tmp = $self->fetch_row( $db, $cid ) ) {
+        $csv->combine( @{$tmp} );
         print $out $csv->string(), "\n";
     }
     $db->SQL_CloseQuery($cid);

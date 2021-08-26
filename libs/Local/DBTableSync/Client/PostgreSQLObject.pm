@@ -5,6 +5,29 @@
 # End-Doc
 package Local::DBTableSync::Client::PostgreSQLObject;
 use parent "Local::DBTableSync::Client";
+use Encode;
+
+# Begin-Doc
+# Name: fetch_row
+# Type: method
+# Description: fetches next row in select statement
+# Returns: returns arrayref of row data, undef if no more row data, and undef on error
+# Comments: Implementing this as a workaround for some weird double decode utf8 behavior in DBI::Pg
+#    changes are welcome to set the driver behavior properly 
+# End-Doc
+sub fetch_row {
+    my $self = shift;
+    my $db   = shift;
+    my $cid  = shift;
+    my $row  = $self->SUPER::fetch_row( $db, $cid );
+    return undef unless $row;
+
+    my @encoded = ();
+    foreach my $val (@{ $row }) {
+        push(@encoded, encode('utf-8', $val));
+    }
+    return \@encoded;
+}
 
 # Begin-Doc
 # Name: _build_coltypes
