@@ -138,6 +138,7 @@ sub new {
     my $timeout         = $info{timeout} || 60;
     my $use_gc          = $info{use_gc} || 0;
     my $domain          = $info{domain} || &_default_domain();
+    my $auth_domain     = $info{auth_domain};
     my $fallback_domain = $info{fallback_domain};
 
     my $server = $info{server};
@@ -250,14 +251,21 @@ sub new {
     while ( $count < $retries && !$bound ) {
         if ( $info{dn} ) {
             $bindinfo = $info{dn};
-            $res = $ldap->bind( $info{dn}, password => $pw );
+            $res      = $ldap->bind( $info{dn}, password => $pw );
         }
         else {
-            $bindinfo = "${user}\@$domain";
-            $res = $ldap->bind( "$user\@$domain", password => $pw );
+            if ($auth_domain) {
+                $bindinfo = "${user}\@$auth_domain";
+                $res      = $ldap->bind( $bindinfo, password => $pw );
+            }
+            else {
+                $bindinfo = "${user}\@$domain";
+                $res      = $ldap->bind( $bindinfo, password => $pw );
 
-            if ( $res->code && $fallback_domain ) {
-                $res = $ldap->bind( "$user\@$fallback_domain", password => $pw );
+                if ( $res->code && $fallback_domain ) {
+                    $bindinfo = "${user}\@$fallback_domain";
+                    $res      = $ldap->bind( $bindinfo, password => $pw );
+                }
             }
         }
         if ( !$res->code ) {
@@ -554,7 +562,7 @@ sub DeleteDN {
     my $self = shift;
     my %info = @_;
     my ($upn);
-    my $dn = $info{dn} || return "Need the dn\n";
+    my $dn     = $info{dn} || return "Need the dn\n";
     my $delusr = $self->{ldap}->delete($dn);
     if ( $delusr->code ) {
         return "delete failed: " . $delusr->error . "\n";
@@ -1184,7 +1192,7 @@ sub ConvertToTime {
     # add base (seconds from 1601 to 1970)
     $secs = $secs->badd("11644473600");
 
-    $nsecs  = new Math::BigInt $secs->bmul(10_000_000);
+    $nsecs = new Math::BigInt $secs->bmul(10_000_000);
 
     return $nsecs;
 }
@@ -1408,7 +1416,7 @@ sub DisableAccountDN {
 # Returns: integer with contents of attribute
 # End-Doc
 sub GetUserAccountControl {
-    my $self = shift;
+    my $self   = shift;
     my $userid = shift || return "must specify userid";
 
     my $info = $self->GetAttributes( $userid, attributes => [qw(userAccountControl)] );
@@ -1427,7 +1435,7 @@ sub GetUserAccountControl {
 # End-Doc
 sub GetUserAccountControlDN {
     my $self = shift;
-    my $dn = shift || return "must specify dn";
+    my $dn   = shift || return "must specify dn";
 
     my $info = $self->GetDNAttributes( $dn, attributes => [qw(userAccountControl)] );
     if ( defined($info) ) {
@@ -1854,7 +1862,7 @@ sub LookupDC {
 
     my $tgt = "_ldap._tcp.dc._msdcs.${domain}";
 
-    my $res = new Net::DNS::Resolver();
+    my $res   = new Net::DNS::Resolver();
     my $query = $res->query( $tgt, "SRV" );
 
     my @rr;
