@@ -133,26 +133,34 @@ Begin-Doc
 Name: count_workable
 Type: method
 Description: counts workable entries in a queue
-Syntax: $cnt = $obj->count_workable(queue => "queuename", [window => $seconds])
+Syntax: $cnt = $obj->count_workable(queue => "queuename", [window => $seconds], [indexhint => $indexname])
 End-Doc
 =cut
 
 sub count_workable {
-    my $self   = shift;
-    my %opts   = @_;
-    my $queue  = $opts{queue} || croak;
-    my $window = $opts{window} || 120;
-    my $tbl    = $self->{table};
-    my $db     = $self->db();
+    my $self      = shift;
+    my %opts      = @_;
+    my $queue     = $opts{queue} || croak;
+    my $window    = $opts{window} || 120;
+    my $tbl       = $self->{table};
+    my $indexhint = $opts{indexhint};
+    my $db        = $self->db();
 
     # need to make this dynamic delay for exp backoff
 
     # ungrabbed and either never grabbed, or previous grab over $window seconds ago
     # grabbed and over window seconds ago
     # (basically, don't retry until window has passed, even if ungrabbed)
-    my $qry = "select count(*) from $tbl where queue=? and 
+    my $qry = "select count(*) from $tbl ";
+
+    if ($indexhint) {
+        $qry .= " use index ($indexhint) ";
+    }
+
+    $qry .= " where queue=? and 
             ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
-            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )";
+            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) ) and 
+            queuetime < now()";
     my $cid = $db->SQL_OpenQuery( $qry, $queue, $window, $window ) || $db->SQL_Error($qry) && return undef;
     my ($cnt) = $db->SQL_FetchRow($cid);
     $db->SQL_CloseQuery($cid);
@@ -165,29 +173,37 @@ Begin-Doc
 Name: grab_workable
 Type: method
 Description: marks workable items in work queue
-Syntax: $cnt = $obj->grab_workable(queue => "queuename", [order => $fieldlist], [window => $seconds], [factor => $max_to_grab])
+Syntax: $cnt = $obj->grab_workable(queue => "queuename", [order => $fieldlist], [window => $seconds], [factor => $max_to_grab], [indexhint => $indexname])
 End-Doc
 =cut
 
 sub grab_workable {
-    my $self    = shift;
-    my %opts    = @_;
-    my $queue   = $opts{queue} || croak;
-    my $window  = $opts{window} || 120;
-    my $factor  = $opts{factor} || 1;
-    my $tbl     = $self->{table};
-    my $shuffle = $opts{shuffle};
-    my $order   = $opts{order};
-    my $db      = $self->db();
+    my $self      = shift;
+    my %opts      = @_;
+    my $queue     = $opts{queue} || croak;
+    my $window    = $opts{window} || 120;
+    my $factor    = $opts{factor} || 1;
+    my $tbl       = $self->{table};
+    my $shuffle   = $opts{shuffle};
+    my $order     = $opts{order};
+    my $indexhint = $opts{indexhint};
+    my $db        = $self->db();
 
     my $hn = hostname;
 
     # ungrabbed and either never grabbed, or previous grab over $window seconds ago
     # grabbed and over window seconds ago
     # (basically, don't retry until window has passed, even if ungrabbed)
-    my $qry = "update $tbl set grabbed='Y',grabhost=?,grabpid=?,grabtime=now(),attempts=attempts+1 where queue=? and 
+    my $qry = "update $tbl ";
+
+    if ($indexhint) {
+        $qry .= " use index ($indexhint) ";
+    }
+
+    $qry .= "set grabbed='Y',grabhost=?,grabpid=?,grabtime=now(),attempts=attempts+1 where queue=? and 
             ( grabtime is null or (grabtime < date_sub(now(),interval ? second)) ) and
-            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) )";
+            ( grabbed != 'Y' or (grabbed='Y' and grabtime < date_sub(now(),interval ? second)) ) and 
+            queuetime < now()";
     if ($order) {
         $qry .= " order by $order limit ?";
     }
