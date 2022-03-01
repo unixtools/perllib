@@ -820,6 +820,12 @@ sub GetAttributesMatch {
         || return undef;
     my $cookie;
 
+    my $controls_ref = $opts{controls};
+    my @controls     = ();
+    if ($controls_ref) {
+        @controls = @$controls_ref;
+    }
+
     $info = {};
 
     if ( !defined($filter) ) {
@@ -846,7 +852,7 @@ sub GetAttributesMatch {
             base    => $base,
             scope   => 'sub',
             filter  => $filter,
-            control => [$page],
+            control => [ $page, @controls ],
         );
 
         if ( defined($whichattrib) ) {
@@ -1020,7 +1026,7 @@ sub _GetLargeAttribute {
 # Name: GetAttributesMatchCB
 # Type: method
 # Description: Returns all attributes for userids matching a filter
-# Syntax: $ad->GetAttributesMatchCB($filter, $callback, [attributes => [attriblist], [base => $searchbase])
+# Syntax: $ad->GetAttributesMatchCB($filter, $callback, [attributes => [attriblist], [base => $searchbase], [controls => $array_ref_added_controls])
 # Returns: executes $callback for each matching object, passing the $entry as the only argument
 # Comments: filter is an ldap search string
 # Comments: callback is a subroutine reference
@@ -1038,6 +1044,12 @@ sub GetAttributesMatchCB {
     my $page        = new Net::LDAP::Control::Paged( size => $self->{pagesize} )
         || return undef;
     my $cookie;
+
+    my $controls_ref = $opts{controls};
+    my @controls     = ();
+    if ($controls_ref) {
+        @controls = @$controls_ref;
+    }
 
     $info = {};
 
@@ -1064,7 +1076,7 @@ sub GetAttributesMatchCB {
             base     => $base,
             scope    => 'sub',
             filter   => $filter,
-            control  => [$page],
+            control  => [ $page, @controls ],
             callback => sub { $self->_WrapCB( $callback, @_ ); },
         );
 
