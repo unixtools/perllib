@@ -77,7 +77,7 @@ sub new {
 # Begin-Doc
 # Name: kv_get
 # Type: function
-# Description: Read a secret
+# Description: Read a secret returning secret data
 # Syntax: $secret = $vault->kv_get(path => "path/...", ["mount" => "secret"])
 # Comments: Path should not include the mount prefix - default is 'secret'.
 # End-Doc
@@ -102,6 +102,37 @@ sub kv_get {
     }
     else {
         die "error retrieving $path";
+    }
+}
+
+# Begin-Doc
+# Name: kv_get_full
+# Type: function
+# Description: Read a secret returning entire vault response
+# Syntax: $secret = $vault->kv_get_full(path => "path/...", ["mount" => "secret"])
+# Comments: Path should not include the mount prefix - default is 'secret'.
+# End-Doc
+sub kv_get_full {
+    my $self = shift;
+    my %opts = @_;
+
+    if ( !$self->{token} ) { die; }
+    my $ua    = $self->{ua};
+    my $url   = $self->{url};
+    my $token = $self->{token};
+
+    my $mount = $opts{mount} || "secret";
+    my $path  = $opts{path}  || die "must provide path";
+
+    my $req = HTTP::Request->new( GET => "${url}/v1/${mount}/data/${path}" );
+    $req->header( "X-Vault-Token" => $token );
+    my $resp = $ua->request($req);
+    if ( $resp->is_success ) {
+        my $info = decode_json( $resp->content );
+        return $info;
+    }
+    else {
+        die "error retrieving full $path";
     }
 }
 
