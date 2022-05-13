@@ -137,6 +137,36 @@ sub kv_get_full {
 }
 
 # Begin-Doc
+# Name: read
+# Type: function
+# Description: Read a path returning entire vault response
+# Syntax: $secret = $vault->read(path => "path/...")
+# End-Doc
+sub read {
+    my $self = shift;
+    my %opts = @_;
+
+    if ( !$self->{token} ) { die; }
+    my $ua    = $self->{ua};
+    my $url   = $self->{url};
+    my $token = $self->{token};
+
+    my $mount = $opts{mount} || "secret";
+    my $path  = $opts{path}  || die "must provide path";
+
+    my $req = HTTP::Request->new( GET => "${url}/v1/${path}" );
+    $req->header( "X-Vault-Token" => $token );
+    my $resp = $ua->request($req);
+    if ( $resp->is_success ) {
+        my $info = decode_json( $resp->content );
+        return $info;
+    }
+    else {
+        die "error retrieving full $path";
+    }
+}
+
+# Begin-Doc
 # Name: write
 # Type: function
 # Description: Write to a path
