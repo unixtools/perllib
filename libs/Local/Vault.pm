@@ -19,6 +19,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use Local::UsageLogger;
 use Local::Encode;
+use LWP;
 use JSON;
 
 @ISA    = qw(Exporter);
@@ -151,8 +152,36 @@ sub read {
     my $url   = $self->{url};
     my $token = $self->{token};
 
-    my $mount = $opts{mount} || "secret";
-    my $path  = $opts{path}  || die "must provide path";
+    my $path = $opts{path} || die "must provide path";
+
+    my $req = HTTP::Request->new( GET => "${url}/v1/${path}" );
+    $req->header( "X-Vault-Token" => $token );
+    my $resp = $ua->request($req);
+    if ( $resp->is_success ) {
+        my $info = decode_json( $resp->content );
+        return $info;
+    }
+    else {
+        die "error retrieving full $path";
+    }
+}
+
+# Begin-Doc
+# Name: list
+# Type: function
+# Description: Read a path returning entire vault response. Note that path should
+#  look like secret/metadata/folder1/foldern for secrets engine mounted at 'secret'
+# Syntax: $secret = $vault->list(path => "path/...")
+# End-Doc
+sub list {
+    my $self = shift;
+    my %opts = @_;
+
+    if ( !$self->{token} ) { die; }
+    my $ua    = $self->{ua};
+    my $url   = $self->{url};
+    my $token = $self->{token};
+    my $path  = $opts{path} || die "must provide path";
 
     my $req = HTTP::Request->new( GET => "${url}/v1/${path}" );
     $req->header( "X-Vault-Token" => $token );
