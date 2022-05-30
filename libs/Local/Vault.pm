@@ -183,7 +183,7 @@ sub list {
     my $token = $self->{token};
     my $path  = $opts{path} || die "must provide path";
 
-    my $req = HTTP::Request->new( GET => "${url}/v1/${path}" );
+    my $req = HTTP::Request->new( LIST => "${url}/v1/${path}" );
     $req->header( "X-Vault-Token" => $token );
     my $resp = $ua->request($req);
     if ( $resp->is_success ) {
