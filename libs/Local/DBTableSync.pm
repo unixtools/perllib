@@ -460,7 +460,7 @@ sub SyncTables {
         }
 
         $msg .= "  Source Cols: ${source_cols}\n";
-        $msg .= "  Dest Cols: ${dest_cols}\n";
+        $msg .= "    Dest Cols: ${dest_cols}\n";
 
         $self->_dprint($msg);
         $self->{error} = $msg;
