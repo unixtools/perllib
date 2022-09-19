@@ -144,19 +144,19 @@ sub new {
     $tmp->{allow_unsafe} = int( $opts{allow_unsafe} );
 
     $tmp->{authenticate} = 0;
-    if ( $tmp->{base_url} =~ m|/auth-perl-bin/| ) {
+    if ( $tmp->{base_url} =~ m|/auth-perl-bin| ) {
         $tmp->{authenticate} = 1;
     }
-    elsif ( $tmp->{base_url} =~ m|/auth-cgi-bin/| ) {
+    elsif ( $tmp->{base_url} =~ m|/auth-cgi-bin| ) {
         $tmp->{authenticate} = 1;
     }
-    elsif ( $tmp->{base_url} =~ m|/auth-fcgi-bin/| ) {
+    elsif ( $tmp->{base_url} =~ m|/auth-fcgi-bin| ) {
         $tmp->{authenticate} = 1;
     }
-    elsif ( $tmp->{base_url} =~ m|/auth-cgi/| ) {
+    elsif ( $tmp->{base_url} =~ m|/auth-cgi| ) {
         $tmp->{authenticate} = 1;
     }
-    elsif ( $tmp->{base_url} =~ m|/auth-cgid/| ) {
+    elsif ( $tmp->{base_url} =~ m|/auth-cgid| ) {
         $tmp->{authenticate} = 1;
     }
 
