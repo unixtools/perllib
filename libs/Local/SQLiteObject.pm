@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::SQLiteObject
 Type: module
-Description: object based interface to SQLite db files, child class derived from CommonDBObject
+Description: object-based interface to SQLite db files, child class derived from CommonDBObject
 
 Comments: 
 
@@ -39,7 +39,7 @@ BEGIN {
 
 # Begin-Doc
 # Name: SQL_OpenDatabase
-# Description: opens connection to an SQLite file
+# Description: opens a connection to an SQLite file
 # Syntax: $db->SQL_OpenDatabase("$mdbfilepath");
 # End-Doc
 sub SQL_OpenDatabase {

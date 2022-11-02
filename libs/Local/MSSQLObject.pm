@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::MSSQLObject
 Type: module
-Description: object based interface to MSSQL, child class derived from CommonDBObject
+Description: object-based interface to MSSQL, child class derived from CommonDBObject
 
 Comments: 
 
@@ -17,7 +17,7 @@ only includes specific routines that are overridden by this class and have diffe
 conventions.
 
 Note - for some databases, it may be necessary to set the "TDSVER" environment variable prior
-to calling SQL_OpenDatabase routine.
+to calling the SQL_OpenDatabase routine.
 
 End-Doc
 

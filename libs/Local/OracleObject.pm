@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::OracleObject
 Type: module
-Description: object based interface to Oracle, child class derived from CommonDBObject
+Description: object-based interface to Oracle, child class derived from CommonDBObject
 
 Comments: 
 

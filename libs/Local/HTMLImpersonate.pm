@@ -66,7 +66,7 @@ BEGIN {
 # Name: HTMLImpersonate
 # Type: function
 # Syntax: &HTMLImpersonate("priv:code");
-# Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if user has priv code
+# Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if the user has priv code
 #
 # Comment: Will be a no-op if the REMOTE_USER_IMPERSONATE environment variable is already defined. (To prevent reentrant requests)
 #
@@ -114,7 +114,7 @@ sub HTMLImpersonate {
 # Name: HTMLImpersonateAlways
 # Type: function
 # Syntax: &HTMLImpersonateAlways();
-# Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if user has priv code
+# Description: Checks for a REMOTE_USER_IMPERSONATE cookie and redefines REMOTE_USER if the user has priv code
 #
 # Comment: Will be a no-op if the REMOTE_USER_IMPERSONATE environment variable is already defined. (To prevent reentrant requests)
 #
