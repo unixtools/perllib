@@ -18,7 +18,7 @@ Example:
 	use Local::AppTemplate;
 
 	$html = new Local::AppTemplate(title => "My App",
-		[other parms if you want to set them]);
+		[other params if you want to set them]);
 
 	$html->PageHeader();
 
@@ -55,27 +55,27 @@ BEGIN {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates object
+# Description: Creates a new object
 # Syntax: $html = new Local::AppTemplate(%params)
-# Example: The following replacable parameters exist
+# Example: The following replaceble parameters exist
 #
 #  title - page title (always recommended)
 #  apptitle - application subtitle
 #  stylesheet - app override stylesheet placed after global stylesheets
 #  style - inline style placed after app stylesheet inclusion
 #  head_extra - inline raw content placed after app stylesheet inclusion
-#  contact_url - contact url target
-#  contact_label - contact url label
-#  app_url - defaults to &HTMLScriptURL(), can override if you have a main app page to link to
-#  app_menu - responsive navigation menu, should be unordered list with an ID or class of "udm"
+#  contact_url - contact URL target
+#  contact_label - contact URL label
+#  app_url - defaults to &HTMLScriptURL(), can override if you have the main app page to link to
+#  app_menu - responsive navigation menu, should be an unordered list with an ID or class of "udm"
 #  quiet - do not show details of error messages or stack traces/etc., defaults to showing for now
 #  refresh_time - meta refresh the page after this many seconds
-#  refresh_url - instead of refreshing to same page, refresh to this URL
+#  refresh_url - instead of refreshing to the same page, refresh to this URL
 #  template_path - scalar or array of scalars pointing at locations to try accessing the template
 #  template_cache_dir - override default location where remote templates are cached
 #  disable_auto_header - disable automatically sending page header on exit or error routines
 #  disable_auto_ctype - disable automatically sending content-type when PageHeader is called if it hasn't been detectably sent
-#  app_extra_KEY - set of keys/values for replacement of any __APP_EXTRA_UPPERKEY__ values in template, keys are forced to uc for replacement
+#  app_extra_KEY - set of keys/values for replacement of any __APP_EXTRA_UPPERKEY__ values in template, keys are forced to UC for replacement
 #
 # End-Doc
 sub new {
@@ -97,7 +97,7 @@ sub new {
 # Begin-Doc
 # Name: reset
 # Type: method
-# Description: routine to reset state of template, such as currently open blocks and row number
+# Description: routine to reset the state of template, such as currently open blocks and row number
 # Syntax: $obj->reset();
 # End-Doc
 sub reset {
@@ -675,7 +675,7 @@ sub PrivErrorExit {
 # Begin-Doc
 # Name: Exit
 # Type: method
-# Description: closes page and then exits
+# Description: closes the page and then exits
 # Syntax: $obj->Exit();
 # End-Doc
 sub Exit {
@@ -801,7 +801,7 @@ sub ErrorWarn {
 # Begin-Doc
 # Name: ErrorWarnSQL
 # Type: method
-# Description: prints a sql error message and continues
+# Description: prints a SQL error message and continues
 # Syntax: $obj->ErrorWarnSQL($errmsg, [$db]);
 # Comments: If $db is passed in, will use that to display last query and query arguments
 # End-Doc
@@ -817,9 +817,9 @@ sub ErrorWarnSQL {
 # Begin-Doc
 # Name: ErrorExitSQL
 # Type: method
-# Description: prints a sql error and exits
+# Description: prints a SQL error and exits
 # Syntax: $obj->ErrorExitSQL($errmsg, [$db]);
-# Comments: If $db is passed in, will use that to display last query and query arguments
+# Comments: If $db is passed in, will use that to display the last query and query arguments
 # End-Doc
 sub ErrorExitSQL {
     my $self   = shift;
@@ -941,10 +941,10 @@ sub ErrorSQLHelper {
 # Begin-Doc
 # Name: Encode
 # Type: method
-# Description: html encodes any special characters for safe output
+# Description: HTML encodes any special characters for safe output
 # Syntax: $str = $obj->Encode($str);
 # Comments: This routine should be used wherever possible. At this time it is only
-# encoding the html bracket characters, though it could easily encode others and/or
+# encoding the HTNL bracket characters, though it could easily encode others and/or
 # special characters/binary/etc.
 # End-Doc
 sub Encode {
@@ -957,7 +957,7 @@ sub Encode {
 # Begin-Doc
 # Name: Decode
 # Type: method
-# Description: html decodes any html entities in the passed in string
+# Description: HTML decodes any HTNL entities in the passed in string
 # Syntax: $str = $obj->Decode($str);
 # End-Doc
 sub Decode {
@@ -970,7 +970,7 @@ sub Decode {
 # Begin-Doc
 # Name: URLEncode
 # Type: method
-# Description: Encodes a string in URL encoded format
+# Description: Encodes a string in URL-encoded format
 # Syntax: $string = $obj->URLEncode($string)
 # Comments: All chars other than [A-Za-z0-9-_] are converted to %XX hex notation
 # End-Doc
@@ -984,7 +984,7 @@ sub URLEncode {
 # Begin-Doc
 # Name: URLDecode
 # Type: method
-# Description: Decode a string in URL encoded format
+# Description: Decode a string in URL-encoded format
 # Syntax: $string = $obj->URLDecode($string)
 # End-Doc
 sub URLDecode {
@@ -997,7 +997,7 @@ sub URLDecode {
 # Begin-Doc
 # Name: StartErrorBlockTable
 # Type: method
-# Description: starts a error block table with a particular header caption
+# Description: starts an error block table with a particular header caption
 # Syntax: $obj->StartErrorBlockTable($title, [$width])
 # End-Doc
 sub StartErrorBlockTable {
@@ -1066,7 +1066,7 @@ sub StartInnerTable {
 # Begin-Doc
 # Name: StartInnerRow
 # Type: method
-# Description: starts an inner row and manage tracking even/odd state for coloring
+# Description: starts an inner row and manages to track even/odd state for coloring
 # Syntax: $obj->StartInnerRow()
 # End-Doc
 sub StartInnerRow {
@@ -1088,7 +1088,7 @@ sub StartInnerRow {
 # Begin-Doc
 # Name: StartInnerRowSame
 # Type: method
-# Description: starts an inner row, but keep same row parity as last row
+# Description: starts an inner row, but keeps the same row parity as the last row
 # Syntax: $obj->StartInnerRowSame()
 # End-Doc
 sub StartInnerRowSame {
@@ -1104,7 +1104,7 @@ sub StartInnerRowSame {
 # Begin-Doc
 # Name: StartInnerHeaderRow
 # Type: method
-# Description: starts an inner header row and reset the even/odd coloring state
+# Description: starts an inner header row and resets the even/odd coloring state
 # Syntax: $obj->StartInnerHeaderRow()
 # End-Doc
 sub StartInnerHeaderRow {
@@ -1131,7 +1131,7 @@ sub StartInnerHeaderCell {
 # Begin-Doc
 # Name: EndInnerHeaderRow
 # Type: method
-# Description: ends an inner header row and manage tracking even/odd
+# Description: ends an inner header row and manages to track even/odd
 # Syntax: $obj->EndInnerHeaderRow()
 # End-Doc
 sub EndInnerHeaderRow {
@@ -1157,7 +1157,7 @@ sub EndInnerHeaderCell {
 # Begin-Doc
 # Name: EndInnerRow
 # Type: method
-# Description: end a inner row
+# Description: end an inner row
 # Syntax: $obj->EndInnerRow()
 # End-Doc
 sub EndInnerRow {
@@ -1170,7 +1170,7 @@ sub EndInnerRow {
 # Begin-Doc
 # Name: EndInnerRowSame
 # Type: method
-# Description: end a inner row, for convenience in matching calls only
+# Description: end an inner row, for convenience in matching calls only
 # Syntax: $obj->EndInnerRowSame()
 # End-Doc
 sub EndInnerRowSame {

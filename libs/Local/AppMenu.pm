@@ -8,7 +8,7 @@
 # Begin-Doc
 # Name: Local::AppMenu
 # Type: module
-# Description: object to manage creating a simple application dropdown menu
+# Description: object to manage to create a simple application dropdown menu
 # End-Doc
 
 =cut
@@ -89,7 +89,7 @@ BEGIN {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates object
+# Description: Creates an object
 # Syntax: $netinfo = new Local::AppMenu(%opts)
 # Comments: Pass in keys 'prefix' and 'menus' with menu configuration array ref
 # End-Doc
@@ -115,7 +115,7 @@ sub new {
 # Begin-Doc
 # Name: css
 # Type: method
-# Description: Returns css for the given menu
+# Description: Returns CSS for the given menu
 # Syntax: $css = $obj->css();
 # End-Doc
 sub css {
@@ -182,7 +182,7 @@ EOBASE
 # Name: style
 # Type: method
 # Syntax: $html = $obj->style();
-# Description: Returns stylesheet, wrapper around css call with added style tags
+# Description: Returns stylesheet, a wrapper around CSS call with added style tags
 # End-Doc
 sub style {
     my $self = shift;
@@ -193,7 +193,7 @@ sub style {
 # Name: menuhtml
 # Type: method
 # Syntax: $html = $obj->menuhtml([active => "id_or_name"]);
-# Description: Returns html for menu, optionally pass in a "active" value to
+# Description: Returns HTML for menu, optionally pass in an "active" value to
 #  indicate which submenu is active for highlighting
 # End-Doc
 sub menuhtml {
@@ -252,7 +252,7 @@ sub menuhtml {
 # Name: linkhtml
 # Type: method
 # Syntax: $html = $obj->linkhtml(active => "id_or_name");
-# Description: Returns html for menu, pass in a "active" value to
+# Description: Returns HTML for menu, passes in an "active" value to
 #  indicate which submenu is active to determine which set of subitems to return
 # End-Doc
 sub linkhtml {

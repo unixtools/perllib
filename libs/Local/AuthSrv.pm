@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::AuthSrv
 Type: module
-Description: password stashing utilities for perl scripts
+Description: password stashing utilities for Perl scripts
 Requires: authorization in privsys to actually stash password, and host set up to support it
 
 Comment: Note - modules such as the oracle module typically default to using AuthSrv
@@ -69,9 +69,9 @@ my $AUTHSRV_RAW_ENCRYPT;
 # Begin-Doc
 # Name: AuthSrv_SetPathPrefix
 # Type: function
-# Description: sets prefix for authsrv executables to allow use when not installed in path
+# Description: sets prefix for authsrv executables to allow use when not installed in the path
 # Syntax: &AuthSrv_SetPathPrefix($prefix);
-# Comments: Prefix should end in "/" (or other platform appropriate path separator)
+# Comments: The prefix should end in "/" (or other platform-appropriate path separator)
 # End-Doc
 sub AuthSrv_SetPathPrefix {
     my $prefix = shift;
@@ -91,7 +91,7 @@ sub AuthSrv_SetPathPrefix {
 # Description: fetch a stashed password
 # Syntax: $pw = &AuthSrv_Fetch(instance => $instance, [user => $userid] );
 # Comments: Returns stashed password. 'user' defaults to the
-#       current userid on unix. If running as root, 'owner' can be specified.
+#       current userid on Unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_Fetch {
     my (%opts)   = @_;
@@ -164,7 +164,7 @@ sub AuthSrv_Fetch {
 # Description: fetch a stashed password raw - not just a single line
 # Syntax: $pw = &AuthSrv_FetchRaw(instance => $instance, [user => $userid] );
 # Comments: Returns stashed content. 'user' defaults to the
-#       current userid on unix. If running as root, 'owner' can be specified.
+#       current userid on Unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_FetchRaw {
     my (%opts)   = @_;
@@ -234,7 +234,7 @@ sub AuthSrv_FetchRaw {
 # Description: stash a password
 # Syntax: &AuthSrv_Store(instance => $instance, [user => $userid], password => $pw );
 # Comments: Stashes a password. 'user' defaults to the
-#       current userid on unix. If running as root, 'owner' can be specified.
+#       current userid on Unix. If running as root, 'owner' can be specified.
 # End-Doc
 sub AuthSrv_Store {
     my (%opts)   = @_;
