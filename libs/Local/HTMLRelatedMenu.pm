@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::HTMLRelatedMenu
 Type: module
-Description:  Allows for easy creation of linked popup menus in html
+Description:  Allows for easy creation of linked popup menus in HTML
 Syntax:  require Local::HTMLRelatedMenu;
 Example:
 
@@ -62,10 +62,10 @@ BEGIN {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates a HTMLRelatedMenu object
+# Description: Creates an HTMLRelatedMenu object
 # Syntax: $ex = new Local::HTMLRelatedMenu(%options);
 # Comments: %options are 'basename', 'primaryname', 'secondaryname' - which control field
-# names used for the popup menusm. Also available are 'primary_selected', and 'secondary_selected',
+# names used for the popup menus. Also available are 'primary_selected', and 'secondary_selected',
 # which let you choose the value (not label) that is to be selected by default. These can be
 # overridden in the Generate method calls.
 # End-Doc
@@ -98,7 +98,7 @@ sub new {
 # Type: method
 # Description: Sets the choice list in the primary popup menu
 # Syntax: $menu->SetPrimaryChoices($value1 => $label1, $value2 => $label2, ... );
-# Comments: Values are passed in hash style, but are not put in a hash, so you can control
+# Comments: Values are passed in hash style but are not put in a hash, so you can control
 # the display order.
 # End-Doc
 sub SetPrimaryChoices {
@@ -143,9 +143,9 @@ sub SetSecondaryChoices {
 # Begin-Doc
 # Name: GenerateHead
 # Type: method
-# Description: Returns the html/javascript that should be placed in the HEAD of the document
+# Description: Returns the HTML/javascript that should be placed in the HEAD of the document
 # Syntax: print $menu->GenerateHead(%options);
-# Comments: Optional %options can be passed in, same as the new method.
+# Comments: Optional %options can be passed in, the same as the new method.
 # End-Doc
 sub GenerateHead {
     my $self = shift;
@@ -215,9 +215,9 @@ sub GenerateHead {
 # Begin-Doc
 # Name: GenerateBody
 # Type: method
-# Description: Returns the html for the select menus to be placed in BODY of page
+# Description: Returns the HTML for the select menus to be placed in the BODY of the page
 # Syntax: print $menu->GenerateBody(%options);
-# Comments: Optional %options can be passed in, same as the new method.
+# Comments: Optional %options can be passed in, the same as the new method.
 # End-Doc
 sub GenerateBody {
     my $self = shift;
@@ -287,7 +287,7 @@ sub GenerateBody {
 # Type: method
 # Description: Returns both the head and body output together
 # Syntax: print $menu->Generate(%options);
-# Comments: Optional %options can be passed in, same as the new method. This method can be used
+# Comments: Optional %options can be passed in, the same as the new method. This method can be used
 # if you don't care about strict HTML doctype compliance or want to have the entirety of the related
 # menu inserted inline into your document.
 # End-Doc

@@ -1,7 +1,7 @@
 # Begin-Doc
 # Name: Local::DBTableSync::Client::MySQLObject
 # Type: module
-# Description: MySQL specific implementation of the DBTableSync client module
+# Description: MySQL-specific implementation of the DBTableSync client module
 # End-Doc
 package Local::DBTableSync::Client::MySQLObject;
 use parent "Local::DBTableSync::Client";
@@ -98,9 +98,9 @@ sub _build_coltypes {
 # Name: _build_collists
 # Type: method
 # Description: builds the following column lists
-#       $self->{select_cols} - arrayref (ordered) list of database specific column statements - used to build select statements
+#       $self->{select_cols} - arrayref (ordered) list of database-specific column statements - used to build select statements
 #       $self->{colnames}    - arrayref of lowercase column names
-#       $self->{sort_cols}   - arrayref order in which results of select statement will be ordered - ensure NULLs first
+#       $self->{sort_cols}   - arrayref order in which results of the select statements will be ordered - ensure NULLs first
 # End-Doc
 sub _build_collists {
     my $self = shift;
