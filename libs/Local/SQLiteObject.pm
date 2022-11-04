@@ -14,7 +14,7 @@ Description: object-based interface to SQLite db files, child class derived from
 Comments: 
 
 See the documentation for Local::CommonDBObject for the full set of routines. This documentation
-only includes specific routines that are overridden by this class and have different calling
+only includes specific routines that are overridden by this class and have a different calling
 conventions.
 
 End-Doc

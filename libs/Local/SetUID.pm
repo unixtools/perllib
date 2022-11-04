@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::SetUID
 Type: module
-Description: Handy utility module for selectively changing uid for scripts run as root
+Description: Handy utility module for selectively changing UID for scripts run as root
 Comments: No security exposure
 End-Doc
 
@@ -33,10 +33,10 @@ BEGIN {
 
 # Begin-Doc
 # Name: SetUID
-# Description: switch real and effective uid to a particular user if we are running as root only
+# Description: switch real and effective UID to a particular user if we are running as root only
 # Syntax: &SetUID("user")
 # Comments: only for scripts that might be run by system admin as root on a server, or run intentionally as root
-# Comments: Also functions as a "if script isn't running as this user, terminate" sanity check
+# Comments: Also functions as an "if script isn't running as this user, terminate" sanity check
 # End-Doc
 sub SetUID {
     my $target_user = shift;

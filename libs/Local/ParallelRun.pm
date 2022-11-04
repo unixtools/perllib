@@ -8,13 +8,13 @@
 Begin-Doc
 Name: Local::ParallelRun
 Type: module
-Description: object that provides a parallel execution facility with maximum job limiting
-Comments: This is an object that allows execution of a list of commands,
+Description: an object that provides a parallel execution facility with maximum job limiting
+Comments: This is an object that allows the execution of a list of commands,
 running up to a certain number of them in parallel. This can allow
 the complete list of commands to complete execution much faster than
 executing them sequentially.
 
-Note - be careful using this module in conjunction with connections to oracle, as the oracle
+Note - be careful using this module in conjunction with connections to Oracle, as the Oracle
 libraries/API do not handle forks very well and you will lose your database connection.
 End-Doc
 =cut
@@ -131,7 +131,7 @@ sub _process {
 # Begin-Doc
 # Name: _countstate
 # Type: method
-# Description: return count of how many jobs are running
+# Description: return the count of how many jobs are running
 # Access: internal
 # End-Doc
 sub _countstate {
@@ -291,8 +291,8 @@ sub _startjob {
 # Begin-Doc
 # Name: run
 # Type: method
-# Description: main loop, runs jobs
-# Comment: starts new jobs when a slot is available, runs until idle
+# Description: the main loop, runs jobs
+# Comment: starts new jobs when a slot is available, runs until the idle
 # 	timeout has passed or all jobs have completed.
 # Access: public
 # End-Doc

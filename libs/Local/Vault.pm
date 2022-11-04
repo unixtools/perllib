@@ -7,8 +7,8 @@
 # Begin-Doc
 # Name: Local::Vault
 # Type: module
-# Description: simplified vault client for perl
-# Comments: This has access to subnet configs, ip allocations, ethernet address lookup, etc.
+# Description: simplified vault client for Perl
+# Comments: This has access to subnet configs, IP allocations, Ethernet address lookup, etc.
 # End-Doc
 
 package Local::Vault;
@@ -32,9 +32,9 @@ BEGIN {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates object
+# Description: Creates an object
 # Syntax: $vault = new Local::Vault(%opts)
-# Comments: pass in method=ldap, user, password, or pass in token
+# Comments: pass in method=ldap, user, password, or token
 # End-Doc
 sub new {
     my $self  = shift;
@@ -78,9 +78,9 @@ sub new {
 # Begin-Doc
 # Name: kv_get
 # Type: function
-# Description: Read a secret returning secret data
+# Description: Read a secret and return secret data
 # Syntax: $secret = $vault->kv_get(path => "path/...", ["mount" => "secret"])
-# Comments: Path should not include the mount prefix - default is 'secret'.
+# Comments: The path should not include the mount prefix - default is 'secret'.
 # End-Doc
 sub kv_get {
     my $self = shift;
@@ -109,9 +109,9 @@ sub kv_get {
 # Begin-Doc
 # Name: kv_get_full
 # Type: function
-# Description: Read a secret returning entire vault response
+# Description: Read a secret and return the entire vault response
 # Syntax: $secret = $vault->kv_get_full(path => "path/...", ["mount" => "secret"])
-# Comments: Path should not include the mount prefix - default is 'secret'.
+# Comments: The path should not include the mount prefix - default is 'secret'.
 # End-Doc
 sub kv_get_full {
     my $self = shift;
@@ -140,7 +140,7 @@ sub kv_get_full {
 # Begin-Doc
 # Name: read
 # Type: function
-# Description: Read a path returning entire vault response
+# Description: Read a path and return the entire vault response
 # Syntax: $secret = $vault->read(path => "path/...")
 # End-Doc
 sub read {
@@ -169,8 +169,8 @@ sub read {
 # Begin-Doc
 # Name: list
 # Type: function
-# Description: Read a path returning entire vault response. Note that path should
-#  look like secret/metadata/folder1/foldern for secrets engine mounted at 'secret'
+# Description: Read a path returning the entire vault response. Note that path should
+#  look like secret/metadata/folder1/foldern for the secret engine mounted at 'secret'
 # Syntax: $secret = $vault->list(path => "path/...")
 # End-Doc
 sub list {
@@ -200,7 +200,7 @@ sub list {
 # Type: function
 # Description: Write to a path
 # Syntax: $secret = $vault->write(path => "path/...", content => {});
-# Comments: Path is full path to root
+# Comments: Path is the full path to root
 # End-Doc
 sub write {
     my $self = shift;

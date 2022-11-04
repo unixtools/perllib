@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::SQLTidy
 Type: module
-Description: Simple/minimal sql reformatting function for pretty printing
+Description: Simple/minimal SQL reformatting function for pretty printing
 Comments: 
 
 End-Doc
@@ -34,7 +34,7 @@ BEGIN {
 # Begin-Doc
 # Name: SQLTidyWrapper
 # Type: function
-# Description: Reads from stdin and writes to stdout formatted sql
+# Description: Reads from stdin and writes to stdout formatted SQL
 # Syntax: &SQLTidyWrapper()
 # Comments: This is a simple wrapper around SQLTidy to allow use via:
 # Comments: perl -I/local/perllib/libs -MLocal::SQLTidy -e SQLTidyWrapper
@@ -48,13 +48,13 @@ sub SQLTidyWrapper {
 # Begin-Doc
 # Name: SQLTidy
 # Type: function
-# Description: Returns reformatted version of input sql
+# Description: Returns reformatted version of input SQL
 # Syntax: ($sqltext,$status) = &SQLTidy($text, %options)
 # Syntax: $sqltext = &SQLTidy($text, %options)
 # Comments: returns reformatted text and status, if $status is not null, formatting was not successful
 # Comments: if called in scalar context, only returns reformatted text
 # Comments: available options 'debug' - if nonzero will print out tracing info, 'keep_case' - if nonzero will
-#  not force all sql text to lowercase.
+#  not force all SQL text to lowercase.
 # End-Doc
 sub SQLTidy {
     my $text = shift;

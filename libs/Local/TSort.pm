@@ -10,8 +10,8 @@ Begin-Doc
 Name: Local::TSort
 Type: module
 Description: topological sort
-Comments: implements a topological sort w/ special handling for loops, also
-has handling for two special types of rules "before everything", and "after everything"
+Comments: implements a topological sort with special handling for loops, also
+has handles for two special types of rules "before everything", and "after everything"
 End-Doc
 
 =cut
@@ -55,13 +55,13 @@ BEGIN {
 # Begin-Doc
 # Name: TSort
 # Type: function
-# Description: performs sort according to passed in data
+# Description: performs sort according to passed-in data
 # Syntax: @res = &TSort(%params)
-# Comment: %params are any of:
-# Comment: rules => ref to array of refs to sorting rules: [a,b] means that
+# Comment: %params are any of the:
+# Comment: rules => ref to an array of refs to sorting rules: [a,b] means that
 # 	a must come before b in the resultant array
-# Comment: items => ref to array of items to sort
-# Comment: extrema => defines the min/max element for sorting rules
+# Comment: items => ref to an array of items to sort
+# Comment: extrema => define the min/max element for sorting rules
 # Comment: debug => enable debugging
 # Comment: This module performs a topological sort given a list of elements,
 # a set of rules, and an optional 'extrema' element, which allows order

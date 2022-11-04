@@ -11,7 +11,7 @@ Name: Local::UsageLogger
 Type: module
 Description: Stub no-op module to do usage tracking
 
-Override with another UsageLogger in search path to activate. Be sure and list the 'use lib' for override
+Override with another UsageLogger in the search path to activate. Be sure and list the 'use lib' for override
 dir after the use lib for perllib itself.
 End-Doc
 

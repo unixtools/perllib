@@ -13,7 +13,7 @@ Description: superclass of JSON module with support for Local::JSON::Raw() to al
 
 Comments: 
 
-Use just like object form of upstream JSON module, with the addition that you pass a Local::JSON::Raw("string") as one of the
+Use just like the object form of the upstream JSON module, with the addition that you pass a Local::JSON::Raw("string") as one of the
 elements in the content passed to $obj->encode() to have it output as-is with no quoting.
 
 End-Doc
