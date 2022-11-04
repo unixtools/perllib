@@ -10,13 +10,13 @@ Begin-Doc
 Name: Local::Error
 Type: module
 Description: Common error handling/reporting routines
-Comments: This module is standalone and does not have any external dependencies outside of a standard perl build.
+Comments: This module is standalone and does not have any external dependencies outside of a standard Perl build.
 Comments: Module is a singleton. Multiple creations of the object will always return the same reference.
 Comments: 
 
-This module is designed to be used as a common error handling infrastructure across a large
+This module is designed to be used as a common error-handling infrastructure across a large
 range of library modules. It is designed to stack errors so that an error condition can 
-percolate up from a lower level routine, without requiring the author or developer to 
+percolate up from a lower-level routine, without requiring the author or developer to 
 go to special effort to manage the return values of the various routines. When using
 this module, standard practice is to ->clear prior to calling any library subroutine,
 and then ->check after the subroutine returns. If ->check returns that an error has 
@@ -80,7 +80,7 @@ our $obj = undef;
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates object
+# Description: Creates an object
 # Syntax: $maint = new Local::Error()
 # End-Doc
 sub new {
@@ -131,9 +131,9 @@ sub clear {
 # Begin-Doc
 # Name: check
 # Type: function
-# Description: Checks if error condition is set
+# Description: Checks if an error condition is set
 # Syntax: $obj->check()
-# Comments: if any data passed, only returns true if at least one record has matches every specified field
+# Comments: if any datab is passed, only returns true if at least one record matches every specified field
 # End-Doc
 sub check {
     my $self = shift;
@@ -151,7 +151,7 @@ sub check {
 # Description: returns contents of error stack or undef
 # Syntax: @stack = $obj->get()
 # Comments: similar to check, but returns data
-# Returns: array of hashes with keys 'data', 'msg', 'caller', 'caller_file'. Last entry in array is lowest level function.
+# Returns: array of hashes with keys 'data', 'msg', 'caller', 'caller_file'. The last entry in the array is the lowest level function.
 # End-Doc
 sub get {
     my $self = shift;
@@ -163,7 +163,7 @@ sub get {
 # Type: function
 # Description: Checks if a particular data element was set in any of the errors
 # Syntax: $obj->check_data(%data)
-# Comments: returns true if at least one record has matches every specified field in %data
+# Comments: returns true if at least one record matches every specified field in %data
 # End-Doc
 sub check_data {
     my $self = shift;
@@ -231,7 +231,7 @@ sub format {
 # Begin-Doc
 # Name: as_text
 # Type: function
-# Description: returned a formatted error as plain text
+# Description: returns a formatted error as plain text
 # Syntax: $txt = $obj->as_text();
 # End-Doc
 sub as_text {
@@ -247,7 +247,7 @@ sub as_text {
 # Begin-Doc
 # Name: as_html
 # Type: function
-# Description: returned a formatted error as plain text
+# Description: returns a formatted error as plain text
 # Syntax: $txt = $obj->as_html();
 # End-Doc
 sub as_html {
@@ -263,9 +263,9 @@ sub as_html {
 # Begin-Doc
 # Name: check_and_die
 # Type: function
-# Description: if error is set, output error message and terminate
+# Description: if an error is set, output an error message and terminate
 # Syntax: $obj->check_and_die([%opts]);
-# Comments: %opts can have parameter email, which contains an email address to mail this error message to
+# Comments: %opts can have an email parameter, which contains an email address to mail this error message to
 # Comments: Ideally, this routine should never be used in a library, since a properly behaved library
 #  routine should never terminate the main program.
 # End-Doc

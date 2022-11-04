@@ -26,7 +26,7 @@ use constant { MAX_PENDING => 500 };
 # Begin-Doc
 # Name: new
 # Type: method
-# Description: creates object
+# Description: creates a new DBTableSync::Client object
 # End-Doc
 sub new {
     my $self  = shift;
@@ -83,7 +83,7 @@ sub new {
 # Begin-Doc
 # Name: init
 # Type: method
-# Description: kicks off initialization process for client module
+# Description: kicks off the initialization process for the client module
 # Returns: 1 on success, undef on error
 # End-Doc
 sub init {
@@ -254,7 +254,7 @@ sub deletes {
 # Type: method
 # Description: analyzes the schema of the table/query in question to determine each column type
 #              this information is used later in the comparison routine in Local::DBTableSync
-# Comments: non-implemented stub - each database specific implementation slightly differs
+# Comments: non-implemented stub - each database-specific implementation slightly differs
 # End-Doc
 sub _build_coltypes {
     my $self = shift;
@@ -267,9 +267,9 @@ sub _build_coltypes {
 # Name: _build_collists
 # Type: method
 # Description: builds the following column lists
-#       $self->{select_cols} - arrayref (ordered) list of database specific column statements - used to build select statements
+#       $self->{select_cols} - arrayref (ordered) list of database-specific column statements - used to build select statements
 #       $self->{colnames}    - arrayref of lowercase column names
-#       $self->{sort_cols}   - arrayref order in which results of select statement will be ordered - ensure NULLs first
+#       $self->{sort_cols}   - arrayref order in which results of the select statement will be ordered - ensure NULLs first
 # End-Doc
 sub _build_collists {
     my $self = shift;
@@ -444,7 +444,7 @@ sub _build_delete {
 # Begin-Doc
 # Name: error
 # Type: method
-# Description: returns any internal error message (used in conjuction with methods that may return undef on error)
+# Description: returns any internal error message (used in conjunction with methods that may return undef on an error)
 # End-Doc
 sub error {
     my $self = shift;
@@ -466,7 +466,7 @@ sub _dprint {
 # Begin-Doc
 # Name: dump_colinfo
 # Type: method
-# Description: Generates schema information for given table/query and returns as string
+# Description: Generates schema information for a given table/query and returns as string
 #              used later for schema comparisons
 # End-Doc
 sub dump_colinfo {
@@ -494,7 +494,7 @@ sub dump_colinfo {
 # Begin-Doc
 # Name: _open_select
 # Type: method
-# Description: opens select query
+# Description: opens the select query
 # Returns: 1 on success, undef on error
 # End-Doc
 sub _open_select {
@@ -520,7 +520,7 @@ sub _open_select {
 # Begin-Doc
 # Name: fetch_row
 # Type: method
-# Description: fetches next row in select statement from database
+# Description: fetches the next row in the select statement from the database
 # Returns: arrayref of row data, undef if no more row data, and undef on error
 # Comments: check $obj->error() on undef return from this function
 # End-Doc
@@ -600,7 +600,7 @@ sub insert_row {
 # Begin-Doc
 # Name: delete_row
 # Type: method
-# Description: deletes supplied row from database
+# Description: deletes supplied row from the database
 # Syntax: $obj->delete_row( @row_values );
 # Returns: number of rows deleted on success, undef on error
 # End-Doc
@@ -652,7 +652,7 @@ sub delete_row {
 # Begin-Doc
 # Name: delete_uniq
 # Type: method
-# Description: deletes any rows from database on any matching unique keys
+# Description: deletes any rows from the database on any matching unique keys
 # Syntax: $obj->delete_uniq( @row_values );
 # Returns: number of rows deleted on success, undef on error
 # End-Doc
@@ -686,7 +686,7 @@ sub delete_uniq {
 # Begin-Doc
 # Name: row_count
 # Type: method
-# Description: returns number of rows in given table/query
+# Description: returns the number of rows in given table/query
 # Syntax: $obj->row_count( $database_key );
 #   $database_key - (optional) database selector (either read_db or write_db)
 # End-Doc
@@ -720,7 +720,7 @@ sub row_count {
 # Begin-Doc
 # Name: dump_table
 # Type: method
-# Description: dumps (csv) contents of table/query to supplied file
+# Description: dumps (CSV) contents of table/query to supplied file
 # Syntax: $obj->dump_table( $filename, $database_key );
 #   $filename     - self explanatory
 #   $database_key - (optional) database selector (either read_db or write_db)

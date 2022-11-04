@@ -28,7 +28,7 @@ create table $tablename
 );
 
 The id column is used to identify a particular record to store, update, or fetch. If your
-unique identiers do not lend themselves to integer values, you may safely change the data type
+unique identifiers do not lend themselves to integer values, you may safely change the data type
 of id during the table creation process. This will not affect the performance of the DBStore
 object.
 
@@ -77,7 +77,7 @@ Name: new
 Type: method
 Description: Creates new DBStoreObject
 Syntax: $dbstore = new Local::DBStoreObject (%parms)
-Comments: %parms has manditory keys "table", "db", and optional keys
+Comments: %parms have mandatory keys "table", "db", and optional keys
 Comments: "id_field", "seq_field", "data_field", "cache", "chunksize", "debug", "disable_mime"
 Comments: fields default to 'id', 'seq', and 'data'
 Comments: chunksize defaults to 4000
@@ -141,7 +141,7 @@ sub debug {
 Begin-Doc
 Name: fetch
 Type: method
-Description: retrieve entry from table
+Description: retrieve an entry from the table
 Syntax: $text = $dbstore->fetch ($id);
 
 Comments: This function retrieves the text associated with the id variable from the database
@@ -201,7 +201,7 @@ sub fetch {
 Begin-Doc
 Name: delete
 Type: method
-Description: deletes entry from table
+Description: deletes entry from the table
 Syntax: $dbstore->delete($id);
 End-Doc
 =cut
@@ -230,7 +230,7 @@ sub delete {
 Begin-Doc
 Name: update
 Type: method
-Description: updates entry in table
+Description: updates an entry in the table
 Syntax: $dbstore->update ($id, $text);
 
 Comments: This does the same thing as the store method.
@@ -250,7 +250,7 @@ sub update {
 Begin-Doc
 Name: store
 Type: method
-Description: stores entry in table
+Description: stores an entry in the table
 Syntax: $dbstore->store ($id, $text);
 
 Comments: This function replaces data associated with the id variable with the data supplied
@@ -323,7 +323,7 @@ sub store {
 Begin-Doc
 Name: list_ids
 Type: method
-Description: returns list of ids in table
+Description: returns list of ids in the table
 Syntax: @list = $obj->list_ids();
 End-Doc
 =cut

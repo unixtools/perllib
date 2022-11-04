@@ -59,7 +59,7 @@ BEGIN {
 Begin-Doc
 Name: new
 Type: method
-Description: creates new db queue object
+Description: creates a new db queue object
 Syntax: $obj = new Local::DBQueue(db => $dbobject, table => "work_queue")
 Comments: Must be passed a database object handle
 End-Doc
@@ -172,7 +172,7 @@ sub count_workable {
 Begin-Doc
 Name: grab_workable
 Type: method
-Description: marks workable items in work queue
+Description: marks workable items in the work queue
 Syntax: $cnt = $obj->grab_workable(queue => "queuename", [order => $fieldlist], [window => $seconds], [factor => $max_to_grab], [indexhint => $indexname])
 End-Doc
 =cut
@@ -271,9 +271,9 @@ sub get_marked {
 Begin-Doc
 Name: delete_item
 Type: method
-Description: removes an item from the queue, pass in item reference
+Description: removes an item from the queue, and passes in item reference
 Syntax: $arrayref = $obj->delete_item($itemref)
-Comments: will only remove from queue if it hasn't been requeued while being worked
+Comments: will only remove from the queue if it hasn't been re-queued while being worked
 End-Doc
 =cut
 
@@ -310,7 +310,7 @@ sub delete_item {
 Begin-Doc
 Name: release_item
 Type: method
-Description: ungrabs an item in work queue
+Description: ungrabs an item in the work queue
 Syntax: $arrayref = $obj->release_item($itemref)
 End-Doc
 =cut
@@ -334,7 +334,7 @@ sub release_item {
 Begin-Doc
 Name: extend_grab
 Type: method
-Description: extends grab of an item in work queue
+Description: extends grab of an item in the work queue
 Syntax: $arrayref = $obj->extend_grab($itemref)
 End-Doc
 =cut
@@ -397,8 +397,8 @@ sub add {
 Begin-Doc
 Name: exists
 Type: method
-Description: returns if an item id is already in queue
-Comments: This is obviously polling and not atomic for other operations, but good for quick checks
+Description: returns if an item id is already inn the queue
+Comments: This is obviously polling and not atomic for other operations but good for quick checks
 Syntax: $found = $obj->exists(queue => $queue, itemid => $itemid);
 End-Doc
 =cut

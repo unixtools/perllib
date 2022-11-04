@@ -32,7 +32,7 @@ use vars qw (@ISA @EXPORT);
 Begin-Doc
 Name: new
 Type: method
-Description: creates object
+Description: creates an object
 Syntax: $obj->new(%params)
 Comments: Same syntax/behavior as routine in AppTemplate module.
 End-Doc

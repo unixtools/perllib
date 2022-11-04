@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::Encode
 Type: module
-Description: data marshalling/encoding/serialization routines
+Description: data marshaling/encoding/serialization routines
 End-Doc
 =cut
 
@@ -36,7 +36,7 @@ BEGIN {
 # Begin-Doc
 # Name: Encode_URLEncode
 # Type: function
-# Description: Encodes a string in URL encoded format
+# Description: Encodes a string in URL-encoded format
 # Syntax: $string = &Encode_URLEncode($string)
 # Comments: All chars other than [A-Za-z0-9-_] are converted to %XX hex notation
 # End-Doc
@@ -49,7 +49,7 @@ sub Encode_URLEncode {
 # Begin-Doc
 # Name: Encode_URLDecode
 # Type: function
-# Description: Decodes a url-encoded string
+# Description: Decodes a URL-encoded string
 # Syntax: $string = &Encode_URLDecode($string);
 # End-Doc
 sub Encode_URLDecode {

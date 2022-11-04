@@ -10,7 +10,7 @@
 Begin-Doc
 Name: Local::DBTableSync
 Type: module
-Description: object to manage sychronizing content of two database tables
+Description: object to manage synchronizing content of two database tables
 
 Example:
 
@@ -34,17 +34,17 @@ my %res = $sync->SyncTables(
     max_inserts => 10000,
     row_count_interval => 1000,
 
-    # Example table: position, department, user
-    # Unique index on position,department and a unique index on user (one job per userid and per position nbr)
+    # Example table: position, department, user,
+    # a unique index on position, department and a unique index on user (one job per userid and per position nbr)
     # if we had a composite key field, include it here as well
     # if no unique constraints exist, this attribute can be left out
     unique_keys => [
-        ["position","department"],
+        ["position", "department"],
         ["user"],
     ],
 );
 
-Note that module has only been actively tested with OracleObject and MySQLObject at this time.
+Note that the module has only been actively tested with OracleObject and MySQLObject at this time.
  
 End-Doc
 
@@ -70,7 +70,7 @@ BEGIN {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description: Creates object
+# Description: Creates an object
 # Syntax: $sync = new Local::DBTableSync(%opts)
 # Comments: options are:
 #    compare_schemas: error if SQL_ColumnInfo returns different information from src/dest
@@ -78,8 +78,8 @@ BEGIN {
 #    force: force update regardless of any set limits
 #    max_deletes: set maximum number of deletes that will be issued
 #    max_inserts: set maximum number of inserts that will be issued
-#    no_dups: hint that there will be NO 100% duplicated records in destination
-#    debug: enable/disable debuging (1/0)
+#    no_dups: a hint that there will be NO 100% duplicated records in the destination
+#    debug: enable/disable debugging (1/0)
 #    check_empty_source: check for empty source table and fail sync if empty
 # End-Doc
 sub new {
@@ -140,7 +140,7 @@ sub new {
 # Begin-Doc
 # Name: error
 # Type: method
-# Description: returns any error message that may be set in object
+# Description: returns any error message that may be set in the object
 # Syntax: $err = $obj->error();
 # Comments: this should be checked after any operation to determine success/failure
 # End-Doc
@@ -223,7 +223,7 @@ sub _dprintrowall {
 # Begin-Doc
 # Name: SyncTables
 # Type: function
-# Description: routine that is called to sync tables, separated to allow for easy multipass
+# Description: a routine that is called to sync tables, separated to allow for easy multipass
 # Syntax: %res = $obj->SyncTables(%opts)
 # Comments: This takes the same arguments as the 'new' routine, but also takes some additional
 # required options.
@@ -243,10 +243,10 @@ sub _dprintrowall {
 #    source_alias => alias for primary source table, can be useful in where clause
 #    dest_alias => alias for primary dest table, can be useful in where clause
 #
-#    ukey_sort => allow sorting by a unique key instead of calculated column list.
+#    ukey_sort => allows sorting by a unique key instead of calculated column list.
 #      Optional: pass array reference of column names to use for unique key sorting
 #    pre_setup_check => callback sub reference, called prior to schema analysis
-#    pre_select_check => callback sub reference, called prior to opening of select/insert queries
+#    pre_select_check => callback sub reference, called prior to the opening of select/insert queries
 #    post_sync_check => callback sub reference, called prior to final commit, after all inserts/deletes
 #    post_commit_check => callback sub reference, called prior to final commit, after final commit
 #      Optional: only called if reference is provided
@@ -254,7 +254,7 @@ sub _dprintrowall {
 #      and should return undef. If anything other than undef is returned, it will be treated as
 #      a fatal error.
 #
-#    check_empty_source => check for empty source table and fail if table is empty
+#    check_empty_source => check for empty source table and fail if the table is empty
 #
 # Comments: this expects case insensitive column and table names, if you've done something different
 # you need to stop doing that, it's evil. Additionally, this will skip any *LOB columns quietly. Nulls
@@ -881,7 +881,7 @@ MAIN: while ( $more_source || $more_dest ) {
 # Description: Performs a columnwise comparison of two rows, returning -1,0,1 similar to cmp
 # Syntax: $obj->_compare($srow,$drow,$coltypesref)
 # Comments: -1: srow < drow, 0: equal, 1: srow > drow
-# Comments: returns undef if either row not defined
+# Comments: returns undef if either row is not defined
 # Comments: coltypesref is a ref to an array of "string" or "numeric", directing which type of comparison
 # will be used for each column
 # End-Doc
@@ -976,7 +976,7 @@ sub _dump_row {
 # Begin-Doc
 # Name: GetUniqueKeys
 # Type: method
-# Description: Returns ref to array of array refs containing the unique key sets for a given table
+# Description: Returns ref to an array of array refs containing the unique key sets for a given table
 # Syntax: $keys = $obj->GetUniqueKeys($db, $schema, $table);
 # End-Doc
 

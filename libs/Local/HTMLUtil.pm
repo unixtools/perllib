@@ -84,7 +84,7 @@ my $CGI_PRE;
 
 # Begin-Doc
 # Name: HTMLUtil_Sent_CType
-# Description: package var to keep track of whether content type was sent
+# Description: package var to keep track of whether the content type was sent
 # End-Doc
 my $HTMLUtil_Sent_CType = 0;
 
@@ -116,7 +116,7 @@ sub HTMLGetCGI {
 # Name: HTMLScriptURL
 # Type: function
 # Syntax: $string = &HTMLScriptURL;
-# Description: Returns URL of the currently executing script
+# Description: Returns the URL of the currently executing script
 #
 # Comment: Returns the URL of the currently executing script, calculated
 # from SERVER_NAME, SERVER_PORT, and other environment variables. Use this
@@ -160,8 +160,8 @@ sub HTMLScriptURL {
 # Type: function
 # Description: print out a text input box
 # Syntax: &HTMLInputText($name,$size,$default,$maxlength)
-# Comments: Prints out an input text field, with name $name. If size is
-# not empty, it prints out a size=$size parameter. If defaults is not
+# Comments: Prints out an input text field, with name $name. If a size is
+# not empty, it prints out a size=$size parameter. If the defaults is not
 # empty, it sets the default value of the input box to be $default. If
 # $maxlength is non-zero, it sets the maximum input length to be $maxlength.
 # End-Doc
@@ -190,7 +190,7 @@ sub HTMLInputText {
 # Type: function
 # Description: file selection field, requires a multipart form
 # Syntax: &HTMLInputFile($name,$size,$default,$maxlength)
-# Comments: Prints out an file upload field, with name $name. If size is
+# Comments: Prints out a file upload field, with name $name. If a size is
 # not empty, it prints out a size=$size parameter. If defaults is not
 # empty, it sets the default value of the input box to be $default. Note - most
 # browsers ignore the default value. If $maxlength is non-zero, it sets the maximum
@@ -250,7 +250,7 @@ sub HTMLInputPassword {
 # Comments: Prints out a text area, pre-filled in with text "$value",
 #        $width columns wide, and $height rows in length. If $wrap is
 #        set, will add a WRAP= header. If $wrap is BOTH, will do
-#        WRAP=HARD WRAP=PHYSICAL.  If $wrap is set to PHYSICAL, text is wrapped
+#        WRAP=HARD WRAP=PHYSICAL.  If $wrap is set to PHYSICAL, the text is wrapped
 #        and the result is sent to the web server with the line breaks included.
 #        If $wrap is set to VIRTUAL, text is wrapped within the textarea, but
 #        the result is sent to the web server without the wrapping information.
@@ -276,7 +276,7 @@ sub HTMLTextArea {
 # Begin-Doc
 # Name: HTMLLink
 # Type: function
-# Description: prints out a link to another doc with label
+# Description: prints out a link to another doc with a label
 # Syntax: &HTMLLink($url,$label)
 # Comments: Prints out a &lt;A HREF=$url&gt;$name&lt;/A&gt; link to another url.
 # End-Doc
@@ -288,10 +288,10 @@ sub HTMLLink {
 # Begin-Doc
 # Name: HTMLRadioButton
 # Type: function
-# Description: prints ouf a input radio button
+# Description: prints out a input radio button
 # Syntax: &HTMLRadioButton($name,$value,$on,$text);
-# Comments: Prints out a input radio button, with name $name. Sets
-# returned value to $value. If $on is 1, the readio button is pre-checked.
+# Comments: Prints out an input radio button, with name $name. Sets
+# returned value to $value. If $on is 1, the radio button is pre-checked.
 # If $text is non-empty, prints $text after the radio button.
 # End-Doc
 sub HTMLRadioButton {
@@ -428,8 +428,8 @@ sub HTMLEndForm {
 # Description: starts a select box
 # Syntax: &HTMLStartSelect($name,$size,$multiple);
 # Comments: Starts a select box, with name $name, and selection size
-# $size. If size is 1, will be a popup, otherwise will be a list box. If
-# $multiple is present and non-zero, select list will support multiple selections.
+# $size. If the size is 1, will be a popup, otherwise will be a list box. If
+# $multiple is present and non-zero, the select list will support multiple selections.
 # End-Doc
 sub HTMLStartSelect {
     my ( $NAME, $SIZE, $MULTIPLE ) = @_;
@@ -452,11 +452,11 @@ sub HTMLStartSelect {
 # Type: function
 # Description: build a select box from a hash
 # Syntax: &HTMLSelectAssocArray($name,$size,$blank,$select,%data);
-# Comments: Prints out an select box, size $size, name $name, for each
+# Comments: Prints out a select box, size $size, name $name, for each
 # key/value pair in associative array %data. If $blank is non-zero, a blank
 # entry will be added to the select box to allow an empty choice. If
 # $select is non-empty the key/value with key=$select will be preselected
-# and place at the top of the select box.
+# and placed at the top of the select box.
 # End-Doc
 sub HTMLSelectAssocArray {
     my ( $NAME, $SIZE, $BLANK, $select, %DATA ) = @_;
@@ -505,9 +505,9 @@ sub HTMLSelectAssocArray {
 # Name: HTMLSelectArray
 # Type: function
 # Syntax: &HTMLSelectArray($varname, $size, $selection, @array)
-# Description: create a select box based on array
+# Description: create a select box based on an array
 # Comments: $varname is the name of the variable in quotes.
-#         if $size equals one, the select box will be a popup, otherwise it will be a listbox.
+#         if $size equals one, the select box will be a popup, otherwise, it will be a listbox.
 #         $selection will be the default value
 #         @array is a list of the select box
 # Comments: does not encoded any of the values, so make sure they are HTML-safe
@@ -541,7 +541,7 @@ sub HTMLEndSelect {
 # Begin-Doc
 # Name: HTMLSelectItem
 # Type: function
-# Description: prints out a item for a select box
+# Description: prints out an item for a select box
 # Syntax: &HTMLSelectItem($value,$name,$selected);
 # Comments: Prints out an option tag, pre-selected if $selected is 1,
 # with a special value= if $value is non-empty, and the contents will be $name.
@@ -561,7 +561,7 @@ sub HTMLSelectItem {
 # Begin-Doc
 # Name: HTMLButton
 # Type: function
-# Description: prints out self-contained form button that opens a url
+# Description: prints out self-contained form button that opens a URL
 # Syntax: &HTMLRule($url,$linklabel);
 # End-Doc
 sub HTMLButton {
@@ -653,7 +653,7 @@ sub HTMLFooter {
 # Begin-Doc
 # Name: HTMLStatusHeader
 # Type: function
-# Description: outputs a http status header for nph scripts
+# Description: outputs an HTTP status header for NPH scripts
 # Syntax: &HTMLStatusHeader()
 # End-Doc
 sub HTMLStatusHeader {
@@ -663,7 +663,7 @@ sub HTMLStatusHeader {
 # Begin-Doc
 # Name: HTMLContentType
 # Type: function
-# Description: prints ouf a content-type header and double-newline
+# Description: prints out a content-type header and double-newline
 # Syntax: &HTMLContentType($type);
 # Comments: $type defaults to "text/html"
 # End-Doc
@@ -698,7 +698,7 @@ sub HTMLSentContentType {
 # Type: function
 # Description: returns filehandle for a file uploaded by a multipart form
 # Syntax: $fh = &HTMLGetFile("fieldname");
-# Comments: returns undef if no file uploaded
+# Comments: returns undef if no file is uploaded
 # End-Doc
 sub HTMLGetFile {
     my ($name) = @_;
@@ -709,11 +709,11 @@ sub HTMLGetFile {
 # Begin-Doc
 # Name: HTMLGetRequest
 # Type: function
-# Description: retrieves cgi request parameters into %rqpairs and %in
+# Description: retrieves CGI request parameters into %rqpairs and %in
 # Syntax: &HTMLGetRequest();
 # Comments: Decodes the request from the server into the associative
 # array %rqpairs. Entries that result from multiple selections in a list
-# box will be stored into a single element, with the values separated by
+# box will be stored in a single element, with the values separated by
 # whitespace.
 # End-Doc
 sub HTMLGetRequest {
@@ -748,7 +748,7 @@ sub HTMLGetRequest {
 # Begin-Doc
 # Name: HTMLGetCookies
 # Type: function
-# Description: retrieves cookies from web request, returns hash
+# Description: retrieves cookies from a web request, returns the hash
 # Syntax: %cookies = &HTMLGetCookies();
 # End-Doc
 sub HTMLGetCookies {

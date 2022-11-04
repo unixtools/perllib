@@ -35,8 +35,8 @@ BEGIN {
 # Begin-Doc
 # Name: AUTOLOAD
 # Type: function
-# Description: perl internal/magic AUTOLOAD function that implements the RPC call
-# Syntax: Never called directly, perl calls when a RPC client issues $rpc->RPCMethod(@args)
+# Description: Perl internal/magic AUTOLOAD function that implements the RPC call
+# Syntax: Never called directly, Perl calls when a RPC client issues $rpc->RPCMethod(@args)
 # Comments: This routine calls back to the parent implementation object CallRPC routine that
 # Comments: implements the RPC encoding of request, error checking, and response to caller.
 # End-Doc
@@ -108,17 +108,17 @@ BEGIN {
 # Description: Creates new client object
 # Syntax: $sync = new Local::SimpleRPC::Client(%opts)
 # Comments: options are:
-#    base_url: base url that rpc requests are issued against, the function name is appended to this URL
-#    url_suffix: used if the target server requires an extension on the cgi files, such as ".pl" or ".exe"
+#    base_url: base URL that RPC requests are issued against, the function name is appended to this URL
+#    url_suffix: used if the target server requires an extension on the CGI files, such as ".pl" or ".exe"
 #    authenticate: if true, will always pass auth info, will auto-set to 1 by default if URL contains 'auth-perl-bin',
 #    user: optional, will auto-determine
 #    password: optional, will auto-determine
 #    retries: automatically retry on failure up to this many times, set to 0 to disable retries by default
 #    timeout: set LWP client request timeout
-#    allow_unsafe: allow unsafe operations such as authenticated requests on a non-https URL
+#    allow_unsafe: allow unsafe operations such as authenticated requests on a non-HTTPS URL
 #    debug: enable/disable debuging (1/0)
-#    pre_args: array ref, args inserted at beginning of every rpc request issued by this object
-#    post_args: array ref, args inserted at end of every rpc request issued by this object
+#    pre_args: array ref, args inserted at beginning of every RPC request issued by this object
+#    post_args: array ref, args inserted at end of every RPC request issued by this object
 # End-Doc
 sub new {
     my $self  = shift;
@@ -210,7 +210,7 @@ sub new {
 # Name: CallRPC
 # Description: driver/worker routine that implements the RPC operation
 # Syntax: $obj->RPCName(@args);
-# Returns: array of results returned in json response from the RPC
+# Returns: array of results returned in JSON response from the RPC
 # End-Doc
 sub CallRPC {
     my $self = shift;
@@ -362,9 +362,9 @@ BEGIN {
 # Description: Creates new server object.
 # Syntax: $sync = new Local::SimpleRPC::Server(%opts)
 # Comments: options are:
-#    debug: enable/disable debuging (1/0)
-#    pretty: enables/disable easy-to-read json output (1/0)
-#    cgi: allow passing in cgi object such as when using with FastCGI loop
+#    debug: enable/disable debugging (1/0)
+#    pretty: enables/disable easy-to-read JSON output (1/0)
+#    cgi: allow passing in CGI object such as when using with FastCGI loop
 # End-Doc
 sub new {
     my $self  = shift;
@@ -386,7 +386,7 @@ sub new {
 # Begin-Doc
 # Name: Init
 # Type: method
-# Description: retrieves cgi request parms, and returns content type header
+# Description: retrieves CGI request parms, and returns a content-type header
 # Syntax: %rqpairs = $obj->Init();
 # End-Doc
 sub Init {
@@ -420,7 +420,7 @@ sub Init {
 # Begin-Doc
 # Name: param
 # Type: method
-# Description: pass-thru to CGI module param method to retrieve parameters from cgi request
+# Description: pass-thru to CGI module param method to retrieve parameters from CGI request
 # Syntax: @vals = $obj->param("name");
 # Syntax: $val = $obj->param("name");
 # End-Doc
@@ -441,7 +441,7 @@ sub param {
 # Begin-Doc
 # Name: multi_param
 # Type: method
-# Description: pass-thru to CGI module multi_param method to retrieve parameters from cgi request
+# Description: pass-thru to CGI module multi_param method to retrieve parameters from CGI request
 # Syntax: @vals = $obj->multi_param("name");
 # Syntax: $val = $obj->multi_param("name");
 # End-Doc
@@ -457,7 +457,7 @@ sub multi_param {
 # Begin-Doc
 # Name: Try
 # Type: method
-# Description: attempts to execute a code block, terminates with json failure if eval fails
+# Description: attempts to execute a code block, terminates with JSON failure if eval fails
 # Syntax: @res = $obj->Try($coderef);
 # Syntax: @res = $obj->Try(sub { code here });
 # Syntax: @res = $obj->Try(\&sub, arg1, arg2, ...);
@@ -485,7 +485,7 @@ sub Try {
 # Begin-Doc
 # Name: _json_out
 # Type: method
-# Description: outputs a standard formatted response with ok status and exits
+# Description: outputs a standard formatted response with an ok status and exits
 # Syntax: $obj->_json_out(@results);
 # End-Doc
 sub _json_print {
@@ -509,7 +509,7 @@ sub _json_print {
 # Begin-Doc
 # Name: Finish
 # Type: method
-# Description: outputs a standard formatted response with ok status and exits
+# Description: outputs a standard formatted response with an ok status and exits
 # Syntax: $obj->Finish(@results);
 # End-Doc
 sub Finish {
@@ -522,7 +522,7 @@ sub Finish {
 # Begin-Doc
 # Name: FinishReturn
 # Type: method
-# Description: outputs a standard formatted response with ok status and returns
+# Description: outputs a standard formatted response with an ok status and return
 # Syntax: $obj->FinishReturn(@results);
 # End-Doc
 sub FinishReturn {
@@ -535,7 +535,7 @@ sub FinishReturn {
 # Begin-Doc
 # Name: Fail
 # Type: method
-# Description: outputs a standard formatted response with failure status and exits
+# Description: outputs a standard formatted response with a failure status and exits
 # Syntax: $obj->Fail($msg);
 # End-Doc
 sub Fail {
@@ -549,7 +549,7 @@ sub Fail {
 # Begin-Doc
 # Name: FailReturn
 # Type: method
-# Description: outputs a standard formatted response with failure status and returns non-zero
+# Description: outputs a standard formatted response with a failure status and returns non-zero
 # Syntax: $obj->FailReturn($msg);
 # End-Doc
 sub FailReturn {
@@ -563,7 +563,7 @@ sub FailReturn {
 # Begin-Doc
 # Name: RequirePriv
 # Type: method
-# Description: outputs a standard formatted response with failure status and exits
+# Description: outputs a standard formatted response with a failure status and exits
 # Syntax: $obj->RequirePriv($privcode);
 # End-Doc
 sub RequirePriv {
@@ -586,7 +586,7 @@ sub RequirePriv {
 # Begin-Doc
 # Name: RequirePrivReturn
 # Type: method
-# Description: outputs a standard formatted response with failure status and returns nonzero if failed
+# Description: outputs a standard formatted response with a failure status and returns nonzero if failed
 # Syntax: $obj->RequirePrivReturn($privcode);
 # End-Doc
 sub RequirePrivReturn {

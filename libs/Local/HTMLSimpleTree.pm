@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::HTMLSimpleTree
 Type: module
-Description: Simple ajax style tree builder with cookie enabled collapse/expand
+Description: Simple ajax style tree builder with cookie-enabled collapse/expand
 
 Comments: Note - this tree object does require that each node in the tree must have 
 a unique id.
@@ -62,21 +62,21 @@ use Carp;
 Begin-Doc
 Name: new
 Type: method
-Description: creates new HTMLSimpleTree object
+Description: creates a new HTMLSimpleTree object
 Syntax: $obj = new Local::HTMLSimpleTree(id => $id, icon_WHICH => $uri, callback => $subref, [debug => 0/1], [jsdebug => 0/1]);
 Comments: WHICH is "expanded", "collapsed", "empty", "terminal". 
 Each has a server relative or absolute URL for the icon to use for that type of
 tree node. Empty is a node with no children. Terminal is a node that specifically
 cannot have any children. Tree will initially be fully visible. $id is an alphanumeric
-string (starting with letter) that identifies this particular tree. It should
+string (starting with a letter) that identifies this particular tree. It should
 be unique across multiple uses of this API. The ID is used to form all callback
 routine names, classes, object IDs, and cookie names. Callback is a subroutine
-reference called with the id of each node, and is expected to output any node content
+reference called with the id of each node and is expected to output any node content
 for that node. The Tree ID should include the application id to help guarantee
 uniqueness. It should avoid generating <LI> tags or lists unless they are 
-completely self contained.
+completely self-contained.
 
-If icons are not specified, will default to some ugly looking one from apache.
+If icons are not specified, will default to some ugly looking ones from apache.
 
 End-Doc
 =cut
@@ -176,7 +176,7 @@ sub safe_treeid {
 
 # Begin-Doc
 # Name: clear_nodes
-# Description: Removes all nodes from current tree
+# Description: Removes all nodes from the current tree
 # Syntax: $obj->clear_nodes();
 # End-Doc
 sub clear_nodes {
@@ -195,7 +195,7 @@ sub clear_nodes {
 # Description: Add a node to current tree
 # Syntax: $id = $obj->add_node([parent => $parent_node_id], [id => "node id"], [content => "node content"]);
 # Comments: node id must be unique throughout the tree, if node id isn't passed
-# in, will assign an return unique id. If an id is passed in, will return that id. If content is
+# in, will assign an return unique id. If an id is passed in, will return that id. If the content is
 # passed as a parameter, the 'print' method will output that as the node content and will not
 # invoke the callback function for the node.
 # End-Doc
@@ -258,7 +258,7 @@ sub add_node {
 # Name: print_js
 # Description: helper routine to dump out the javascript for the tree implementation
 # Syntax: $self->print_js();
-# Comments: This is included inline instead of an external js file to make this module self contained.
+# Comments: This is included inline instead of an external js file to make this module self-contained.
 # Comments: Future improvement - allow specifying a URL of another script to retrieve this from with caching/expires header
 # End-Doc
 sub print_js {
@@ -523,7 +523,7 @@ sub print {
 # Begin-Doc
 # Name: print_helper
 # Type: method
-# Description: recursive routine called for each node in tree to generate output, calls the callback routine
+# Description: recursive routine called for each node in the tree to generate output, calls the callback routine
 # Syntax: $self->print_helper($safe_treeid, $noderef, $depth)
 # End-Doc
 sub print_helper {

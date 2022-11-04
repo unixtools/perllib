@@ -8,26 +8,26 @@
 Begin-Doc
 Name: Local::GoogleAuth
 Type: module
-Description: object that provides easy access to obtain a google web token
+Description: an object that provides easy access to obtain a google web token
 Comments: 
 
 Setup procedure - common steps:
 
-1. Establish account on the google domain that has sufficient admin privileges to perform the relevant operations
+1. Establish an account on the google domain that has sufficient admin privileges to perform the relevant operations
 2. Go to https://console.developers.google.com/project
 3. Create a Project if one isn't already created
 4. Click on "APIs & Auth -> Credentials"
-5. Update at least application name on Consent Screen tab.
+5. Update at least the application name on the Consent Screen tab.
 
 Additional steps for using an "Installed Application" client ID - usable with normal APIs and expected to
-interactively grant permission using 'authorize' api. 
+interactively grant permission using 'authorize' API. 
 
 1. Click "Credentials -> Add -> OAuth 2.0 Client ID"
 2. Give the client a friendly name, and then click on the name, and 'Download JSON' to download a .json key file.
 3. Import that file into authsrv: cat x.json | authsrv-raw-encrypt myuser myuser@example.com google-native-client-id
 4. Delete any downloaded credentials files since they contain secure content
 5. Click on "APIs & Auth -> APIs" and enable any/all of the APIs you might want to use
-6. Use the authorize method in this module to create refresh token and authorize any desired API scopes.
+6. Use the authorize method in this module to create a refresh token and authorize any desired API scopes.
 
 Additional steps for using a "Service Account" client ID - usable with explicit grants of scopes in google admin
 control panel, intended for user impersonation for data access:
@@ -112,7 +112,7 @@ sub new {
 # Name: debug
 # Type: method
 # Access: public
-# Description: Sets or returns current module debugging level
+# Description: Sets or returns the current module debugging level
 # Syntax: $obj->debug(1) to enable
 # Syntax: $obj->debug(0) to disable
 # End-Doc
@@ -130,7 +130,7 @@ sub debug {
 # Name: error
 # Type: method
 # Access: public
-# Description: Sets or returns current object error status
+# Description: Sets or returns the current object error status
 # End-Doc
 sub error {
     my $self = shift;
@@ -148,7 +148,7 @@ sub error {
 # Access: public
 # Description: Retrieves token for a given scope
 # Syntax: $token = $obj->token( ["sub" => $email], scope => $scope, scopes => [$scope1,$scope2,...], [expires => $tstamp] );
-# Comments: If expires is not specified, defaults to 2 minutes. Either scope or scopes should be specified
+# Comments: If expiration is not specified, defaults to 2 minutes. Either scope or scopes should be specified
 #
 # End-Doc
 sub token {
@@ -292,10 +292,10 @@ sub access_token_from_refresh_token {
 # Name: authorize
 # Type: method
 # Access: public
-# Description: Retrieves refresh token and requests authorization for a given scope
+# Description: Retrieves refresh token and request authorization for a given scope
 # Syntax: $token = $obj->authorize( scope => $scope, scopes => [$scope1,$scope2,...], [incremental => 0], [instance => "google-native-client-id"], [refreshinstance => "google-refresh-token"] );
-# Comments: If expires is not specified, defaults to 2 minutes. Either scope or scopes should be specified. Defaults to incrementally
-# adding scopes to previously granted scopes for same client id.
+# Comments: If expiration is not specified, defaults to 2 minutes. Either scope or scopes should be specified. Defaults to incrementally
+# adding scopes to previously granted scopes for the same client id.
 #
 # End-Doc
 sub authorize {

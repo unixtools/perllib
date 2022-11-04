@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::MySQL
 Type: module
-Description: non object based access to MySQL
+Description: non object-based access to MySQL
 Comments: Don't use this module, it should be considered strongly discouraged. For documentation of it's routines
 see the documentation for Local::MySQLObject. These routinese are just wrappers around the corresponding
 method in Local::MySQLObject.

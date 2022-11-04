@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::ODBCObject
 Type: module
-Description: object based interface to ODBC database, child class derived from CommonDBObject
+Description: object-based interface to ODBC database, child class derived from CommonDBObject
 
 Comments: 
 

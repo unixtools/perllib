@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::CommonDBObject
 Type: module
-Description: object based interface to databases, base class for other modules
+Description: an object-based interface to databases, a base class for other modules
 
 Example: 
 
@@ -68,7 +68,7 @@ BEGIN {
 Begin-Doc
 Name: new
 Type: method
-Description: creates new database object
+Description: creates a new database object
 Syntax: $obj = new Local::CommonDBObject
 End-Doc
 =cut
@@ -163,7 +163,7 @@ sub sthandle {
 Begin-Doc
 Name: SQL_LastQuery
 Type: method
-Description: returns text of last query executed
+Description: returns text of the last query executed
 Syntax: $obj->SQL_LastQuery();
 End-Doc
 =cut
@@ -177,7 +177,7 @@ sub SQL_LastQuery {
 Begin-Doc
 Name: SQL_LastParams
 Type: method
-Description: returns ref to array of last query parameters
+Description: returns ref to an array of last query parameters
 Syntax: $obj->SQL_LastParams();
 End-Doc
 =cut
@@ -193,7 +193,7 @@ Name: SQL_Error
 Type: method
 Description: generates a textual error message with query error info
 Syntax: $obj->SQL_Error($qry);
-Comments: Prints out an plain text error message with '$qry' listed in
+Comments: Prints out a plain text error message with '$qry' listed in
                 the error message for reference.
 End-Doc
 =cut
@@ -215,7 +215,7 @@ sub SQL_Error {
 Begin-Doc
 Name: SQL_HTMLError
 Type: method
-Description: generates a html error message with query error info
+Description: generates an html error message with query error info
 Syntax: $obj->SQL_HTMLError($qry);
 Comments: Prints out an HTML'ized error message with '$qry' listed in
                 the error message for reference.
@@ -238,7 +238,7 @@ sub SQL_HTMLError {
 Begin-Doc
 Name: SQL_Commit
 Type: method
-Description: commits current open transaction
+Description: commits the current open transaction
 Syntax: $obj->SQL_Commit();
 Comments: Commits a transaction when the script is operating in transaction
         mode (auto-commit is off).  See SQL_AutoCommit above for more
@@ -256,7 +256,7 @@ sub SQL_Commit {
 Begin-Doc
 Name: SQL_RollBack
 Type: method
-Description: rolls back current transaction
+Description: rolls back the current transaction
 Syntax: $obj->SQL_RollBack()
 Comments: Rolls back a transaction when the script is operating in transaction
         mode (auto-commit is off).  See SQL_AutoCommit above for more
@@ -276,13 +276,13 @@ sub SQL_RollBack {
 Begin-Doc
 Name: SQL_AutoCommit
 Type: method
-Description: turns autocommit on or off
+Description: turns auto-commit feature on or off
 Syntax: $obj->SQL_AutoCommit($val)
 Comments: Turns auto-commit on or off (1 is on).  It is on by default, which
         causes each query to be committed as it is processed.  Turning
         auto-commit off causes the script to enter a transaction-based mode.
         While in transaction mode, changes to the database can only be caused by
-        explicity invoking SQL_Commit.  All activity after the previous commit
+        explicitly invoking SQL_Commit.  All activity after the previous commit
         can also be rolled back using SQL_RollBack.  Regular processing of
         commands can be reenabled by using this routing to turn on auto-commit.
 
@@ -343,7 +343,7 @@ Name: SQL_CloseDatabase
 Type: method
 Description: closes current database connection 
 Syntax: $obj->SQL_CloseDatabase()
-Comments: Closes the current datbase connection.  This is most useful when
+Comments: Closes the current database connection.  This is most useful when
         connecting to more than one database server is necessary and the
         object-oriented routines are not being used.
 
@@ -365,7 +365,7 @@ Type: method
 Description: opens a cursor but delays processing of parameters
 Syntax: $cid = $obj->SQL_OpenBoundQuery($qry);
 Comments: Opens a query using bound parameters.  Bound parameters use
-    question marks as place holders for values that that will later be
+    question marks as placeholders for values that will later be
     used with SQL_ExecQuery and the replacement values.
 
 End-Doc
@@ -432,7 +432,7 @@ Name: SQL_OpenQueryExtra
 Type: method
 Description: opens a cursor to a new query
 Syntax: $cid = $obj->SQL_OpenQueryExtra($qry, $properties, [@values])
-Comments: This is the same as SQL_OpenQuery, but allows passing hash of statement handle options such as ora_pers_lob
+Comments: This is the same as SQL_OpenQuery, but allows the passing hash of statement handle options such as ora_pers_lob
 End-Doc
 =cut
 
@@ -468,7 +468,7 @@ sub SQL_OpenQueryExtra {
 Begin-Doc
 Name: SQL_CloseQuery
 Type: method
-Description: closes open query cursor
+Description: closes an open query cursor
 Syntax: $obj->SQL_CloseQuery($cid)
 Comments: Closes query whose connection id is $cid.
 
@@ -491,7 +491,7 @@ sub SQL_CloseQuery {
 Begin-Doc
 Name: SQL_ExecQuery
 Type: method
-Description: executes a sql query
+Description: executes a SQL query
 Syntax: $res = $obj->SQL_ExecQuery($qry, [@params])
 Comments: Executes an SQL query.  This function should be used whenever an
         SQL command needs to be executed on the database server for any purpose
@@ -548,10 +548,10 @@ sub SQL_ExecQuery {
 Begin-Doc
 Name: SQL_DoQuery
 Type: method
-Description: executes a sql query, returns single row
+Description: executes a SQL query, returns a single row/record
 Syntax: @res = $obj->SQL_DoQuery($qry, [@params])
 Comments: Executes an SQL query.  This function can be used whenever an
-        SQL command needs to be executed on the database server for a single
+        SQL command needs to be executed on the database server for single
         record retrieval.  If the optional array of values is
         included, all instances of &quot;?&quot; in the query will be
         replaced with the corresponding value from @values.  The number of
@@ -664,7 +664,7 @@ sub SQL_FetchRow {
 Begin-Doc
 Name: SQL_FetchRowRef
 Type: method
-Description: fetches a single row, returns array reference
+Description: fetches a single row, returns an array reference
 Syntax: $rowarrayref = $obj->SQL_FetchRowRef($cid)
 Comments: Returns a single row from a query as an array reference.  
         Columns are returned in the order specified in the SQL query.  
@@ -682,7 +682,7 @@ sub SQL_FetchRowRef {
 Begin-Doc
 Name: SQL_FetchRow_Array
 Type: method
-Description: fetches a single row, returns array reference
+Description: fetches a single row, returns an array reference
 Syntax: $rowarrayref = $obj->SQL_FetchRow_Array($cid)
 Comments: Returns a single row from a query as an array reference.  
         Columns are returned in the order specified in the SQL query.  
@@ -772,9 +772,9 @@ sub SQL_FetchAllRows {
 Begin-Doc
 Name: SQL_ErrorCode
 Type: method
-Description: returns error code from last query
+Description: returns an error code from last query
 Syntax: $errcode = $obj->SQL_ErrorCode()
-Comments: Returns an error code from last query submitted.  Use
+Comments: Returns an error code from the last query submitted.  Use
         SQL_ErrorString to see the text of the corresponding error message.
 
 End-Doc
@@ -788,9 +788,9 @@ sub SQL_ErrorCode {
 Begin-Doc
 Name: SQL_ErrorString
 Type: method
-Description: returns error message from last query
+Description: returns an error message from last query
 Syntax: $str = $obj->SQL_ErrorString()
-Comments: Returns an error message from last query submitted.  Use
+Comments: Returns an error message from the last query submitted.  Use
         SQL_ErrorCode to see the corresponding error code.
 
 End-Doc
@@ -806,9 +806,9 @@ Name: SQL_QuoteString
 Type: method
 Description: quotes a string for safe use in a query
 Syntax: $safe = $obj->SQL_QuoteString($str)
-Comments: Properly escapes special characters in an string so that it can
-        be used as a column value in an SQL query.  This allows scripts to handle
-        input which contains characters that are considered special by the
+Comments: Properly escapes special characters in a string so that it can
+        be used as a column value in a SQL query.  This allows scripts to handle
+        input that contains characters that are considered special by the
         database engine.  The resulting safe string is enclosed in single
         quotation marks.
 
@@ -824,7 +824,7 @@ sub SQL_QuoteString {
 Begin-Doc
 Name: SQL_Databases
 Type: method
-Description: returns list of databases on the server
+Description: returns a list of databases on the server
 Syntax: @list = $obj->SQL_Databases()
 Comments: Returns an array of database names that are available for
         connection.  The existence of a database in the return list does not
@@ -845,7 +845,7 @@ Name: SQL_ColumnInfo
 Type: method
 Description: returns information on columns returned by a query
 Syntax: %info = $obj->SQL_ColumnInfo()
-Comments: Returns a hash with keys numcols, colnames, coltypes, precision, scale. All except numcols are
+Comments: Returns a hash with keys numcols, colnames, coltypes, precision, and scale. All except numcols are
 arrays. Column types, precision, and scale are going to be database driver specific. See DBI documentation
 for more specifics. Typically use only the colnames element, or use all of the fields for comparison purposes.
 End-Doc
@@ -873,7 +873,7 @@ sub SQL_ColumnInfo {
 Begin-Doc
 Name: SQL_LowerColumns
 Type: method
-Description: returns list of lowercased column names for the query
+Description: returns a list of lowercased column names for the query
 Syntax: @colnames = $obj->SQL_LowerColumns()
 Comments: Returns an array with lowercased column names returned by the query
 End-Doc
@@ -894,7 +894,7 @@ sub SQL_LowerColumns {
 Begin-Doc
 Name: SQL_RowCount
 Type: method
-Description: returns number of rows affected by last SQL query
+Description: returns the number of rows affected by the last SQL query
 Syntax: $obj->SQL_RowCount()
 Comments: Returns the number of rows affected by the last SQL query.  This
         function is intended for use with SQL_ExecQuery.  Results may be
@@ -926,7 +926,7 @@ sub SQL_RowCount {
 Begin-Doc
 Name: SQL_SerialNumber
 Type: method
-Description: returns value assigned to last auto insert id number column
+Description: returns the value assigned to last auto insert id number column
 Syntax: $val = $obj->SQL_SerialNumber()
 End-Doc
 =cut

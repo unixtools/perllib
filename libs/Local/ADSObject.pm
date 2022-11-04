@@ -26,7 +26,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 # Begin-Doc
 # Name: Local::ADSObject
 # Type: module
-# Description:  Allows for create/modify/delete/reset passwords in AD
+# Description:  Allows for creation/modification/deletion/reseting passwords in Active Directory
 # Syntax:  use Local::ADSObject;
 # End-Doc
 
@@ -111,7 +111,7 @@ our $ATYPE_VALS = [
 # Begin-Doc
 # Name: _default_domain
 # Type: function
-# Description:  determines default domain name for this host
+# Description:  determines the default domain name for this host
 # Syntax: $domain = &_default_domain();
 # Comments: Internal use only
 # End-Doc
@@ -124,7 +124,7 @@ sub _default_domain {
 # Begin-Doc
 # Name: new
 # Type: function
-# Description:  Binds to AD
+# Description:  Binds to Active Directory
 # Syntax: $ex = new Local::ADSObject(
 #		[user => $user | dn => $dn],
 #		password => $pw) || die $Local::ADSObject::ErrorMsg;
@@ -287,7 +287,7 @@ sub new {
 # Name: debug
 # Type: method
 # Access: public
-# Description: Sets or returns current module debugging level
+# Description: Sets or returns the current module debugging level
 # Syntax: $obj->debug(1) to enable
 # Syntax: $obj->debug(0) to disable
 # End-Doc
@@ -305,7 +305,7 @@ sub debug {
 # Name: ldap
 # Type: method
 # Access: semi-private
-# Description: Returns the internal ldap connection established by the object
+# Description: Returns the internal LDAP connection established by the object
 # Returns: reference to a Net::LDAP or Net::LDAPS object
 # End-Doc
 sub ldap {
@@ -319,7 +319,7 @@ sub ldap {
 # Name: _GetDN
 # Type: method
 # Access: private
-# Description: Does a search on the spn attributei for host/$hostname and returns the
+# Description: Does a search on the SPN attribute for host/$hostname and returns the
 # distinguishedName attribute
 # Returns: distinguishedName
 # End-Doc
@@ -360,7 +360,7 @@ sub _GetHostDN {
 # Name: FindUPN
 # Type: method
 # Access: public
-# Description: Searches for first instance found of a particular userid
+# Description: Searches for the first instance found of a particular userid
 # Returns: user principal name for authentication
 # End-Doc
 
@@ -650,9 +650,9 @@ sub GetUserList {
 # Description: Returns all attributes associated with a userid
 # Syntax: $info = $ad->GetAttributes($userid, [attributes => [attriblist]], [base => "basedn"])
 # Returns: hash reference, elements are the ldap keys for each attribute, values are array references
-# Comments: In most cases, the array will only have a single element, in some there will be multiple elements.
-# Comments: can optionally specify list of specific attributes to retrieve,
-#	otherwise it retrieves everything.
+# Comments: In most cases, the array will only have a single element, in some, there will be multiple elements.
+# Comments: can optionally specify the list of specific attributes to retrieve,
+#	otherwise, it retrieves everything.
 # End-Doc
 
 sub GetAttributes {
@@ -725,10 +725,10 @@ sub GetAttributes {
 # Type: method
 # Description: Returns all attributes associated with a dn
 # Syntax: $info = $ad->GetDNAttributes($dn, [attributes => [attriblist])
-# Returns: hash reference, elements are the ldap keys for each attribute, values are array references
-# Comments: In most cases, the array will only have a single element, in some there will be multiple elements.
-# Comments: can optionally specify list of specific attributes to retrieve,
-#	otherwise it retrieves everything.
+# Returns: hash reference, elements are the LDAP keys for each attribute, values are array references
+# Comments: In most cases, the array will only have a single element, in some, there will be multiple elements.
+# Comments: can optionally specify a list of specific attributes to retrieve,
+#	otherwise, it retrieves everything.
 # End-Doc
 
 sub GetDNAttributes {
@@ -800,11 +800,11 @@ sub GetDNAttributes {
 # Type: method
 # Description: Returns all attributes for userids matching a filter
 # Syntax: $info = $ad->GetAttributesMatch($filter, [attributes => [attriblist], [base => $searchbase])
-# Returns: ref to array of hash refs, elements are the ldap keys for each attribute, values are array references
-# Comments: In most cases, the array will only have a single element, in some there will be multiple elements.
-# Comments: can optionally specify list of specific attributes to retrieve,
-#	otherwise it retrieves everything.
-# Comments: filter is an ldap search string
+# Returns: ref to an array of hash refs, elements are the LDAP keys for each attribute, values are array references
+# Comments: In most cases, the array will only have a single element, in some, there will be multiple elements.
+# Comments: can optionally specify a list of specific attributes to retrieve,
+#	otherwise, it retrieves everything.
+# Comments: filter is an LDAP search string
 # End-Doc
 
 sub GetAttributesMatch {
@@ -938,7 +938,7 @@ sub _WrapCB {
 # Begin-Doc
 # Name: _GetLargeAttribute
 # Type: method
-# Description: Returns full set of values for an attribute that may include range processing
+# Description: Returns a full set of values for an attribute that may include range processing
 # Syntax: $arrayref = $ad->_GetLargeAttribute($dn, $attribute)
 # Returns: array ref containing values
 # End-Doc
@@ -1028,7 +1028,7 @@ sub _GetLargeAttribute {
 # Description: Returns all attributes for userids matching a filter
 # Syntax: $ad->GetAttributesMatchCB($filter, $callback, [attributes => [attriblist], [base => $searchbase], [controls => $array_ref_added_controls])
 # Returns: executes $callback for each matching object, passing the $entry as the only argument
-# Comments: filter is an ldap search string
+# Comments: filter is an LDAP search string
 # Comments: callback is a subroutine reference
 # End-Doc
 sub GetAttributesMatchCB {
@@ -1118,7 +1118,7 @@ sub GetAttributesMatchCB {
 #        );
 # Returns: undef is successful otherwise the error
 # Comments: $info should be array ref containing [ attrib => val, ... ]
-# values should either be scalars, or should be references to arrays of scalars
+# values should either be scalars or should be references to arrays of scalars
 # For backwards compatability, "attributes" can be used instead of "replace".
 # End-Doc
 sub SetAttributes {
@@ -1170,7 +1170,7 @@ sub SetAttributes {
 
 # Begin-Doc
 # Name: ConvertTime
-# Description: Converts a ADS FileTime value to unix timestamp
+# Description: Converts an ADS FileTime value to Unix timestamp
 # Syntax: $timestamp = $ads->ConvertTime($value);
 # End-Doc
 sub ConvertTime {
@@ -1190,7 +1190,7 @@ sub ConvertTime {
 
 # Begin-Doc
 # Name: ConvertToTime
-# Description: Converts a unix timestamp to ADS FileTime value
+# Description: Converts a Unix timestamp to ADS FileTime value
 # Syntax: $adtime = $ads->ConvertToTime($unixtime);
 # End-Doc
 sub ConvertToTime {
@@ -1212,7 +1212,7 @@ sub ConvertToTime {
 # Begin-Doc
 # Name: DumpLDIF
 # Type: method
-# Description: Dumps ldap info to an LDIF format file
+# Description: Dumps LDAP info to an LDIF format file
 # Syntax: $ad->DumpLDIF($fh, %options)
 # Comments: Don't use this yet... Options will eventually allow specifying list of
 # attributes, and a different filter string, etc.
@@ -1280,7 +1280,7 @@ sub DumpLDIF {
 # Type: method
 # Description: Attempts to validate an ADS password
 # Syntax: $res = $ad->CheckPassword($userid, $password, $domain)
-# Comments: Actually attempts to bind to ADS with that user and password, and returns
+# Comments: Actual attempts to bind to ADS with that user and password, and returns
 # non-zero if it cannot.
 # End-Doc
 sub CheckPassword {
@@ -1314,7 +1314,7 @@ sub CheckPassword {
 # Type: method
 # Description: Attempts to validate an ADS password
 # Syntax: $res = $ad->CheckDNPassword($dn, $password, $domain)
-# Comments: Actually attempts to bind to ADS with that dn and password, and returns
+# Comments: Actual attempts to bind to ADS with that dn and password, and returns
 # non-zero if it cannot.
 # End-Doc
 sub CheckDNPassword {
@@ -1425,7 +1425,7 @@ sub DisableAccountDN {
 # Name: GetUserAccountControl
 # Description: Fetches the contents of the userAccountControl attribute for a user
 # Syntax: $res = $ex->GetUserAccountControl($userid);
-# Returns: integer with contents of attribute
+# Returns: integer with contents of an attribute
 # End-Doc
 sub GetUserAccountControl {
     my $self   = shift;
@@ -1443,7 +1443,7 @@ sub GetUserAccountControl {
 # Name: GetUserAccountControlDN
 # Description: Fetches the contents of the userAccountControl attribute for a user by dn
 # Syntax: $res = $ex->GetUserAccountControlDN($dn);
-# Returns: integer with contents of attribute
+# Returns: integer with contents of an attribute
 # End-Doc
 sub GetUserAccountControlDN {
     my $self = shift;

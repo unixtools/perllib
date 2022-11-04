@@ -1,7 +1,7 @@
 # Begin-Doc
 # Name: Local::DBTableSync::Client::OracleObject
 # Type: module
-# Description: Oracle specific implementation of the DBTableSync client module
+# Description: Oracle-specific implementation of the DBTableSync client module
 # End-Doc
 package Local::DBTableSync::Client::OracleObject;
 use parent "Local::DBTableSync::Client";
@@ -9,7 +9,7 @@ use parent "Local::DBTableSync::Client";
 # Begin-Doc
 # Name: init
 # Type: method
-# Description: kicks off initialization process for client module
+# Description: kicks off the initialization process for the client module
 # Returns: 1 on success, undef on error
 # End-Doc
 sub init {
@@ -60,7 +60,7 @@ sub init {
 # Begin-Doc
 # Name: _open_select
 # Type: method
-# Description: opens select query
+# Description: opens the select query
 # Returns: 1 on success, undef on error
 # End-Doc
 sub _open_select {

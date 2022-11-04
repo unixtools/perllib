@@ -8,7 +8,7 @@
 Begin-Doc
 Name: Local::MySQLObject
 Type: module
-Description: object based interface to MySQL, child class derived from CommonDBObject
+Description: object-based interface to MySQL, child class derived from CommonDBObject
 
 Comments: 
 
@@ -112,7 +112,7 @@ sub SQL_OpenDatabase {
 Begin-Doc
 Name: SQL_SerialNumber
 Type: method
-Description: returns value assigned to last auto insert id number column
+Description: returns the value assigned to last auto insert id number column
 Syntax: $val = $obj->SQL_SerialNumber()
 End-Doc
 =cut

@@ -1,7 +1,7 @@
 # Begin-Doc
 # Name: Local::DBTableSync::Client::PostgreSQLObject
 # Type: module
-# Description: PostgreSQL specific implementation of DBTableSync client module
+# Description: PostgreSQL-specific implementation of DBTableSync client module
 # End-Doc
 package Local::DBTableSync::Client::PostgreSQLObject;
 use parent "Local::DBTableSync::Client";
@@ -10,10 +10,10 @@ use Encode;
 # Begin-Doc
 # Name: fetch_row
 # Type: method
-# Description: fetches next row in select statement
+# Description: fetches the next row in the select statement
 # Returns: returns arrayref of row data, undef if no more row data, and undef on error
-# Comments: Implementing this as a workaround for some weird double decode utf8 behavior in DBI::Pg
-#    changes are welcome to set the driver behavior properly 
+# Comments: Implementing this as a workaround for some weird double decode utf8 behavior in DBI::Pg.
+#    Changes are welcome to set the driver behavior properly 
 # End-Doc
 sub fetch_row {
     my $self = shift;

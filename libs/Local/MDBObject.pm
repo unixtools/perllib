@@ -9,7 +9,7 @@
 Begin-Doc
 Name: Local::MDBObject
 Type: module
-Description: object based interface to .MDB files, child class derived from CommonDBObject
+Description: object-based interface to .MDB files, child class derived from CommonDBObject
 
 Comments: 
 
@@ -40,7 +40,7 @@ BEGIN {
 
 # Begin-Doc
 # Name: SQL_OpenDatabase
-# Description: opens connection to an MDB file
+# Description: opens a connection to an MDB file
 # Syntax: $db->SQL_OpenDatabase("$mdbfilepath");
 # End-Doc
 sub SQL_OpenDatabase {
