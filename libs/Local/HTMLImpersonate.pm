@@ -16,11 +16,9 @@ Use the following as a bookmarklet in your browser for easily switching users. T
 be placed in your code as early as possible. I generally would recommend putting it right after GetRequest, so
 that all users of REMOTE_USER in the code are covered.
 
-Bookmarklet (Prompts for user): <A HREF="javascript:imuser=prompt(&quot;Username&quot;,&quot;&quot;);document.cookie=&quot;REMOTE_USER_IMPERSONATE=&quot;+escape(imuser)+&quot;;domain=.&quot;+escape(document.domain)+&quot;path=/&quot;;location=location;">Impersonate</A>
+JavaScript (Prompts for user): javascript:imuser=prompt("Username","");dotdomain=document.domain==="localhost"?"":".";document.cookie="REMOTE_USER_IMPERSONATE="+escape(imuser)+";domain="+dotdomain+escape(document.domain)+";path=/";location=location;
 
-JavaScript (Prompts for user): javascript:imuser=prompt("Username","");document.cookie="REMOTE_USER_IMPERSONATE="+escape(imuser)+";domain=."+escape(document.domain)+";path=/";location=location;
-
-JavaScript (Hardwired to particular user): javascript:document.cookie="REMOTE_USER_IMPERSONATE=specificuser;domain=."+escape(document.domain)+";path=/";location=location;
+JavaScript (Hardwired to particular user): javascript:dotdomain=document.domain==="localhost"?"":".";document.cookie="REMOTE_USER_IMPERSONATE=specificuser;domain="+dotdomain+escape(document.domain)+";path=/";location=location;
 
 Example:
 
