@@ -45,6 +45,7 @@ sub new {
 
     $tmp->{ua} = new LWP::UserAgent;
     $tmp->{ua}->timeout(5);
+    my $ua = $tmp->{ua};
 
     &LogAPIUsage();
 
