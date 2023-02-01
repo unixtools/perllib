@@ -34,7 +34,7 @@ BEGIN {
 # Type: function
 # Description: Creates an object
 # Syntax: $vault = new Local::Vault(%opts)
-# Comments: optionally pass in user + password, role_id + secret_id, or token
+# Comments: optionally pass in user + password, role_id + secret_id, k8s_mount + k8s_token + k8s_role, or token
 # End-Doc
 sub new {
     my $self  = shift;
@@ -70,6 +70,15 @@ sub new {
     }
     if ( $opts{secret_id} ) {
         $tmp->{secret_id} = $opts{secret_id};
+    }
+    if ( $opts{k8s_mount} ) {
+        $tmp->{k8s_mount} = $opts{k8s_mount};
+    }
+    if ( $opts{k8s_token} ) {
+        $tmp->{k8s_token} = $opts{k8s_token};
+    }
+    if ( $opts{k8s_role} ) {
+        $tmp->{k8s_role} = $opts{k8s_role};
     }
 
     if ( !$tmp->{url} ) {
@@ -110,12 +119,33 @@ sub new {
                 $tmp->{token} = $info->{auth}->{client_token};
             }
             else {
-                die "Failed ldap auth.";
+                die "Failed approle auth.";
             }
         }
     }
 
-    if ( !$tmp->{token} && ( !$tmp->{user} || !$tmp->{password} ) && ( !$tmp->{role_id} && !$tmp->{secret_id} ) ) {
+    if ( !$tmp->{token} ) {
+        if ( $tmp->{k8s_mount} && $tmp->{k8s_token} && $tmp->{k8s_role} ) {
+            my $req      = HTTP::Request->new( POST => $tmp->{url} . "/v1/auth/" . $tmp->{k8s_mount} . "/login" );
+            my $authdata = {
+                jwt  => $tmp->{k8s_token},
+                role => $tmp->{k8s_role},
+            };
+            $req->content( encode_json($authdata) );
+            $req->content_type("application/json");
+
+            my $resp = $ua->request($req);
+            if ( $resp->is_success ) {
+                my $info = decode_json( $resp->content );
+                $tmp->{token} = $info->{auth}->{client_token};
+            }
+            else {
+                die "Failed k8s auth.";
+            }
+        }
+    }
+
+    if ( !$tmp->{token} ) {
         die "must provide means to get token or token itself";
     }
 
