@@ -34,7 +34,7 @@ BEGIN {
 # Type: function
 # Description: Creates an object
 # Syntax: $vault = new Local::Vault(%opts)
-# Comments: pass in method=ldap, user, password, or token
+# Comments: optionally pass in user + password, role_id + secret_id, or token
 # End-Doc
 sub new {
     my $self  = shift;
@@ -48,6 +48,9 @@ sub new {
 
     &LogAPIUsage();
 
+    # Default from environment if provided
+    $tmp->{url} = $ENV{VAULT_ADDR};
+
     if ( $opts{url} ) {
         $tmp->{url} = $opts{url};
         $tmp->{url} =~ s|/$||go;
@@ -58,17 +61,60 @@ sub new {
     if ( $opts{password} ) {
         $tmp->{password} = $opts{password};
     }
-    if ( $opts{method} ) {
-        $tmp->{method} = $opts{method};
-    }
     if ( $opts{token} ) {
         $tmp->{token} = $opts{token};
+    }
+    if ( $opts{role_id} ) {
+        $tmp->{role_id} = $opts{role_id};
+    }
+    if ( $opts{secret_id} ) {
+        $tmp->{secret_id} = $opts{secret_id};
     }
 
     if ( !$tmp->{url} ) {
         die "must provide url";
     }
+
     if ( !$tmp->{token} ) {
+        if ( $tmp->{user} && $tmp->{password} ) {
+            my $req      = HTTP::Request->new( POST => $tmp->{url} . "/v1/auth/ldap/login/" . $tmp->{user} );
+            my $authdata = { "password" => $tmp->{password} };
+            $req->content( encode_json($authdata) );
+            $req->content_type("application/json");
+
+            my $resp = $ua->request($req);
+            if ( $resp->is_success ) {
+                my $info = decode_json( $resp->content );
+                $tmp->{token} = $info->{auth}->{client_token};
+            }
+            else {
+                die "Failed ldap auth.";
+            }
+        }
+    }
+
+    if ( !$tmp->{token} ) {
+        if ( $tmp->{role_id} && $tmp->{secret_id} ) {
+            my $req      = HTTP::Request->new( POST => $tmp->{url} . "/v1/auth/approle/login" );
+            my $authdata = {
+                "role_id"   => $tmp->{role_id},
+                "secret_id" => $tmp->{secret_id}
+            };
+            $req->content( encode_json($authdata) );
+            $req->content_type("application/json");
+
+            my $resp = $ua->request($req);
+            if ( $resp->is_success ) {
+                my $info = decode_json( $resp->content );
+                $tmp->{token} = $info->{auth}->{client_token};
+            }
+            else {
+                die "Failed ldap auth.";
+            }
+        }
+    }
+
+    if ( !$tmp->{token} && ( !$tmp->{user} || !$tmp->{password} ) && ( !$tmp->{role_id} && !$tmp->{secret_id} ) ) {
         die "must provide means to get token or token itself";
     }
 
