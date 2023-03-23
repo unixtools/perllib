@@ -472,7 +472,7 @@ if (ok) then
     for _,itemid in ipairs(matches) do
         local exp = redis.call('HGET', q_expires, itemid)
 
-        if (exp<cutoff) then
+        if (exp == nil or exp<cutoff) then
             local ver = redis.call('HGET', q_working, itemid)
             redis.call('HSET', q_pending, itemid, ver)
             redis.call('HINCRBY', q_pending, itemid, 1)
