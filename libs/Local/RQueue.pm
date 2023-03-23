@@ -336,13 +336,24 @@ local q_working = KEYS[1]
 local q_meta = KEYS[2]
 local q_expires = KEYS[3]
 
-redis.call('HDEL', q_working, itemid)
-redis.call('HDEL', q_meta, itemid)
-redis.call('HDEL', q_expires, itemid)
+local itemid = ARGV[1]
+local ver = ARGV[2]
 
-return nil
+local found_ver = redis.call('HGET', q_working, itemid)
+if (found_ver == ver) then
+    redis.call('HDEL', q_working, itemid)
+    redis.call('HDEL', q_meta, itemid)
+    redis.call('HDEL', q_expires, itemid)
+
+    redis.call('HSET', q_pending, itemid, ver)
+    redis.call('HINCRBY', q_pending, itemid, 1)
+
+    return itemid
+else
+    return nil
+end
 EOF
-    $redis->eval( $lua, 3, $hash_working, $hash_meta, $hash_expires );
+    $redis->eval( $lua, 3, $hash_working, $hash_meta, $hash_expires, $iref->{id}, $iref->{version} );
     return undef;
 }
 
