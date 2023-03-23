@@ -166,6 +166,10 @@ sub grab {
 
     my $redis = $self->redis();
 
+    if ( time - $self->{last_maintain} > 30 ) {
+        $self->maintain(queue => $queue);
+    }
+
     my $hash_pending = "q_pending_${queue}";
     my $hash_working = "q_working_${queue}";
     my $hash_meta    = "q_meta_${queue}";
@@ -344,10 +348,6 @@ if (found_ver == ver) then
     redis.call('HDEL', q_working, itemid)
     redis.call('HDEL', q_meta, itemid)
     redis.call('HDEL', q_expires, itemid)
-
-    redis.call('HSET', q_pending, itemid, ver)
-    redis.call('HINCRBY', q_pending, itemid, 1)
-
     return itemid
 else
     return nil
@@ -400,5 +400,69 @@ sub working {
 # need maintain() -> call lua - iterate through 'working', moving back to pending with a version increment if past expiration time
 # should be called periodically, likely in it's own scheduled task, might also do something where this is called directly from the
 # module periodically with a redis key to keep track of the last time the clean pass was run for concurrency purposes to make it a no-op
+
+=begin
+Begin-Doc
+Name: maintain
+Type: method
+Description: cleans up any orphaned items moving back to pending queue
+Syntax: $obj->maintain(queue => $queue)
+End-Doc
+=cut
+
+sub maintain {
+    my $self  = shift;
+    my %opts  = @_;
+    my $queue = $opts{queue} || return undef;
+
+    # Keep track of last run so that we can regularly run during grab operation
+    $self->{last_maintain} = time;
+
+    my $redis = $self->redis();
+
+    my $hash_pending = "q_pending_${queue}";
+    my $hash_working = "q_working_${queue}";
+    my $hash_meta    = "q_meta_${queue}";
+    my $hash_expires = "q_expires_${queue}";
+    my $str_maintain = "q_maintain_${queue}";
+
+    # This is somewhat inefficient, but the total count in the expires table should never be significantly larger
+    # than the number of workers, which should make this a tiny operation.
+
+    my $lua = <<EOF;
+local q_pending = KEYS[1]
+local q_working = KEYS[2]
+local q_meta = KEYS[3]
+local q_expires = KEYS[4]
+local q_maintain = KEYS[5]
+
+local cutoff = ARGV[1]
+
+local ok = redis.call('SET', q_maintain, cutoff, 'NX', 'EX', 10)
+if (ok) then
+    redis.log(redis.LOG_WARNING, "starting maintain run")
+
+    local matches = redis.call('HKEYS', q_expires)
+    for _,itemid in ipairs(matches) do
+        local exp = redis.call('HGET', q_expires, itemid)
+
+        if (exp<cutoff) then
+            redis.log(redis.LOG_WARNING, "moving expired: " .. tostring(itemid) .. " " .. tostring(exp))
+            local ver = redis.call('HGET', q_working, itemid)
+            redis.call('HDEL', q_working, itemid)
+            redis.call('HDEL', q_expires, itemid)
+            redis.call('HSET', q_pending, itemid, ver)
+            redis.call('HINCRBY', q_pending, itemid, 1)
+        end
+    end
+else
+    redis.log(redis.LOG_WARNING, "skipping maintain run")
+end
+
+return nil
+EOF
+    $redis->eval( $lua, 5, $hash_pending, $hash_working, $hash_meta, $hash_expires, $str_maintain, time );
+    return undef;
+}
 
 1;
