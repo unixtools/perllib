@@ -306,12 +306,11 @@ local ver = ARGV[2]
 
 local found_ver = redis.call('HGET', q_working, itemid)
 if (found_ver == ver) then
-    redis.call('HDEL', q_working, itemid)
-    redis.call('HDEL', q_expires, itemid)
-
     redis.call('HSET', q_pending, itemid, ver)
     redis.call('HINCRBY', q_pending, itemid, 1)
 
+    redis.call('HDEL', q_working, itemid)
+    redis.call('HDEL', q_expires, itemid)
     return itemid
 else
     return nil
@@ -475,10 +474,10 @@ if (ok) then
 
         if (exp<cutoff) then
             local ver = redis.call('HGET', q_working, itemid)
-            redis.call('HDEL', q_working, itemid)
-            redis.call('HDEL', q_expires, itemid)
             redis.call('HSET', q_pending, itemid, ver)
             redis.call('HINCRBY', q_pending, itemid, 1)
+            redis.call('HDEL', q_working, itemid)
+            redis.call('HDEL', q_expires, itemid)
         end
     end
 end
