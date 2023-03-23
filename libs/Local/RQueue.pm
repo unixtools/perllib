@@ -440,14 +440,11 @@ local cutoff = ARGV[1]
 
 local ok = redis.call('SET', q_maintain, cutoff, 'NX', 'EX', 10)
 if (ok) then
-    redis.log(redis.LOG_WARNING, "starting maintain run")
-
     local matches = redis.call('HKEYS', q_expires)
     for _,itemid in ipairs(matches) do
         local exp = redis.call('HGET', q_expires, itemid)
 
         if (exp<cutoff) then
-            redis.log(redis.LOG_WARNING, "moving expired: " .. tostring(itemid) .. " " .. tostring(exp))
             local ver = redis.call('HGET', q_working, itemid)
             redis.call('HDEL', q_working, itemid)
             redis.call('HDEL', q_expires, itemid)
@@ -455,8 +452,6 @@ if (ok) then
             redis.call('HINCRBY', q_pending, itemid, 1)
         end
     end
-else
-    redis.log(redis.LOG_WARNING, "skipping maintain run")
 end
 
 return nil
