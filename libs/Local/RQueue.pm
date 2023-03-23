@@ -139,14 +139,14 @@ local result = ""
 local newver = 0
 
 if(redis.call('HEXISTS', q_working, itemid) == 1) then
-    newver = redis.call('HINCRBY', q_working, itemid, 1)
+    newver = redis.pcall('HINCRBY', q_working, itemid, 1)
 else
     -- will insert with val 0 and increment if not already in hash
-    newver = redis.call('HINCRBY', q_pending, itemid, 1)
+    newver = redis.pcall('HINCRBY', q_pending, itemid, 1)
 end
 
 -- maybe questionable, but always update metadata
-redis.call('HSET', q_meta, itemid, meta)
+redis.pcall('HSET', q_meta, itemid, meta)
 
 return newver
 EOF
@@ -194,9 +194,9 @@ local tstamp = ARGV[1]
 local itemid = redis.call('HRANDFIELD', q_pending)
 if (itemid) then
     local ver = redis.call('HGET', q_pending, itemid)
-    redis.call('HSET', q_working, itemid, ver)
-    redis.call('HDEL', q_pending, itemid)
-    redis.call('HSET', q_expires, itemid, tstamp)
+    redis.pcall('HSET', q_working, itemid, ver)
+    redis.pcall('HSET', q_expires, itemid, tstamp)
+    redis.pcall('HDEL', q_pending, itemid)
     return itemid
 else
     return nil
@@ -255,7 +255,7 @@ local tstamp = ARGV[3]
 
 local found_ver = redis.call('HGET', q_working, itemid)
 if (found_ver == ver) then
-    redis.call('HSET', q_expires, itemid, tstamp)
+    redis.pcall('HSET', q_expires, itemid, tstamp)
     return itemid
 else
     return nil
@@ -306,11 +306,11 @@ local ver = ARGV[2]
 
 local found_ver = redis.call('HGET', q_working, itemid)
 if (found_ver == ver) then
-    redis.call('HSET', q_pending, itemid, ver)
-    redis.call('HINCRBY', q_pending, itemid, 1)
+    redis.pcall('HSET', q_pending, itemid, ver)
+    redis.pcall('HINCRBY', q_pending, itemid, 1)
 
-    redis.call('HDEL', q_working, itemid)
-    redis.call('HDEL', q_expires, itemid)
+    redis.pcall('HDEL', q_working, itemid)
+    redis.pcall('HDEL', q_expires, itemid)
     return itemid
 else
     return nil
@@ -352,9 +352,9 @@ local ver = ARGV[2]
 
 local found_ver = redis.call('HGET', q_working, itemid)
 if (found_ver == ver) then
-    redis.call('HDEL', q_working, itemid)
-    redis.call('HDEL', q_meta, itemid)
-    redis.call('HDEL', q_expires, itemid)
+    redis.pcall('HDEL', q_working, itemid)
+    redis.pcall('HDEL', q_meta, itemid)
+    redis.pcall('HDEL', q_expires, itemid)
     return itemid
 else
     return nil
@@ -474,10 +474,10 @@ if (ok) then
 
         if (exp == nil or exp<cutoff) then
             local ver = redis.call('HGET', q_working, itemid)
-            redis.call('HSET', q_pending, itemid, ver)
-            redis.call('HINCRBY', q_pending, itemid, 1)
-            redis.call('HDEL', q_working, itemid)
-            redis.call('HDEL', q_expires, itemid)
+            redis.pcall('HSET', q_pending, itemid, ver)
+            redis.pcall('HINCRBY', q_pending, itemid, 1)
+            redis.pcall('HDEL', q_working, itemid)
+            redis.pcall('HDEL', q_expires, itemid)
         end
     end
 end
