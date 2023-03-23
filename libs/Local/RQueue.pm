@@ -21,7 +21,8 @@ use vars qw(@ISA @EXPORT);
 # Name: new
 # Type: function
 # Description:  establishes object
-# Syntax: $ex = new Local::RQueue()
+# Syntax: $ex = new Local::RQueue([auto_maintain_interval => $seconds])
+# Comments: pass 0 for auto_maintain_interval to disable
 # End-Doc
 sub new {
     my $self  = shift;
@@ -32,6 +33,11 @@ sub new {
     my $tmp = {};
 
     $tmp->{"debug"} = $opts{debug};
+
+    $tmp->{auto_maintain_interval} = 60;
+    if ( exists( $opts{auto_maintain_interval} ) ) {
+        $tmp->{auto_maintain_interval} = $opts{auto_maintain_interval};
+    }
 
     # Bless the object
     bless $tmp, $class;
@@ -166,8 +172,10 @@ sub grab {
 
     my $redis = $self->redis();
 
-    if ( time - $self->{last_maintain} > 30 ) {
-        $self->maintain(queue => $queue);
+    if ( $self->{auto_maintain_interval} ) {
+        if ( time - $self->{last_maintain} > $self->{auto_maintain_interval} ) {
+            $self->maintain( queue => $queue );
+        }
     }
 
     my $hash_pending = "q_pending_${queue}";
@@ -353,8 +361,8 @@ else
     return nil
 end
 EOF
-    $redis->eval( $lua, 3, $hash_working, $hash_meta, $hash_expires, $iref->{id}, $iref->{version} );
-    return undef;
+    my $res = $redis->eval( $lua, 3, $hash_working, $hash_meta, $hash_expires, $iref->{id}, $iref->{version} );
+    return $res eq $iref->{id};
 }
 
 =begin
@@ -397,9 +405,30 @@ sub working {
     return $redis->hlen($hash_working);
 }
 
-# need maintain() -> call lua - iterate through 'working', moving back to pending with a version increment if past expiration time
-# should be called periodically, likely in it's own scheduled task, might also do something where this is called directly from the
-# module periodically with a redis key to keep track of the last time the clean pass was run for concurrency purposes to make it a no-op
+=begin
+Begin-Doc
+Name: queues
+Type: method
+Description: returns list of known queues
+Syntax: my @queues = $obj->queues()
+End-Doc
+=cut
+
+sub queues {
+    my $self = shift;
+    my %opts = @_;
+
+    my $redis = $self->redis();
+
+    my @keys = $redis->keys("*");
+    my @res;
+    foreach my $key (@keys) {
+        if ( $key =~ m/^q_working_(.*)$/o ) {
+            push( @res, $1 );
+        }
+    }
+    return @res;
+}
 
 =begin
 Begin-Doc
