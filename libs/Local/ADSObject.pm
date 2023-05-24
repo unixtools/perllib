@@ -40,7 +40,7 @@ BEGIN {
 my $retries = 4;    # Set this to one higher than the number of DCs.
 
 # Preloaded cache of domain to server mappings
-my $domain_server_map = {};
+our $domain_server_map = {};
 
 # Last Error Message
 our $ErrorMsg = "no error";
@@ -132,7 +132,7 @@ sub _default_domain {
 # Comments: Internal use only
 # End-Doc
 sub _preload_domain_server {
-    my %maps = ();
+    my %maps = @_;
     foreach my $d ( keys %maps ) {
         $domain_server_map->{$d} = $maps{$d};
     }
