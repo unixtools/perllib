@@ -134,7 +134,7 @@ sub _default_domain {
 sub _preload_domain_server {
     my %maps = ();
     foreach my $d ( keys %maps ) {
-        $domain_server_map->{$d} = $maps->{$d};
+        $domain_server_map->{$d} = $maps{$d};
     }
 }
 
