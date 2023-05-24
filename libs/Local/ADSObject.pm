@@ -39,6 +39,9 @@ BEGIN {
 
 my $retries = 4;    # Set this to one higher than the number of DCs.
 
+# Preloaded cache of domain to server mappings
+my $domain_server_map = {};
+
 # Last Error Message
 our $ErrorMsg = "no error";
 
@@ -122,6 +125,20 @@ sub _default_domain {
 }
 
 # Begin-Doc
+# Name: _preload_domain_server
+# Type: function
+# Description:  loads an entry into the domain server map for use by superclasses
+# Syntax: &_preload_domain_server($domain => [$server1, $servern]);
+# Comments: Internal use only
+# End-Doc
+sub _preload_domain_server {
+    my %maps = ();
+    foreach my $d ( keys %maps ) {
+        $domain_server_map->{$d} = $maps->{$d};
+    }
+}
+
+# Begin-Doc
 # Name: new
 # Type: function
 # Description:  Binds to Active Directory
@@ -146,14 +163,26 @@ sub new {
     # Override with default from SRV record unless specified via DNS
     if ($use_gc) {
 
-        # This is not going to work usually since it's not the forest, but hardwired
-        # response will work for now
-        my ($srv) = &LookupGC($domain);
-        $server ||= $srv;
+        # In future grab more for fallback/retry capability
+        if ( !$server && $domain_server_map->{$domain} ) {
+            $server = $domain_server_map->{$domain}->[0];
+        }
+
+        if ( !$server ) {
+            my ($srv) = &LookupGC($domain);
+            $server ||= $srv;
+        }
     }
     else {
-        my ($srv) = &LookupDC($domain);
-        $server ||= $srv;
+        # In future grab more for fallback/retry capability
+        if ( !$server && $domain_server_map->{$domain} ) {
+            $server = $domain_server_map->{$domain}->[0];
+        }
+
+        if ( !$server ) {
+            my ($srv) = &LookupDC($domain);
+            $server ||= $srv;
+        }
     }
 
     $pref_debug && print "using server ($server)\n";
