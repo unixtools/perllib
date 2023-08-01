@@ -451,8 +451,6 @@ sub Init {
         &HTMLSetCGI( $self->{cgi} );
     }
 
-# TODO: Look at content type - if we were posted application/json or text/json - then decode and store for parameter use from param and multi_param
-# For now, just continue to support only form parameter type submissions
     &HTMLGetRequest();
 
     if ( $self->{version} < 2 ) {
@@ -460,6 +458,17 @@ sub Init {
     }
 
     $self->{cgi} = &HTMLGetCGI();
+
+    # Pull in json from posted data if possible and use it for param retrieval
+    if ( $ENV{CONTENT_TYPE} eq "application/json" || $ENV{CONTENT_TYPE} eq "text/json" ) {
+        my $raw = $self->{cgi}->param("POSTDATA");
+        if ($raw) {
+            eval { $self->{posted} = decode_json($raw); };
+            if ( $@ ) {
+                $self->Fail("Could not decode posted JSON: $@");
+            }
+        }
+    }
 
     # If we're running under mod_perl, to keep semantics, export into callers namespace as well
     my ($pkg) = caller(0);
@@ -490,9 +499,12 @@ sub param {
     # newer CGI.pm
     $CGI::LIST_CONTEXT_WARN = 0;
 
-    # Need to update to also handle posted JSON content
-
-    return $cgi->param($name);
+    if ( $self->{posted} && exists( $self->{posted}->{$name} ) ) {
+        return $self->{posted}->{$name};
+    }
+    else {
+        return $cgi->param($name);
+    }
 }
 
 # Begin-Doc
@@ -508,7 +520,17 @@ sub multi_param {
     my $cgi  = $self->{cgi};
 
     # This will only work on newer CGI.pm's - specifically won't work on FC20
-    return $cgi->multi_param($name);
+    if ( $self->{posted} && exists( $self->{posted}->{$name} ) ) {
+        if ( ref( $self->{posted}->{$name} ) eq "ARRAY" ) {
+            return @{ $self->{posted}->{$name} };
+        }
+        else {
+            return ( $self->{posted}->{$name} );
+        }
+    }
+    else {
+        return $cgi->multi_param($name);
+    }
 }
 
 # Begin-Doc
@@ -549,7 +571,7 @@ sub _json_print {
     my $self = shift;
     my $json = new JSON;
 
-    my $js = $json->encode(@_);
+    my $js = $json->canonical->encode(@_);
 
     # Potential for mixed/partially converted output, but won't die
     my $ejs = encode( 'UTF-8', $js, Encode::FB_QUIET );
