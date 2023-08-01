@@ -108,6 +108,7 @@ BEGIN {
 # Description: Creates new client object
 # Syntax: $sync = new Local::SimpleRPC::Client(%opts)
 # Comments: options are:
+#    version: version of SimpleRPC request/response format, v2 switches to HTTP codes and native return from functions
 #    base_url: base URL that RPC requests are issued against, the function name is appended to this URL
 #    url_suffix: used if the target server requires an extension on the CGI files, such as ".pl" or ".exe"
 #    authenticate: if true, will always pass auth info, will auto-set to 1 by default if URL contains 'auth-perl-bin',
@@ -131,6 +132,8 @@ sub new {
 
     $tmp->{debug} = $opts{debug};
     $tmp->{error} = undef;
+
+    $tmp->{version} = $opts{version} || 1;
 
     $tmp->{base_url} = $opts{base_url}
         || croak "no base url provided, will not create object";
@@ -219,7 +222,8 @@ sub CallRPC {
 
     $self->{error} = undef;
 
-    my $debug = $self->{debug};
+    my $debug   = $self->{debug};
+    my $version = $self->{version};
 
     $debug && print "CallRPC called with $self / $name\n";
 
@@ -292,47 +296,97 @@ sub CallRPC {
     }
 
     # get response
-    if ( !$res->is_success ) {
-        $self->{error} = "LWP Request Failed: " . $res->message;
-        croak $self->{error};
-    }
-
-    my $content = $res->content;
-    if ( !$content ) {
-        $self->{error} = "No content returned from LWP request.";
-        croak $self->{error};
-    }
-
-    $debug && print "response: $content\n";
-
     my $jsonret;
-    eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
-    if ( !$jsonret ) {
-        eval { $jsonret = from_json($content); };
+
+    if ( $version > 1 ) {
+
+        # New apps will always try to use json return for structure and will use http error codes
+        # So we will get "non-success" responses
+        my $content = $res->content;
+        if ( !$content ) {
+            $self->{error} = "No content returned from LWP request.";
+            croak $self->{error};
+        }
+
+        $debug && print "response: $content\n";
+
+        eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
+        if ( !$jsonret ) {
+            eval { $jsonret = from_json($content); };
+        }
+
+        if ($@) {
+            $self->{error} = "JSON Response Parsing Failed: " . $@;
+            croak $self->{error};
+        }
+
+        if ( !$res->is_success && ref($jsonret) eq "HASH" ) {
+            $self->{error} = "API Request Returned Failure: " . $jsonret->{error};
+            croak $self->{error};
+        }
+        elsif ( !$res->is_success ) {
+            $self->{error} = "API Request Returned Unknown Failure: " . $res->content;
+            croak $self->{error};
+        }
+
+        if ( ref($jsonret) ne "HASH" ) {
+            $self->{error} = "Invalid response, not a JSON hash ($jsonret)";
+            croak $self->{error};
+        }
+
+        if ( $jsonret->{data} ) {
+            return @{ $jsonret->{data} };
+        }
+        else {
+            return ();
+        }
+    }
+    else {
+        if ( !$res->is_success ) {
+            $self->{error} = "LWP Request Failed: " . $res->message;
+            croak $self->{error};
+        }
+
+        my $content = $res->content;
+        if ( !$content ) {
+            $self->{error} = "No content returned from LWP request.";
+            croak $self->{error};
+        }
+
+        $debug && print "response: $content\n";
+
+        eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
+        if ( !$jsonret ) {
+            eval { $jsonret = from_json($content); };
+        }
+
+        if ($@) {
+            $self->{error} = "Error parsing JSON response: " . $@;
+            croak $self->{error};
+        }
+
+        # Since we always get an array in v1, a null/false response is invalid
+        if ( !$jsonret ) {
+            $self->{error} = "JSON response not found.";
+            croak $self->{error};
+        }
+
+        if ( ref($jsonret) ne "ARRAY" ) {
+            $self->{error} = "Invalid response, not a JSON array ($jsonret)";
+            croak $self->{error};
+        }
+
+        my ( $status, $msg, @results ) = @$jsonret;
+        if ( $status != 0 ) {
+            $self->{error} = "Error returned from API: " . $msg;
+            croak $self->{error};
+        }
+
+        return @results;
     }
 
-    if ($@) {
-        $self->{error} = "Error parsing JSON response: " . $@;
-        croak $self->{error};
-    }
-
-    if ( !$jsonret ) {
-        $self->{error} = "JSON response not found.";
-        croak $self->{error};
-    }
-
-    if ( ref($jsonret) ne "ARRAY" ) {
-        $self->{error} = "Invalid response, not a JSON array ($jsonret)";
-        croak $self->{error};
-    }
-
-    my ( $status, $msg, @results ) = @$jsonret;
-    if ( $status != 0 ) {
-        $self->{error} = "Error returned from API: " . $msg;
-        croak $self->{error};
-    }
-
-    return @results;
+    $self->{error} = "Error in API: Should not get here";
+    croak $self->{error};
 }
 
 # Server components - this has several utility routines for making the server side
@@ -363,8 +417,8 @@ BEGIN {
 # Syntax: $sync = new Local::SimpleRPC::Server(%opts)
 # Comments: options are:
 #    debug: enable/disable debugging (1/0)
-#    pretty: enables/disable easy-to-read JSON output (1/0)
 #    cgi: allow passing in CGI object such as when using with FastCGI loop
+#    version: use newer return model that is more REST-like output format and uses HTTP status codes
 # End-Doc
 sub new {
     my $self  = shift;
@@ -375,10 +429,11 @@ sub new {
 
     &LogAPIUsage();
 
-    $tmp->{debug}  = $opts{debug};
-    $tmp->{pretty} = $opts{pretty};
-    $tmp->{error}  = undef;
-    $tmp->{cgi}    = $opts{cgi};
+    $tmp->{debug} = $opts{debug};
+    $tmp->{error} = undef;
+    $tmp->{cgi}   = $opts{cgi};
+
+    $tmp->{version} = int( $opts{version} ) || 1;
 
     return bless $tmp, $class;
 }
@@ -395,12 +450,12 @@ sub Init {
     if ( $self->{cgi} ) {
         &HTMLSetCGI( $self->{cgi} );
     }
+
+# TODO: Look at content type - if we were posted application/json or text/json - then decode and store for parameter use from param and multi_param
+# For now, just continue to support only form parameter type submissions
     &HTMLGetRequest();
 
-    if ( $self->{pretty} ) {
-        &HTMLContentType("text/plain");
-    }
-    else {
+    if ( $self->{version} < 2 ) {
         &HTMLContentType("application/json");
     }
 
@@ -434,6 +489,8 @@ sub param {
     # two methods and do an eval check to try to use multi_param instead with
     # newer CGI.pm
     $CGI::LIST_CONTEXT_WARN = 0;
+
+    # Need to update to also handle posted JSON content
 
     return $cgi->param($name);
 }
@@ -492,18 +549,62 @@ sub _json_print {
     my $self = shift;
     my $json = new JSON;
 
-    my $js;
-    if ( $self->{pretty} ) {
-        $js = $json->pretty->encode(@_);
-    }
-    else {
-        $js = $json->encode(@_);
-    }
+    my $js = $json->encode(@_);
 
     # Potential for mixed/partially converted output, but won't die
     my $ejs = encode( 'UTF-8', $js, Encode::FB_QUIET );
 
     print $ejs;
+}
+
+# Begin-Doc
+# Name: FinishStatus
+# Type: method
+# Description: outputs a standard formatted response with an ok status and exits
+# Syntax: $obj->FinishStatus($http_status_code, @results);
+# End-Doc
+sub FinishStatus {
+    my $self   = shift;
+    my $status = shift;
+
+    if ( $self->{version} > 1 ) {
+        print "Status: $status\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { data => [@_], status => "success", error => undef } );
+    }
+    else {
+        print "Status: $status\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 0, "", @_ ] );
+    }
+    exit(0);
+}
+
+# Begin-Doc
+# Name: FinishStatusReturn
+# Type: method
+# Description: outputs a standard formatted response with an ok status and return
+# Syntax: $obj->FinishStatusReturn($http_status_code, @results);
+# End-Doc
+sub FinishStatusReturn {
+    my $self   = shift;
+    my $status = shift;
+
+    if ( $self->{version} > 1 ) {
+        print "Status: $status\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { data => [@_], status => "success", error => undef } );
+    }
+    else {
+        print "Status: $status\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 0, "", @_ ] );
+    }
+    return (0);
 }
 
 # Begin-Doc
@@ -515,7 +616,18 @@ sub _json_print {
 sub Finish {
     my $self = shift;
 
-    $self->_json_print( [ 0, "", @_ ] );
+    if ( $self->{version} > 1 ) {
+        print "Status: 200\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { data => [@_], status => "success", error => undef } );
+    }
+    else {
+        print "Status: 200\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 0, "", @_ ] );
+    }
     exit(0);
 }
 
@@ -528,7 +640,18 @@ sub Finish {
 sub FinishReturn {
     my $self = shift;
 
-    $self->_json_print( [ 0, "", @_ ] );
+    if ( $self->{version} > 1 ) {
+        print "Status: 200\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { data => [@_], status => "success", error => undef } );
+    }
+    else {
+        print "Status: 200\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 0, "", @_ ] );
+    }
     return (0);
 }
 
@@ -540,9 +663,20 @@ sub FinishReturn {
 # End-Doc
 sub Fail {
     my $self = shift;
-    my $msg = shift || "Unknown Error";
+    my $msg  = shift || "Unknown Error";
 
-    $self->_json_print( [ 1, $msg ] );
+    if ( $self->{version} > 1 ) {
+        print "Status: 400\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { status => "error", error => $msg } );
+    }
+    else {
+        print "Status: 400\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 1, $msg, @_ ] );
+    }
     exit(0);
 }
 
@@ -554,9 +688,20 @@ sub Fail {
 # End-Doc
 sub FailReturn {
     my $self = shift;
-    my $msg = shift || "Unknown Error";
+    my $msg  = shift || "Unknown Error";
 
-    $self->_json_print( [ 1, $msg ] );
+    if ( $self->{version} > 1 ) {
+        print "Status: 400\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( { status => "error", error => $msg } );
+    }
+    else {
+        print "Status: 400\n";
+        &HTMLContentType("application/json");
+
+        $self->_json_print( [ 1, $msg, @_ ] );
+    }
     return (1);
 }
 
