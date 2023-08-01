@@ -37,6 +37,8 @@ use Exporter;
 use strict;
 use Carp;
 use Sys::Hostname;
+use MIME::Base64 qw(decode_base64);
+use Digest::SHA qw(sha256_hex);
 use JSON;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
