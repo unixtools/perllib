@@ -22,7 +22,7 @@ create table auth_clients
     client_id_sub varchar(50),
     description varchar(250),
     client_secret_crypt varchar(200) not null,
-    enabled enum('Y','N') default 'Y'
+    enabled enum('Y','N') default 'Y',
     last_auth datetime(3),
     auth_count integer not null default 0
 );
