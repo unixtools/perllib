@@ -452,11 +452,7 @@ sub Init {
     }
 
     &HTMLGetRequest();
-
-    if ( $self->{version} < 2 ) {
-        &HTMLContentType("application/json");
-    }
-
+    # Do not output content type here, will be handled in the returns to allow setting status header
     $self->{cgi} = &HTMLGetCGI();
 
     # Pull in json from posted data if possible and use it for param retrieval
