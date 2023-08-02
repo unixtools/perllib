@@ -499,7 +499,7 @@ sub param {
         return $self->{posted}->{$name};
     }
     else {
-        return $cgi->param($name);
+        return $cgi->param($name) || $cgi->url_param($name);
     }
 }
 
@@ -525,7 +525,7 @@ sub multi_param {
         }
     }
     else {
-        return $cgi->multi_param($name);
+        return $cgi->multi_param($name) || $cgi->url_param($name);
     }
 }
 
