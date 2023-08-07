@@ -452,6 +452,7 @@ sub Init {
     }
 
     &HTMLGetRequest();
+
     # Do not output content type here, will be handled in the returns to allow setting status header
     $self->{cgi} = &HTMLGetCGI();
 
@@ -460,7 +461,7 @@ sub Init {
         my $raw = $self->{cgi}->param("POSTDATA");
         if ($raw) {
             eval { $self->{posted} = decode_json($raw); };
-            if ( $@ ) {
+            if ($@) {
                 $self->Fail("Could not decode posted JSON: $@");
             }
         }
@@ -499,7 +500,13 @@ sub param {
         return $self->{posted}->{$name};
     }
     else {
-        return $cgi->param($name) || $cgi->url_param($name);
+        my $tmp = $cgi->param($name);
+        if ( defined($tmp) ) {
+            return $cgi->param($name);
+        }
+        else {
+            return $cgi->url_param($name);
+        }
     }
 }
 
@@ -525,7 +532,13 @@ sub multi_param {
         }
     }
     else {
-        return $cgi->multi_param($name) || $cgi->url_param($name);
+        my @tmp = $cgi->multi_param($name);
+        if ( scalar(@tmp) > 1 ) {
+            return @tmp;
+        }
+        else {
+            return $cgi->url_param($name);
+        }
     }
 }
 
