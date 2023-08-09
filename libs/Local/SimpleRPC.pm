@@ -533,7 +533,7 @@ sub multi_param {
     }
     else {
         my @tmp = $cgi->multi_param($name);
-        if ( scalar(@tmp) > 1 ) {
+        if ( scalar(@tmp) > 0 ) {
             return @tmp;
         }
         else {
