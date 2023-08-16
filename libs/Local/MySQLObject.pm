@@ -103,7 +103,6 @@ sub SQL_OpenDatabase {
         $self->dbhandle($dbh);
         $self->dbhandle->{PrintError}           = 0;
         $self->dbhandle->{RaiseError}           = 0;    # don't generate a die
-        $self->dbhandle->{mysql_auto_reconnect} = 1;
     }
     return defined( $self->dbhandle );
 }
