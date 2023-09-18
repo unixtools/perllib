@@ -33,6 +33,16 @@ BEGIN {
 our $detected_env;
 
 # Begin-Doc
+# Name: Local_Env_Reset
+# Type: function
+# Description: Resets detected environment name
+# Syntax: &Local_Env_Reset()
+# End-Doc
+sub Local_Env_Reset {
+    undef $detected_env;
+}
+
+# Begin-Doc
 # Name: Local_Env
 # Type: function
 # Description: Returns detected environment name
