@@ -24,7 +24,7 @@ use Local::UsageLogger;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 @ISA    = qw(Exporter);
-@EXPORT = qw( Local_Env );
+@EXPORT = qw( Local_Env Local_Env_Reset );
 
 BEGIN {
     &LogAPIUsage();
