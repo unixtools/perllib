@@ -156,6 +156,9 @@ sub new {
     elsif ( $tmp->{base_url} =~ m|/auth-fcgi-bin| ) {
         $tmp->{authenticate} = 1;
     }
+    elsif ( $tmp->{base_url} =~ m|/auth-api-bin| ) {
+        $tmp->{authenticate} = 1;
+    }
     elsif ( $tmp->{base_url} =~ m|/auth-cgi| ) {
         $tmp->{authenticate} = 1;
     }
