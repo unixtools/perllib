@@ -280,7 +280,12 @@ sub CallRPC {
 
     # Fill with request parms first
     my $req_content = join( "&", @content_pieces );
-    $debug && print "request: $req_content\n";
+    if ($req_content) {
+        $debug && print "request: $req_content\n";
+    }
+    else {
+        $debug && print "request: no parameters\n";
+    }
     $req->content($req_content);
 
     my $ua = $self->{ua};
@@ -298,31 +303,38 @@ sub CallRPC {
         croak $self->{error};
     }
 
-    # get response
+    # If older version and we get a non-successful response code, instant failure, newer versions use
+    # variable http response codes for status.
+    if ( $version < 2 ) {
+        if ( !$res->is_success ) {
+            $self->{error} = "LWP Request Failed: " . $res->message;
+            croak $self->{error};
+        }
+    }
+
+    # New apps will always try to use json return for structure and will use http error codes
+    # So we will get "non-success" responses
+    my $content = $res->content;
+    if ( !$content ) {
+        $self->{error} = "No content returned from LWP request.";
+        croak $self->{error};
+    }
+
+    $debug && print "response: $content\n";
+
     my $jsonret;
+    eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
+    if ( !$jsonret ) {
+        eval { $jsonret = from_json($content); };
+    }
 
-    if ( $version > 1 ) {
+    if ($@) {
+        $self->{error} = "JSON Response Parsing Failed: " . $@;
+        croak $self->{error};
+    }
 
-        # New apps will always try to use json return for structure and will use http error codes
-        # So we will get "non-success" responses
-        my $content = $res->content;
-        if ( !$content ) {
-            $self->{error} = "No content returned from LWP request.";
-            croak $self->{error};
-        }
-
-        $debug && print "response: $content\n";
-
-        eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
-        if ( !$jsonret ) {
-            eval { $jsonret = from_json($content); };
-        }
-
-        if ($@) {
-            $self->{error} = "JSON Response Parsing Failed: " . $@;
-            croak $self->{error};
-        }
-
+    # If we've been told we're version 2 or we get a HASH in data we know it is a version 2 server
+    if ( $version > 1 || ref($jsonret) eq "HASH" ) {
         if ( !$res->is_success && ref($jsonret) eq "HASH" ) {
             $self->{error} = "API Request Returned Failure: " . $jsonret->{error};
             croak $self->{error};
@@ -345,29 +357,6 @@ sub CallRPC {
         }
     }
     else {
-        if ( !$res->is_success ) {
-            $self->{error} = "LWP Request Failed: " . $res->message;
-            croak $self->{error};
-        }
-
-        my $content = $res->content;
-        if ( !$content ) {
-            $self->{error} = "No content returned from LWP request.";
-            croak $self->{error};
-        }
-
-        $debug && print "response: $content\n";
-
-        eval { $jsonret = from_json( decode( 'UTF-8', $content ) ); };
-        if ( !$jsonret ) {
-            eval { $jsonret = from_json($content); };
-        }
-
-        if ($@) {
-            $self->{error} = "Error parsing JSON response: " . $@;
-            croak $self->{error};
-        }
-
         # Since we always get an array in v1, a null/false response is invalid
         if ( !$jsonret ) {
             $self->{error} = "JSON response not found.";
