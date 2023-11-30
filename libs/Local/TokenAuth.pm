@@ -202,14 +202,14 @@ order by last_auth desc
             }
             $db->SQL_CloseQuery($cid);
 
-            $cache->{$client_id}->{$hex_secret} = { expires => time + $self->{ttl_good}, status => 1 };
+            $cache->{$client_id}->{$hex_secret} = { expires => time + $self->{ttl_ok}, status => 1 };
             return 1;
         }
     }
     $db->SQL_CloseQuery($cid);
 
     # Return not authorized by default
-    $cache->{client_id}->{$hex_secret} = { expires => time + $self->{ttl_bad}, status => 0 };
+    $cache->{client_id}->{$hex_secret} = { expires => time + $self->{ttl_fail}, status => 0 };
     return 0;
 }
 
