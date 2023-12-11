@@ -178,6 +178,17 @@ sub is_authorized {
     my $hex_secret = sha256_hex($client_secret);
     my $cached     = $cache->{$client_id}->{$hex_secret};
     if ( $cached && $cached->{expires} && $cached->{expires} > time ) {
+        if ( $cached->{status} ) {
+
+            # All primary client ids are tied to userids
+            $ENV{REMOTE_USER} = lc($client_id);
+
+            # Optional secondary ID if the app wants to do permission limiting tokens
+            if ( $cached->{client_id_sub} ) {
+                $ENV{REMOTE_USER_SUB} = lc( $cached->{client_id_sub} );
+            }
+        }
+
         return $cached->{status};
     }
 
@@ -202,7 +213,8 @@ order by last_auth desc
             }
             $db->SQL_CloseQuery($cid);
 
-            $cache->{$client_id}->{$hex_secret} = { expires => time + $self->{ttl_ok}, status => 1 };
+            $cache->{$client_id}->{$hex_secret}
+                = { expires => time + $self->{ttl_ok}, status => 1, client_id_sub => $client_id_sub };
             return 1;
         }
     }
