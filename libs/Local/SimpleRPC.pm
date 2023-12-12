@@ -419,6 +419,9 @@ sub new {
 
     my $tmp = {};
 
+    # Accomodate invocations through FastCGI or other persistent server scripts
+    &ResetAPIUsage();
+
     &LogAPIUsage();
 
     $tmp->{debug} = $opts{debug};
