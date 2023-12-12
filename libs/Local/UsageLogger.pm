@@ -26,6 +26,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 @ISA    = qw(Exporter);
 @EXPORT = qw(
     LogAPIUsage
+    ResetAPIUsage
 );
 
 # Begin-Doc
@@ -38,6 +39,18 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 # Comments: Should be called from anywhere you want to track usage
 # End-Doc
 sub LogAPIUsage {
+    return undef;
+}
+
+# Begin-Doc
+# Name: ResetAPIUsage
+# Type: subroutine
+# Description: reset api usage logger caching
+# Access: public
+# Syntax: &ResetAPIUsage()
+# Comments: Should be called when state should be reset
+# End-Doc
+sub ResetAPIUsage {
     return undef;
 }
 
