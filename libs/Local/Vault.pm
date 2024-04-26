@@ -305,4 +305,37 @@ sub write {
     }
 }
 
+# Begin-Doc
+# Name: write_read
+# Type: function
+# Description: Write to a path and returns parsed json of response
+# Syntax: $resp = $vault->write(path => "path/...", content => {});
+# Comments: Path is the full path to root
+# End-Doc
+sub write_read {
+    my $self = shift;
+    my %opts = @_;
+
+    if ( !$self->{token} ) { die; }
+    my $ua    = $self->{ua};
+    my $url   = $self->{url};
+    my $token = $self->{token};
+
+    my $content = $opts{content} || die "must provide content";
+    my $path    = $opts{path}    || die "must provide path";
+
+    my $req = HTTP::Request->new( POST => "${url}/v1/$path" );
+    $req->content_type("application/json");
+    $req->content( encode_json($content) );
+    $req->header( "X-Vault-Token" => $token );
+
+    my $resp = $ua->request($req);
+    if ( $resp->is_success ) {
+        return decode_json($resp->content);
+    }
+    else {
+        die "Error parsing response";
+    }
+}
+
 1;
