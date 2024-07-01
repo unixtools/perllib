@@ -25,6 +25,7 @@ package Local::SimpleRPC::Client::Stub;
 use Carp;
 use strict;
 use Local::UsageLogger;
+use Time::HiRes qw(sleep);
 
 our $AUTOLOAD;
 
@@ -59,7 +60,9 @@ sub AUTOLOAD {
     my @errors  = ();
     my @results = ();
     my $retries = $self->{retries};
+    my $attempt = 0;
     do {
+        $attempt++;
         $debug
             && print "Passing to CallRPC($name, \@_) with $retries retries remaining.\n";
         eval { @results = $client->CallRPC( $name, @_ ); };
@@ -67,6 +70,12 @@ sub AUTOLOAD {
             push( @errors, $@ );
         }
         $retries--;
+        if ( $retries >= 0 && $attempt > 0 ) {
+            # Delay 200ms, exponentially increasing up to 10 seconds max
+            my $delay = 0.1 * (2 ** $attempt);
+            if ( $delay > 10 ) { $delay = 10; }
+            sleep($delay);
+        }
     } while ( $@ && $retries >= 0 );    # retry up to $retries times, set to 0 for only a single request
     if ($@) {
         croak join( "\nFailed on retry: ", @errors );
