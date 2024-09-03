@@ -18,7 +18,6 @@ use Net::DNS;
 use Local::AuthSrv;
 use Local::CurrentUser;
 use Local::UsageLogger;
-use Math::BigInt;    # should do with eval instead perhaps
 use Sys::Hostname;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
@@ -1211,16 +1210,15 @@ sub SetAttributes {
 sub ConvertTime {
     my $self = shift;
     my $time = shift;
-    my ( $secs, $nsecs );
 
-    # convert from 100-nanosecond intervals to 1-sec intervals
-    $nsecs = new Math::BigInt $time;
-    $secs  = new Math::BigInt $nsecs->bdiv(10_000_000);
+    # Truncate/shift to translate to 1-sec intervals from nanoseconds
+    # (divide by 10M)
+    my $secs = substr("0"x10 . $time,0,-7) + 0;
 
     # subtract base (seconds from 1601 to 1970)
-    $secs = $secs->bsub("11644473600");
+    $secs = $secs - 11644473600;
 
-    return int($secs);
+    return $secs;
 }
 
 # Begin-Doc
@@ -1234,12 +1232,9 @@ sub ConvertToTime {
     my ( $secs, $nsecs );
 
     # convert from 100-nanosecond intervals to 1-sec intervals
-    $secs = new Math::BigInt $time;
-
-    # add base (seconds from 1601 to 1970)
-    $secs = $secs->badd("11644473600");
-
-    $nsecs = new Math::BigInt $secs->bmul(10_000_000);
+    # after adding base
+    my $nsecs = int($time + 11644473600);
+    $nsecs .= "0" x 7;
 
     return $nsecs;
 }
