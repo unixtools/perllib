@@ -52,7 +52,8 @@ keys 'user','passwd', and 'host', whose values are the userid and password
 respectively. Host defaults to 'localhost'. The 'user' and
 'passwd' values default to the current user, and the password from that user's
 'mysql' instance as retrieved by the AuthSrv API. If 'nopasswd' is non-zero
-will connect without a password.
+will connect without a password. If 'ssl' is passed with nonzero, ssl will be
+required, otherwise optional. If 'ssl' is passed with zero, it will be disabled.
 
 End-Doc
 =cut
@@ -97,14 +98,18 @@ sub SQL_OpenDatabase {
             $dsn .= ";mysql_socket=/var/run/mysqld/mysqld.sock";
         }
 
-        # Request that SSL be optionally enabled if supportedA
-        if ( !defined( $info{ssl} ) ) {
+        # Request that SSL be optionally enabled if supported
+        if ( ! exists $info{ssl} ) {
             $dsn .= ";mysql_optional=1";
             $dsn .= ";mysql_ssl=1";
         }
         elsif ( $info{ssl} ) {
             $dsn .= ";mysql_optional=0";
             $dsn .= ";mysql_ssl=1";
+        }
+        elsif ( !$info{ssl} ) {
+            $dsn .= ";mysql_optional=0";
+            $dsn .= ";mysql_ssl=0";
         }
 
         my $dbh = DBI->connect( $dsn, $user, $pass );
