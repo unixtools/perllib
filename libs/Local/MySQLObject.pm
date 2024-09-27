@@ -97,12 +97,22 @@ sub SQL_OpenDatabase {
             $dsn .= ";mysql_socket=/var/run/mysqld/mysqld.sock";
         }
 
+        # Request that SSL be optionally enabled if supportedA
+        if ( !defined( $info{ssl} ) ) {
+            $dsn .= ";mysql_optional=1";
+            $dsn .= ";mysql_ssl=1";
+        }
+        elsif ( $info{ssl} ) {
+            $dsn .= ";mysql_optional=0";
+            $dsn .= ";mysql_ssl=1";
+        }
+
         my $dbh = DBI->connect( $dsn, $user, $pass );
         return undef unless $dbh;
 
         $self->dbhandle($dbh);
-        $self->dbhandle->{PrintError}           = 0;
-        $self->dbhandle->{RaiseError}           = 0;    # don't generate a die
+        $self->dbhandle->{PrintError} = 0;
+        $self->dbhandle->{RaiseError} = 0;    # don't generate a die
     }
     return defined( $self->dbhandle );
 }
