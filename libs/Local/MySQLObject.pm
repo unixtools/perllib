@@ -100,15 +100,15 @@ sub SQL_OpenDatabase {
 
         # Request that SSL be optionally enabled if supported
         if ( ! exists $info{ssl} ) {
-            $dsn .= ";mysql_optional=1";
+            $dsn .= ";mysql_ssl_optional=1";
             $dsn .= ";mysql_ssl=1";
         }
         elsif ( $info{ssl} ) {
-            $dsn .= ";mysql_optional=0";
+            $dsn .= ";mysql_ssl_optional=0";
             $dsn .= ";mysql_ssl=1";
         }
         elsif ( !$info{ssl} ) {
-            $dsn .= ";mysql_optional=0";
+            $dsn .= ";mysql_ssl_optional=0";
             $dsn .= ";mysql_ssl=0";
         }
 
