@@ -234,6 +234,8 @@ sub _dprintrowall {
 #    dest_table => dest table name
 #    excl_cols => column names to exclude from sync
 #    mask_cols => column names and optional values to mask during sync
+#    map_cols => column names and function to apply to map or transform during sync, currently only 'to_char'
+#       is implemented for oracle source tables
 #    unique_keys => optional array ref, containing array refs, each of which is a list of column names
 #       that make up a unique index on the table. If the table has unique indexes, it is strongly
 #       recommended that this be included

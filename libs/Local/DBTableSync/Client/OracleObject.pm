@@ -129,6 +129,9 @@ sub _build_coltypes {
         if ( exists( $self->{mask_cols}->{$name} ) ) {
             $self->{types}->{$name} = "string";
         }
+        elsif ( exists( $self->{map_cols}->{$name} ) && $self->{map_cols}->{$name} eq "to_char" ) {
+            $self->{types}->{$name} = "string";
+        }
         elsif ($tname =~ /CHAR/
             || $tname =~ /TIME/
             || $tname =~ /DATE/

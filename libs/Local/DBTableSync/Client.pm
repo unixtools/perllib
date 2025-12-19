@@ -70,6 +70,13 @@ sub new {
         $tmp->{mask_cols}->{ lc $cname } = $val;
     }
 
+    $tmp->{map_cols} = {};
+    foreach my $col ( split( /[\s,;]+/, $opts{map_cols} ) ) {
+        my ( $cname, $val ) = split( /:/, $col );
+        next if ( ! $val );
+        $tmp->{map_cols}->{ lc $cname } = $val;
+    }
+
     $tmp->{pending}         = 0;
     $tmp->{commits}         = 0;
     $tmp->{inserts}         = 0;
@@ -329,6 +336,10 @@ sub _build_collists {
         unless ( $self->{skipcols}->{$col} ) {
             if ( exists( $self->{mask_cols}->{$col} ) && $self->{type} eq "source" ) {
                 my $tcol = $self->{read_db}->SQL_QuoteString( $self->{mask_cols}->{$col} ) . " " . $col;
+                push( @{ $self->{select_cols} }, $tcol );
+            }
+            elsif ( exists( $self->{map_cols}->{$col} ) && $self->{type} eq "source" && $self->{map_cols}->{$col} eq "to_char" ) {
+                my $tcol = "to_char($col) $col";
                 push( @{ $self->{select_cols} }, $tcol );
             }
             else {
