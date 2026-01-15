@@ -71,8 +71,8 @@ sub new {
 
     $tmp->{"table"} = $opts{table} || "auth_clients";
 
-    $tmp->{"ttl_good"}   = 300;
-    $tmp->{"ttl_bad"} = 30;
+    $tmp->{"ttl_ok"}   = 300;
+    $tmp->{"ttl_fail"} = 30;
 
     $tmp->{"cache"} = {};
 
