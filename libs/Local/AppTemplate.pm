@@ -385,7 +385,7 @@ sub _filter {
     my $app_head_post;
 
     if ( $app_env && $app_env ne "prod" && $app_env ne "production" ) {
-        my $app_env_label = "<b><font color=\"\#BB1111\">" . uc($app_env) . "<\/font></b>";
+        my $app_env_label = "<b><span style=\"color: #f8c7c7\">" . uc($app_env) . "<\/span></b>";
         $title .= " - $app_env";
         $apptitle = $app_env_label . " - " . $apptitle . " - " . $app_env_label;
     }
