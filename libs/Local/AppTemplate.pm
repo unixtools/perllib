@@ -434,6 +434,9 @@ sub _filter {
     # Accomodate newer app templates that have an actual login/logout handler in the template
     $text =~ s/__APP_LOGIN__/$remuser/g;
 
+    # Not defined in perl template
+    $text =~ s/__ERROR_CONTENT__/$remuser/g;
+
     my $remhost = $self->Encode( $ENV{HTTP_X_FORWARDED_FOR} || $ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} );
     $text =~ s/__REMOTE_HOST__/$remhost/g;
 
