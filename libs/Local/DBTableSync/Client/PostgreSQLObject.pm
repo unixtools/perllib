@@ -13,7 +13,7 @@ use Encode;
 # Description: fetches the next row in the select statement
 # Returns: returns arrayref of row data, undef if no more row data, and undef on error
 # Comments: Implementing this as a workaround for some weird double decode utf8 behavior in DBI::Pg.
-#    Changes are welcome to set the driver behavior properly 
+#    Changes are welcome to set the driver behavior properly
 # End-Doc
 sub fetch_row {
     my $self = shift;
@@ -23,8 +23,8 @@ sub fetch_row {
     return undef unless $row;
 
     my @encoded = ();
-    foreach my $val (@{ $row }) {
-        push(@encoded, encode('utf-8', $val));
+    foreach my $val ( @{$row} ) {
+        push( @encoded, encode( 'utf-8', $val ) );
     }
     return \@encoded;
 }
@@ -38,7 +38,9 @@ sub fetch_row {
 sub _build_coltypes {
     my $self = shift;
 
-    $self->{skipcols} = {};
+    if ( !$self->{skipcols} ) {
+        $self->{skipcols} = {};
+    }
     $self->{skiplong} = {};
     $self->{coltypes} = undef;
     $self->{types}    = {};

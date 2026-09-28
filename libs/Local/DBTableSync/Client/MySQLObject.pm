@@ -15,7 +15,9 @@ use parent "Local::DBTableSync::Client";
 sub _build_coltypes {
     my $self = shift;
 
-    $self->{skipcols} = {};
+    if ( !$self->{skipcols} ) {
+        $self->{skipcols} = {};
+    }
     $self->{skiplong} = {};
     $self->{coltypes} = undef;
     $self->{types}    = {};

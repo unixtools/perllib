@@ -69,7 +69,7 @@ sub _open_select {
     my $db   = $self->{read_db};
     my $qry  = $self->{queries}->{select}->{qry};
     my $args = $self->{queries}->{select}->{args};
-    my $cid = $db->SQL_OpenQueryExtra( $qry, { ora_pers_lob => 1 }, @{$args} );
+    my $cid  = $db->SQL_OpenQueryExtra( $qry, { ora_pers_lob => 1 }, @{$args} );
 
     $self->_dprint("\nOpening select query (${type}): ${qry}");
 
@@ -92,7 +92,9 @@ sub _open_select {
 sub _build_coltypes {
     my $self = shift;
 
-    $self->{skipcols} = {};
+    if ( !$self->{skipcols} ) {
+        $self->{skipcols} = {};
+    }
     $self->{skiplong} = {};
     $self->{coltypes} = undef;
     $self->{types}    = {};

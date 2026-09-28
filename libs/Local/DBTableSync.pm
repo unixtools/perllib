@@ -81,6 +81,7 @@ BEGIN {
 #    no_dups: a hint that there will be NO 100% duplicated records in the destination
 #    debug: enable/disable debugging (1/0)
 #    check_empty_source: check for empty source table and fail sync if empty
+#    compare_schemas_warn_extra: only warn if extra columns found in source schema, defaults to 0/false
 # End-Doc
 sub new {
     my $self  = shift;
@@ -97,6 +98,11 @@ sub new {
     $tmp->{compare_schemas} = 1;
     if ( exists( $opts{compare_schemas} ) ) {
         $tmp->{compare_schemas} = $opts{compare_schemas};
+    }
+
+    $tmp->{compare_schemas_warn_extra} = 0;
+    if ( exists( $opts{compare_schemas_warn_extra} ) ) {
+        $tmp->{compare_schemas_warn_extra} = $opts{compare_schemas_warn_extra};
     }
 
     $tmp->{dry_run} = 0;
@@ -276,6 +282,7 @@ sub SyncTables {
     my @tmp_times = times;
     $self->{start_user_cpu}   = $tmp_times[0];
     $self->{start_system_cpu} = $tmp_times[1];
+    my @schema_warnings = ();
 
     #
     # Determine config parms/limits, override on this request if set
@@ -283,6 +290,11 @@ sub SyncTables {
     my $compare_schemas = $self->{compare_schemas};
     if ( exists( $opts{compare_schemas} ) ) {
         $compare_schemas = $opts{compare_schemas};
+    }
+
+    my $compare_schemas_warn_extra = $self->{compare_schemas_warn_extra};
+    if ( exists( $opts{compare_schemas_warn_extra} ) ) {
+        $compare_schemas_warn_extra = $opts{compare_schemas_warn_extra};
     }
 
     my $dry_run = $self->{dry_run};
@@ -438,15 +450,34 @@ sub SyncTables {
     my %have_dest_cols   = map { $_ => 1 } @dest_cols;
     my $col_compare      = "";
 
+    my $col_compare_extra = 0;
+    my $col_compare_other = 0;
+
+    my @keep_source_cols = ();
     foreach my $col (@source_cols) {
         if ( !$have_dest_cols{$col} ) {
-            $col_compare .= "Column ${col} in source but not in destination.\n";
+            my $tmp_msg = "Column ${col} in source but not in destination.";
+
+            $col_compare_extra++;
+            if ($compare_schemas_warn_extra) {
+                $sclient->skipcol($col);
+                push( @schema_warnings, $tmp_msg );
+            }
+            else {
+                $col_compare .= "$tmp_msg\n";
+                push( @keep_source_cols, $col );
+            }
+        }
+        else {
+            push( @keep_source_cols, $col );
         }
     }
+    @source_cols = @keep_source_cols;
 
     foreach my $col (@dest_cols) {
         if ( !$have_source_cols{$col} ) {
             $col_compare .= "Column ${col} in destination but not in source.\n";
+            $col_compare_other++;
         }
     }
 
@@ -859,7 +890,7 @@ MAIN: while ( $more_source || $more_dest ) {
     $self->{end_user_cpu}   = $tmp_times[0];
     $self->{end_system_cpu} = $tmp_times[1];
 
-    return (
+    my %res = (
         status               => $status,
         error                => $self->{error},
         inserts              => $dclient->inserts(),
@@ -875,6 +906,11 @@ MAIN: while ( $more_source || $more_dest ) {
         elapsed_fetch_source => $elap_fetch_source,
         elapsed_fetch_dest   => $elap_fetch_dest,
     );
+    if (@schema_warnings) {
+        $res{warnings} = [@schema_warnings];
+    }
+
+    return %res;
 }
 
 # Begin-Doc

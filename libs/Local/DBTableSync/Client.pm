@@ -59,9 +59,9 @@ sub new {
         $tmp->{type} = $opts{type};
     }
 
-    $tmp->{excl_cols} = {};
+    $tmp->{skipcols} = {};
     foreach my $col ( split( /[\s,;]+/, $opts{excl_cols} ) ) {
-        $tmp->{excl_cols}->{ lc $col } = 1;
+        $tmp->{skipcols}->{ lc $col } = 1;
     }
 
     $tmp->{mask_cols} = {};
@@ -73,7 +73,7 @@ sub new {
     $tmp->{map_cols} = {};
     foreach my $col ( split( /[\s,;]+/, $opts{map_cols} ) ) {
         my ( $cname, $val ) = split( /:/, $col );
-        next if ( ! $val );
+        next if ( !$val );
         $tmp->{map_cols}->{ lc $cname } = $val;
     }
 
@@ -237,6 +237,17 @@ sub skipcols {
 }
 
 # Begin-Doc
+# Name: skipcol
+# Type: method
+# Description: marks a column as skipped
+# End_doc
+sub skipcol {
+    my $self = shift;
+    my $col  = shift;
+    return $self->{skipcols}->{ lc $col } = 1;
+}
+
+# Begin-Doc
 # Name: inserts
 # Type: method
 # Description: returns the number of rows inserted
@@ -268,7 +279,6 @@ sub _build_coltypes {
     $self->{error} = ref($self) . "::_build_coltypes - method not implemented";
     return undef;
 }
-
 
 # Begin-Doc
 # Name: _build_collists
@@ -338,7 +348,10 @@ sub _build_collists {
                 my $tcol = $self->{read_db}->SQL_QuoteString( $self->{mask_cols}->{$col} ) . " " . $col;
                 push( @{ $self->{select_cols} }, $tcol );
             }
-            elsif ( exists( $self->{map_cols}->{$col} ) && $self->{type} eq "source" && $self->{map_cols}->{$col} eq "to_char" ) {
+            elsif (exists( $self->{map_cols}->{$col} )
+                && $self->{type} eq "source"
+                && $self->{map_cols}->{$col} eq "to_char" )
+            {
                 my $tcol = "to_char($col) $col";
                 push( @{ $self->{select_cols} }, $tcol );
             }
@@ -514,7 +527,7 @@ sub _open_select {
     my $db   = $self->{read_db};
     my $qry  = $self->{queries}->{select}->{qry};
     my $args = $self->{queries}->{select}->{args};
-    my $cid = $db->SQL_OpenQuery( $qry, @{$args} );
+    my $cid  = $db->SQL_OpenQuery( $qry, @{$args} );
 
     $self->_dprint("\nOpening select query (${type}): ${qry}");
 
